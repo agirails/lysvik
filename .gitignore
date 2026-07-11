@@ -1,0 +1,24 @@
+# Secrets & keys — NEVER commit these
+.env
+.env.*
+!.env.example
+.actp/
+*.keystore.json
+keystore.json
+*.pem
+*.key
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

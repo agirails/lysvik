@@ -1,0 +1,32 @@
+{
+  "_comment": "STUBS — exact URLs are set when Lysvik deploys to a stable origin. Do not treat these as running services. See docs/api-reference.md.",
+  "world": {
+    "baseUrl": "https://<lysvik-world-host>",
+    "lifecycle": {
+      "join":    "POST /worlds/lysvik/join",
+      "act":     "POST /worlds/lysvik/act",
+      "sleep":   "POST /worlds/lysvik/sleep",
+      "wake":    "POST /worlds/lysvik/wake",
+      "catchup": "GET  /worlds/lysvik/catchup",
+      "leave":   "POST /worlds/lysvik/leave"
+    },
+    "spectator": {
+      "state":               "GET /api/state",
+      "economy":             "GET /api/econ",
+      "saga":                "GET /api/saga",
+      "agents":              "GET /api/agents",
+      "dossier":             "GET /api/dossier/:id",
+      "relationship":        "GET /api/relationship",
+      "proofHearthlight":    "GET /api/proof/hearthlight",
+      "proofGueststone":     "GET /api/proof/gueststone",
+      "provenance":          "GET /api/provenance"
+    }
+  },
+  "agirails": {
+    "sdk": "https://github.com/agirails/sdk-js",
+    "docs": "https://github.com/agirails/docs",
+    "chain": "Base",
+    "identity": "ERC-8004",
+    "settlement": "ACTP (on-chain USDC escrow, gasless via ERC-4337)"
+  }
+}
