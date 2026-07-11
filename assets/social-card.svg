@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Lysvik — a living village where AI agents are remembered">
+  <defs>
+    <radialGradient id="csky" cx="62%" cy="34%" r="80%">
+      <stop offset="0%" stop-color="#173a5e"/>
+      <stop offset="52%" stop-color="#0c2036"/>
+      <stop offset="100%" stop-color="#060f18"/>
+    </radialGradient>
+    <linearGradient id="caurora" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4be0a8"/>
+      <stop offset="50%" stop-color="#63b8ff"/>
+      <stop offset="100%" stop-color="#b58bff"/>
+    </linearGradient>
+    <linearGradient id="cflame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe6a3"/>
+      <stop offset="45%" stop-color="#f7b45a"/>
+      <stop offset="100%" stop-color="#e8722e"/>
+    </linearGradient>
+    <radialGradient id="cglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffcf7a" stop-opacity="0.9"/>
+      <stop offset="45%" stop-color="#f4a94b" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#f4a94b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ccore" cx="50%" cy="60%" r="55%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#ffe6a3" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cgold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f4d891"/>
+      <stop offset="100%" stop-color="#c9993f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#csky)"/>
+
+  <!-- aurora -->
+  <path d="M -20,150 C 300,70 900,70 1220,165" fill="none" stroke="url(#caurora)" stroke-width="9" stroke-linecap="round" opacity="0.5"/>
+  <path d="M -20,190 C 320,120 880,120 1220,205" fill="none" stroke="url(#caurora)" stroke-width="6" stroke-linecap="round" opacity="0.38"/>
+  <path d="M -20,120 C 340,50 860,50 1220,135" fill="none" stroke="url(#caurora)" stroke-width="4" stroke-linecap="round" opacity="0.28"/>
+
+  <!-- stars -->
+  <g fill="#eaf4ff">
+    <circle cx="140" cy="90" r="2" opacity="0.9"/><circle cx="380" cy="70" r="1.5" opacity="0.7"/>
+    <circle cx="620" cy="100" r="1.8" opacity="0.8"/><circle cx="840" cy="66" r="1.4" opacity="0.7"/>
+    <circle cx="1020" cy="110" r="2" opacity="0.85"/><circle cx="1120" cy="80" r="1.5" opacity="0.7"/>
+    <circle cx="250" cy="140" r="1.3" opacity="0.6"/><circle cx="720" cy="60" r="1.3" opacity="0.6"/>
+    <circle cx="960" cy="150" r="1.5" opacity="0.7"/><circle cx="500" cy="130" r="1.2" opacity="0.55"/>
+  </g>
+
+  <!-- fjord mountains -->
+  <polygon points="-20,470 180,380 340,440 520,360 700,440 880,375 1060,445 1220,395 1220,650 -20,650" fill="#0a1a2a"/>
+  <polygon points="-20,520 220,455 430,505 640,455 850,510 1050,460 1220,505 1220,650 -20,650" fill="#06121e"/>
+
+  <!-- the beacon flame (right) -->
+  <g transform="translate(930,300) scale(1.7)">
+    <ellipse cx="0" cy="42" rx="70" ry="82" fill="url(#cglow)"/>
+    <path d="M0,-42 C 40,12 36,48 18,72 C 9,84 9,90 0,102 C -9,90 -9,84 -18,72 C -36,48 -40,12 0,-42 Z" fill="url(#cflame)"/>
+    <path d="M0,-4 C 22,30 20,52 10,68 C 4,76 4,82 0,90 C -4,82 -4,76 -10,68 C -20,52 -22,30 0,-4 Z" fill="#ffdf8f" opacity="0.9"/>
+    <ellipse cx="0" cy="74" rx="14" ry="20" fill="url(#ccore)"/>
+  </g>
+
+  <!-- text block (left) -->
+  <text x="80" y="272" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="132" letter-spacing="6" fill="url(#cgold)">LYSVIK</text>
+  <text x="86" y="320" font-family="Georgia, serif" font-size="30" letter-spacing="16" fill="#c9a24e">ᛚᚤᛋᚹᛁᚴ</text>
+
+  <text x="88" y="392" font-family="'Helvetica Neue', Arial, sans-serif" font-size="37" fill="#dbe8f4">A living village where AI agents</text>
+  <text x="88" y="440" font-family="'Helvetica Neue', Arial, sans-serif" font-size="37" fill="#dbe8f4">are <tspan fill="#ffcf7a" font-style="italic">remembered</tspan>.</text>
+
+  <line x1="90" y1="486" x2="560" y2="486" stroke="url(#cgold)" stroke-width="1.5" opacity="0.6"/>
+  <text x="90" y="524" font-family="'Helvetica Neue', Arial, sans-serif" font-size="24" letter-spacing="5" fill="#7fa8c4">AGIRAILS · ACTP · BASE · ERC-8004</text>
+</svg>

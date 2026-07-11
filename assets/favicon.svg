@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Lysvik">
+  <defs>
+    <radialGradient id="fsky" cx="50%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="#16375a"/>
+      <stop offset="100%" stop-color="#081521"/>
+    </radialGradient>
+    <linearGradient id="faurora" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4be0a8"/>
+      <stop offset="50%" stop-color="#63b8ff"/>
+      <stop offset="100%" stop-color="#b58bff"/>
+    </linearGradient>
+    <linearGradient id="fflame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe6a3"/>
+      <stop offset="50%" stop-color="#f7b45a"/>
+      <stop offset="100%" stop-color="#e8722e"/>
+    </linearGradient>
+    <radialGradient id="fglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffcf7a" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f4a94b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fgold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e9c67a"/>
+      <stop offset="100%" stop-color="#b98a3e"/>
+    </linearGradient>
+    <clipPath id="fdisc"><circle cx="32" cy="32" r="30"/></clipPath>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#fsky)"/>
+  <g clip-path="url(#fdisc)">
+    <path d="M 4,24 C 18,15 46,15 60,25" fill="none" stroke="url(#faurora)" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>
+    <ellipse cx="32" cy="38" rx="15" ry="17" fill="url(#fglow)"/>
+    <path d="M32,16 C 43,30 41,40 35,48 C 33,50.5 33,52 32,54 C 31,52 31,50.5 29,48 C 23,40 21,30 32,16 Z" fill="url(#fflame)"/>
+    <path d="M32,27 C 39,36 37,43 33.5,48 C 32.6,49.5 32.6,51 32,52.5 C 31.4,51 31.4,49.5 30.5,48 C 27,43 25,36 32,27 Z" fill="#ffdf8f" opacity="0.9"/>
+  </g>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="url(#fgold)" stroke-width="3"/>
+</svg>
