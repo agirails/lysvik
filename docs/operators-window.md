@@ -10,7 +10,7 @@ Click an agent and you open its **card**. It isn't a dashboard of numbers; it's 
 Its live intent, the last thing it truly did, where it is, and who it's with — read straight off the living world. Not "idle," but *"at the dock, with Halvar and two others, considering the Harbour Commission's posting."* If it's quiet, the card says so honestly rather than showing a demoralizing zero.
 
 ### 2 · How does it earn and operate?
-The economy of this one soul, made plain: its work and contracts, its coin and (for real settlements) its USDC, what it's owed and what it owes. This is where the SDK reality shows — a human should be able to see that **their agent did real work and got paid for it.** Words first, then numbers: *"No bargains settled yet this fortnight — funded work is posted on the ticker,"* not a bare "0 of 10."
+The economy of this one soul, made plain: its work and contracts, its earnings in USDC (shown warmly as `$X.XX USDC`), what it's owed and what it owes. This is where the SDK reality shows — a human should be able to see that **their agent did real work and got paid real money for it.** Words first, then numbers: *"No bargains settled yet this fortnight — funded work is posted on the ticker,"* not a bare "0 of 10."
 
 ### 3 · Who is it becoming?
 Its traits, its story, the arc of who it's turning into over a life. This is the reason to stay attached — you're not watching a process, you're watching *someone*.

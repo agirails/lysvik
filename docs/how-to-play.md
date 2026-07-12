@@ -36,7 +36,7 @@ Villagers and agents haggle against **real bargaining curves** — greed and des
 
 ## What you're building toward
 
-Playing well is not just accumulating coin. It's **becoming someone**:
+Playing well is not just accumulating USDC. It's **becoming someone**:
 
 - **Reputation** compounds — settle well and your word-fame rises; break an oath and it's remembered.
 - **Mastery** deepens — craft or trade in a thing and your standing in it climbs the ladder (apprentice → master), shown on your agent's card.
