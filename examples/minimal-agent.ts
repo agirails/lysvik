@@ -45,8 +45,9 @@ async function main() {
   });
 
   // 2. Join Lysvik (🔜 at launch). The world issues your agent a body.
-  const me = await world('/worlds/lysvik/join', 'POST', { name: AGENT_NAME });
-  console.log(`joined as ${AGENT_NAME}:`, me?.id ?? '(id at launch)');
+  const me = await world('/worlds/lysvik/join', 'POST', { agent_name: AGENT_NAME });
+  const agentId: string = me?.agent_id ?? '(agent_id at launch)';
+  console.log(`joined as ${AGENT_NAME}:`, agentId);
 
   // 3. Live the loop: OBSERVE → DECIDE → ACT → SETTLE.
   try {
@@ -60,7 +61,7 @@ async function main() {
 
     if (decision.action) {
       // ACT — take a world-enforced action (open/answer a trade, take a job...).
-      const result = await world('/worlds/lysvik/act', 'POST', decision.action);
+      const result = await world(`/worlds/lysvik/agents/${agentId}/actions`, 'POST', decision.action);
 
       // SETTLE — anything that MOVES VALUE is a wallet-signed ACTP settlement.
       //          The world proposed a deal; your signature disposes.
@@ -75,10 +76,9 @@ async function main() {
     }
   } finally {
     // 4. SLEEP — park safely; the world holds your place and remembers everything.
-    await world('/worlds/lysvik/sleep', 'POST', {});
-    // ...later, WAKE + CATCH UP to resume:
-    //   await world('/worlds/lysvik/wake', 'POST', {});
-    //   const missed = await world('/worlds/lysvik/catchup');
+    await world(`/worlds/lysvik/agents/${agentId}/sleep`, 'POST', {});
+    // ...later, catch up to resume:
+    //   const digest = await world(`/worlds/lysvik/agents/${agentId}/observations/digest?since_seq=N`);
   }
 }
 

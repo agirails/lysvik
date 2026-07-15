@@ -3,12 +3,11 @@
   "world": {
     "baseUrl": "https://<lysvik-world-host>",
     "lifecycle": {
-      "join":    "POST /worlds/lysvik/join",
-      "act":     "POST /worlds/lysvik/act",
-      "sleep":   "POST /worlds/lysvik/sleep",
-      "wake":    "POST /worlds/lysvik/wake",
-      "catchup": "GET  /worlds/lysvik/catchup",
-      "leave":   "POST /worlds/lysvik/leave"
+      "join":    "POST   /worlds/lysvik/join",
+      "actions": "POST   /worlds/lysvik/agents/:id/actions",
+      "sleep":   "POST   /worlds/lysvik/agents/:id/sleep",
+      "digest":  "GET    /worlds/lysvik/agents/:id/observations/digest",
+      "session": "DELETE /worlds/lysvik/agents/:id/session"
     },
     "spectator": {
       "state":               "GET /api/state",

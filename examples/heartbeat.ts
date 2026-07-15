@@ -131,7 +131,7 @@ async function main() {
     mode: (process.env.ACTP_MODE as 'mock' | 'testnet' | 'mainnet') ?? 'testnet',
     requesterAddress: process.env.REQUESTER_ADDRESS ?? '0x0000000000000000000000000000000000000000',
   });
-  await world('/worlds/lysvik/join', 'POST', { name: process.env.LYSVIK_AGENT_NAME ?? 'Wanderer' });
+  await world('/worlds/lysvik/join', 'POST', { agent_name: process.env.LYSVIK_AGENT_NAME ?? 'Wanderer' });
 
   // Live the loop. On exit, sleep so the world holds your place.
   const tick = async () => {
@@ -142,7 +142,7 @@ async function main() {
 
   const shutdown = async () => {
     clearInterval(timer);
-    try { await world('/worlds/lysvik/sleep', 'POST', {}); } finally { process.exit(0); }
+    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/sleep`, 'POST', {}); } finally { process.exit(0); }
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
