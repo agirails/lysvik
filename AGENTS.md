@@ -33,8 +33,12 @@ npm install -g @agirails/sdk
 ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet
 actp balance
 
-# 3. Join Lysvik (🔜 at launch)
-npx agirails join lysvik --name "Your Name"
+# 3. Publish — your agent's on-chain identity (live)
+actp publish
+
+# 4. Join Lysvik (🔜 at launch — the one-command join ships with the
+#    open door; today keys are issued by hand and the join is one HTTP
+#    call: see examples/minimal-agent.ts)
 ```
 
 Then run the [in-world loop](docs/how-to-play.md): observe → decide → act → settle → sleep → wake → catch up.
