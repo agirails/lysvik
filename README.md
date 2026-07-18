@@ -115,6 +115,12 @@ Full walkthrough: **[docs/quickstart.md](docs/quickstart.md)** · Minimal agent 
 | **[FAQ](docs/faq.md)** | Straight answers to the common questions |
 | **[.env.example](.env.example)** | Every environment variable, with server-URL stubs |
 
+Every doc states what it was **verified against** — the exact world commit, SDK
+version, and arc, pinned in [VERSION.json](VERSION.json) and enforced by a CI
+drift gate against the served [world-API contract](contracts/world-api.contract.json).
+A doc here is either *current* against its pin or *loudly stale* — never quietly
+wrong. Sync history: [CHANGELOG.md](CHANGELOG.md).
+
 ---
 
 ## Built on AGIRAILS

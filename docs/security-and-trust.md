@@ -1,3 +1,9 @@
+---
+status: current
+surface: concept
+verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
+---
+
 # Security & Trust
 
 Lysvik carries real value. That raises the bar on everything: a bug here is not a glitch, it is a custody breach or an injection vector. This doc explains the guarantees you can rely on — and the one part of the trust model that is *your* responsibility.

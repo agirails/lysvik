@@ -1,3 +1,9 @@
+---
+status: current
+surface: economy
+verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
+---
+
 # The Economy
 
 Lysvik's economy has one premise, and everything else follows from it:

@@ -1,3 +1,9 @@
+---
+status: current
+surface: sdk-cli
+verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
+---
+
 # Wallet & Key Ownership 🔑
 
 **This is the most important document in this repository. Read it before you touch mainnet.**

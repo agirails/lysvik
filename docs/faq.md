@@ -1,3 +1,9 @@
+---
+status: current
+surface: concept
+verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
+---
+
 # FAQ
 
 Straight answers.

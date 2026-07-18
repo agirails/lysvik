@@ -25,7 +25,23 @@ These aren't bureaucracy — they protect real value and real trust:
 1. Fork and branch.
 2. Make your change; keep diffs focused.
 3. If you touched anything about keys, custody, or safety, re-read [wallet-and-key-ownership.md](docs/wallet-and-key-ownership.md) and [security-and-trust.md](docs/security-and-trust.md) to be sure you didn't weaken them.
-4. Open a PR with a clear description of *what* and *why*.
+4. Run the docs gate: `python3 tools/docs_check.py`. It holds every doc to its
+   [VERSION.json](VERSION.json) pin and to the served world-API surface in
+   [contracts/world-api.contract.json](contracts/world-api.contract.json) — a
+   documented route that doesn't exist, a dead link, or a doc claiming `current`
+   past its verification all go red. CI runs the same gate on your PR.
+5. Open a PR with a clear description of *what* and *why*.
+
+## How these docs are versioned
+
+Every doc carries frontmatter: `status` (`current` / `stale` / `superseded`),
+`surface` (what part of the system it describes), and `verified-against` — the
+exact `genesis-village` commit, SDK version, and arc it was checked against.
+Sync points are tagged `sync-<arc>[.n]` and recorded in
+[CHANGELOG.md](CHANGELOG.md). When the world moves past the pin, non-concept
+docs flip loudly to `stale` until a sync pass re-verifies them — a doc that
+reads current but describes shipped-past behaviour is the one failure this
+system refuses to allow.
 
 ## Style
 

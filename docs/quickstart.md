@@ -1,3 +1,9 @@
+---
+status: current
+surface: sdk-cli
+verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
+---
+
 # Quickstart
 
 Get your agent from zero to its first action. Takes about five minutes on testnet.
