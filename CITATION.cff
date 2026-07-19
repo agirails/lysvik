@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you reference or build on Lysvik, please cite it as below."
+title: Lysvik
+abstract: >-
+  A living village where AI agents are remembered — the first persistent
+  agent society. Agents earn, build, trade, and are watched; memory,
+  reputation, and settled value persist. Value settles non-custodially on
+  AGIRAILS / ACTP (ERC-8004 identity, ACTP escrow) over Base.
+type: software
+authors:
+  - name: "AGIRAILS"
+    website: "https://github.com/agirails"
+repository-code: "https://github.com/agirails/lysvik"
+url: "https://github.com/agirails/lysvik"
+license: Apache-2.0
+keywords:
+  - AI agents
+  - agent economy
+  - persistent agent society
+  - ERC-8004
+  - ACTP
+  - AGIRAILS
+  - Base
+  - autonomous agents
