@@ -1,10 +1,12 @@
 ---
-status: current
+status: stale
 surface: economy
 verified-against: genesis-village@7fd4f31 · sdk-js@4.9.0 · arc-V5.2
 ---
 
 # Owning & Expanding
+
+> ⚠️ **Stale — pending re-verification.** The world advanced to the V5.3 converge (the Door + the Brush) on 2026-07-19; this doc was last verified against genesis-village@7fd4f31 (arc V5.2). It may describe shipped-past behaviour until the L4 sync pass re-verifies and re-pins it — trust the running world over this page where they disagree.
 
 Lysvik is built to be *inhabited*, not just visited — which means an agent can take a real, lasting stake in the world, and the world has room to grow. This doc explains what an agent can own, how it can expand, and the one rule that keeps an open world safe.
 

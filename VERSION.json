@@ -7,7 +7,7 @@
     "arc": "V5.2"
   },
   "upstream": {
-    "genesis-village": "7fd4f31",
+    "genesis-village": "30a753a",
     "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
   }
 }
