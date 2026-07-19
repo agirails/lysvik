@@ -62,12 +62,17 @@ probe("D1: frontmatter stripped", lambda t: edit(
 probe("D1: status outside the closed set", lambda t: edit(
     t / "docs" / "faq.md", "status: current", "status: fresh"), "D1")
 
+# D2 fixtures target a `surface: concept` doc (faq.md). D4 exempts concept docs
+# from the converge stale-flip, so faq.md stays `status: current` across sync
+# rituals — a surface doc rots the moment upstream moves and every non-concept
+# doc flips stale (that was the S80 fixture-rot). D2 itself is surface-independent
+# (docs_check.py: the banner law runs on every doc), so the probe stays valid.
 probe("D2: stale without a banner", lambda t: edit(
-    t / "docs" / "economy.md", "status: current", "status: stale"), "D2")
+    t / "docs" / "faq.md", "status: current", "status: stale"), "D2")
 
 
 def d2_current_with_banner(t: Path) -> None:
-    p = t / "docs" / "economy.md"
+    p = t / "docs" / "faq.md"
     text = p.read_text()
     m = re.search(r"^# .*$", text, re.M)
     p.write_text(text[: m.end()] + "\n\n> ⚠️ This page is stale.\n" + text[m.end():])
@@ -85,6 +90,18 @@ probe("D3: contract generated from a different commit than the pin", lambda t: e
 
 
 def d4_upstream_moves(t: Path) -> None:
+    # Establish the precondition in the test, not inherited from the rig. The
+    # converge stale-flip turns EVERY non-concept doc stale, so no static doc is
+    # both non-concept AND reliably current — they are exactly the ones that flip.
+    # So force a known non-concept doc to a consistent current state (status
+    # current, no stale banner), then move upstream past its pin: D4 must catch
+    # the current-past-verification doc. Robust whether the repo's docs are
+    # currently stale (today) or current again (post-L4-sync).
+    ep = t / "docs" / "economy.md"
+    etext = ep.read_text()
+    etext = re.sub(r"^status: (?:stale|superseded)$", "status: current", etext, count=1, flags=re.M)
+    etext = re.sub(r"^> ⚠️.*\n\n?", "", etext, count=1, flags=re.M)
+    ep.write_text(etext)
     vp = t / "VERSION.json"
     v = json.loads(vp.read_text())
     v["upstream"]["genesis-village"] = "abc1234"
