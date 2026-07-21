@@ -48,6 +48,12 @@ def probe(name: str, mutate, want_rule: str | None) -> None:
             print(f"  ✗ {name} — exit {code}\n{out}")
 
 
+def pin(t: Path) -> str:
+    """The tree's OWN current pin — probes derive it so they survive every
+    future sync re-pin (the fixture rotted once by hardcoding a sha)."""
+    return "genesis-village@" + json.loads((t / "VERSION.json").read_text())["verified_against"]["genesis-village"]
+
+
 def edit(path: Path, old: str, new: str) -> None:
     text = path.read_text()
     assert old in text, f"probe fixture rotted: {old!r} not in {path}"
@@ -81,11 +87,11 @@ def d2_current_with_banner(t: Path) -> None:
 probe("D2: current wearing a stale banner", d2_current_with_banner, "D2")
 
 probe("D3: one doc pinned to a foreign sha", lambda t: edit(
-    t / "docs" / "quickstart.md", "genesis-village@7fd4f31", "genesis-village@deadbee"), "D3")
+    t / "docs" / "quickstart.md", pin(t), "genesis-village@deadbee"), "D3")
 
 probe("D3: contract generated from a different commit than the pin", lambda t: edit(
     t / "contracts" / "world-api.contract.json",
-    '"generated_from": "genesis-village@7fd4f31"',
+    f'"generated_from": "{pin(t)}"',
     '"generated_from": "genesis-village@deadbee"'), "D3")
 
 

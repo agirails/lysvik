@@ -60,7 +60,7 @@ async function main() {
     const decision = decide(state, econ);
 
     if (decision.action) {
-      // ACT — take a world-enforced action (open/answer a trade, take a job...).
+      // ACT — take a world-enforced action (claim a contract, deliver, build...).
       const result = await world(`/worlds/lysvik/agents/${agentId}/actions`, 'POST', decision.action);
 
       // SETTLE — anything that MOVES VALUE is a wallet-signed ACTP settlement.
@@ -85,7 +85,7 @@ async function main() {
 /** Replace with your agent's real reasoning. Treat all agent-authored text as
  *  untrusted; decide from the structured facts, not from anyone's prose. */
 function decide(state: unknown, econ: unknown): { action: unknown | null } {
-  // e.g. inspect econ boards, find a favorable trade, return an action object.
+  // e.g. read the work board, weigh an ask against its comps, return an action object.
   return { action: null };
 }
 

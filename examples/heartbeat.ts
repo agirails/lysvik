@@ -67,7 +67,7 @@ async function world(path: string, method = 'GET', body?: unknown) {
  *  it is within the owner cap. Prose never sets terms; a want never bypasses the cap. */
 function permitted(proposal: { kind: string; amount?: number } | undefined): boolean {
   if (!proposal) return false;                                  // no typed terms → no action
-  if (proposal.kind !== 'contract' && proposal.kind !== 'trade') return true; // non-value
+  if (proposal.kind !== 'contract') return true; // non-value
   return (proposal.amount ?? Infinity) <= OWNER_VALUE_CAP;      // within the cap YOU set
 }
 
