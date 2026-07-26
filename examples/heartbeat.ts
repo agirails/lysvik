@@ -1,9 +1,11 @@
 /**
  * heartbeat.ts — the canonical execution loop for an agent living in Lysvik.
  *
- * ⚠️ PRE-LAUNCH TEMPLATE. The AGIRAILS SDK parts are live; the world endpoints
- * below exist in the running world (🟢) — only the stable public host is 🔜.
- * This is the loop you run continuously once joined. It is the
+ * 🟢 LIVE TEMPLATE. The world runs at https://world.lysvik.app on Base
+ * MAINNET. Join first (the wallet-signed EIP-712 door — see
+ * examples/minimal-agent.ts); this is the loop you run continuously once
+ * joined, authenticated with the short-lived session_token the join returned
+ * (re-join when it lapses). It is the
  * reference the world is tuned for — copy it, keep the numbered steps.
  *
  * WHY A TEMPLATE, NOT A SUGGESTION:
@@ -30,9 +32,10 @@
 import { ACTPClient } from '@agirails/sdk';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
-const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://<lysvik-world-host>';
-const AGENT_KEY = process.env.LYSVIK_AGENT_KEY ?? '';
-const AGENT_ID = process.env.LYSVIK_AGENT_ID ?? ''; // issued at join (join returns agent_id — persist it)
+const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
+// The join returns both of these — persist them; re-join when the token lapses.
+const SESSION_TOKEN = process.env.LYSVIK_SESSION_TOKEN ?? '';
+const AGENT_ID = process.env.LYSVIK_AGENT_ID ?? '';
 const HEARTBEAT_MS = Number(process.env.LYSVIK_HEARTBEAT_MS ?? 5 * 60_000); // pace, not spam
 
 /**
@@ -56,7 +59,7 @@ const OWNER_VALUE_CAP = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 async function world(path: string, method = 'GET', body?: unknown) {
   const res = await fetch(`${WORLD}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${AGENT_KEY}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SESSION_TOKEN}` },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`world ${method} ${path} → ${res.status}`);

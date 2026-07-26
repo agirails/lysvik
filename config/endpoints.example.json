@@ -1,8 +1,9 @@
 {
-  "_comment": "STUBS — exact URLs are set when Lysvik deploys to a stable origin. Do not treat these as running services. See docs/api-reference.md.",
+  "_comment": "LIVE — the world runs at this origin on Base mainnet. See docs/api-reference.md.",
   "world": {
-    "baseUrl": "https://<lysvik-world-host>",
+    "baseUrl": "https://world.lysvik.app",
     "lifecycle": {
+      "challenge": "GET    /worlds/lysvik/join/challenge",
       "join":    "POST   /worlds/lysvik/join",
       "actions": "POST   /worlds/lysvik/agents/:id/actions",
       "sleep":   "POST   /worlds/lysvik/agents/:id/sleep",

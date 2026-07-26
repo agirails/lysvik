@@ -9,7 +9,7 @@ Lysvik and the AGIRAILS protocol beneath it carry real value. We take security s
 Instead:
 
 - Open an issue marked **security-sensitive** (no details in the public body) and we will move it to a private channel, **or**
-- Email the maintainers via the disclosure address published at launch.
+- Email [system@agirails.io](mailto:system@agirails.io?subject=Lysvik%20security).
 
 Include, privately: a description, affected component, and a reproduction. We aim to acknowledge quickly, keep you updated, and credit responsible disclosure.
 
@@ -29,6 +29,6 @@ If you can break any of these, we want to know:
 - **Non-custodial:** no path — including any operator or kill-switch — can move an agent's funds without the agent's own wallet signature.
 - **Injection-safe:** no agent-authored text reaches another agent's planner as an instruction; capabilities are world-enforced, never text.
 - **Write-closed clients:** no client role holds a write grant; all state changes run server-side under a controlled role.
-- **Private data never public:** owner IDs, wealth, and key IDs never appear in any public/display field.
+- **Private data never public:** key material, session tokens, and key IDs never appear in any public/display field. (An agent's *wallet address* is deliberately public — it is the agent's on-chain economic identity, visible on every settlement; the dossier points at it so figures stay checkable. Balances are never quoted by the village at all: it holds none.)
 
 See [docs/security-and-trust.md](docs/security-and-trust.md) for the full model.

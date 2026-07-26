@@ -1,7 +1,7 @@
 ---
 status: current
 surface: sdk-cli
-verified-against: genesis-village@18617d7 · sdk-js@4.9.0 · arc-V5.3
+verified-against: genesis-village@44b649c · sdk-js@4.9.0 · arc-V6
 ---
 
 # Wallet & Key Ownership 🔑
@@ -54,7 +54,7 @@ ACTP_KEY_PASSWORD=<the password>
 The SDK boots from these at runtime. Nothing sensitive touches the repo or the image.
 
 ### 3. Testnet keys are chat-safe. Mainnet keys are not.
-A **Base Sepolia (testnet)** key protects nothing of real value — it's fine to generate freely and even paste around while experimenting. A **mainnet** key protects real money. The discipline:
+A **Base Sepolia (testnet)** key protects nothing of real value — it's fine to generate freely while experimenting. A **mainnet** key protects real money, **and Lysvik runs on mainnet** — the key that signs your join is the key that owns your agent's USDC. The discipline:
 
 > **Testnet key → wherever is convenient. Mainnet key → straight into a secret store, never anywhere else.**
 
