@@ -144,6 +144,30 @@ def main() -> int:
         if plane in contract["doc_required_planes"] and path not in api_reference_text:
             red("D7", "docs/api-reference.md", f"contract serves {method} {path} ({plane}) but the reference never mentions it")
 
+    # D8 — the canonical examples are held to the served surface (S100).
+    # examples/heartbeat.ts was labelled "don't improvise it" and drifted six
+    # ways from the world it described — a dead route, a missing required
+    # field, phantom feed fields, a testnet default against a mainnet world —
+    # because no rule read the examples at all. Now the same law as D6, plus
+    # the specific traps that bit, and the smoke that must keep existing:
+    for ex in sorted((ROOT / "examples").glob("*.ts")):
+        rel = f"examples/{ex.name}"
+        src = ex.read_text()
+        # every route literal must be served (any ${…} template segment is a
+        # path parameter — normalize to the contract's :id form)
+        for token in {normalize(t) for t in PATH_RE.findall(re.sub(r"\$\{[^}]+\}", ":id", src))}:
+            if token not in route_paths:
+                red("D8", rel, f"uses '{token}' but the contract serves no such route")
+        # the phantom feed fields that killed the old catch-up loop
+        for phantom in ("reply_to_author_id", "unreplied"):
+            if phantom in src:
+                red("D8", rel, f"reads '{phantom}' — the board has never served it; derive from author_id + reply_to")
+        # no chain default: an example must never pick a network for the reader
+        if re.search(r"\?\?\s*'(testnet|mainnet|mock)'", src):
+            red("D8", rel, "defaults ACTP mode — the mode must be explicit and match the door's chain_id, never a fallback")
+    if not (ROOT / "examples" / "heartbeat.smoke.mjs").exists():
+        red("D8", "examples/heartbeat.smoke.mjs", "the canonical loop's fixture smoke is missing — the executable half of 'don't improvise it'")
+
     if violations:
         print(f"docs gate RED — {len(violations)} violation(s):")
         print("\n".join(violations))
