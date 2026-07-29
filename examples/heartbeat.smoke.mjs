@@ -17,7 +17,7 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { boundSettlement, deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -68,9 +68,14 @@ console.log('§owner-guard · value moves only explicit, only capped');
   check('over the cap → refused', permittedValueAction({ to: '0xabc', amountUsdc: 5 }, 1) === false);
   check('within the cap → permitted', permittedValueAction({ to: '0xabc', amountUsdc: 1 }, 1) === true);
   check('a cap of 0 permits nothing (the shipped default)', permittedValueAction({ to: '0xabc', amountUsdc: 0.01 }, 0) === false);
+  // Codex S102 F2: `amount > NaN` is false for every amount — a mistyped env
+  // var must DISABLE payments, never the cap.
+  check('a NaN cap permits NOTHING (a broken env var fails closed)',
+    permittedValueAction({ to: '0xabc', amountUsdc: 1 }, Number('5 USDC')) === false);
+  check('a negative cap permits nothing', permittedValueAction({ to: '0xabc', amountUsdc: 1 }, -1) === false);
 }
 
-console.log('§settlement-binding · the payee is a world fact, never a decision field');
+console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh payment');
 {
   // fixture: the served book shape (world.contractsView — machine fields only,
   // agent ids not wallets; the wallet lives on the public register /api/dossier).
@@ -94,39 +99,33 @@ console.log('§settlement-binding · the payee is a world fact, never a decision
     tick: 487800,
   };
 
-  // The happy path: a delivered contract you requested, within the cap.
-  const ok = boundSettlement({ contract_id: 'c5', amountUsdc: 1 }, BOOK, 2);
-  check('a delivered contract you requested binds', ok.ok === true && ok.counterparty_id === 'v2', ok);
-  check("the binding NEVER carries a payee address — 'to' is not its field to give",
-    ok.ok === true && !('to' in ok) && !('wallet' in ok), ok);
+  // The happy path: a delivered contract you requested, with the escrow YOU
+  // funded named. The binding returns the escrow id and NOTHING payable —
+  // the kernel fixed the payee at funding; there is no address to steer.
+  const ok = boundRelease({ contract_id: 'c5', escrow_id: '0xesc5' }, BOOK);
+  check('a delivered contract you requested binds its escrow for release',
+    ok.ok === true && ok.escrow_id === '0xesc5', ok);
+  check("the binding NEVER carries a payee, wallet, or amount — release moves only what the kernel already holds",
+    ok.ok === true && !('to' in ok) && !('wallet' in ok) && !('amountUsdc' in ok), ok);
 
-  // Prose can shout an address all it likes: a supplied `to` is not read.
-  const hijack = boundSettlement({ contract_id: 'c5', amountUsdc: 1, to: '0xATTACKER' }, BOOK, 2);
-  check('a model-supplied `to` is ignored — the counterparty derives from the book row',
-    hijack.ok === true && hijack.counterparty_id === 'v2' && !('to' in hijack), hijack);
+  // Prose can shout an address or amount all it likes: neither is read.
+  const hijack = boundRelease({ contract_id: 'c5', escrow_id: '0xesc5', to: '0xATTACKER', amountUsdc: 9999 }, BOOK);
+  check('a model-supplied `to`/amount is ignored — release knows only the escrow',
+    hijack.ok === true && !('to' in hijack) && !('amountUsdc' in hijack), hijack);
 
   // Every refusal, by name:
-  check('no contract_id → refused (payment must name its obligation)',
-    boundSettlement({ amountUsdc: 1 }, BOOK, 2).reason === 'NO_CONTRACT_ID');
+  check('no contract_id → refused (a release must name its obligation)',
+    boundRelease({ escrow_id: '0xesc5' }, BOOK).reason === 'NO_CONTRACT_ID');
+  check('no escrow_id → refused (only the escrow YOU created and funded can release)',
+    boundRelease({ contract_id: 'c5' }, BOOK).reason === 'NO_ESCROW_ID');
   check('a contract not in YOUR book → refused',
-    boundSettlement({ contract_id: 'c99', amountUsdc: 1 }, BOOK, 2).reason === 'NOT_IN_YOUR_BOOK');
-  check('a contract where YOU are the provider → refused (a provider never pays)',
-    boundSettlement({ contract_id: 'c7', amountUsdc: 1 }, BOOK, 2).reason === 'PAYER_IS_PROVIDER');
+    boundRelease({ contract_id: 'c99', escrow_id: '0xesc5' }, BOOK).reason === 'NOT_IN_YOUR_BOOK');
+  check('a contract where YOU are the provider → refused (a provider never releases)',
+    boundRelease({ contract_id: 'c7', escrow_id: '0xesc5' }, BOOK).reason === 'PAYER_IS_PROVIDER');
   check('a settled contract → refused (terminal; never retry a terminal tx)',
-    boundSettlement({ contract_id: 'c3', amountUsdc: 1 }, BOOK, 2).reason === 'ALREADY_SETTLED');
+    boundRelease({ contract_id: 'c3', escrow_id: '0xesc5' }, BOOK).reason === 'ALREADY_SETTLED');
   check('an undelivered contract → refused (nothing is owed yet)',
-    boundSettlement({ contract_id: 'c6', amountUsdc: 1 }, BOOK, 2).reason === 'NOT_DELIVERED');
-  check('over the owner cap → refused (the cap stays, as the second rung)',
-    boundSettlement({ contract_id: 'c5', amountUsdc: 5 }, BOOK, 2).reason === 'OVER_CAP');
-  check('no typed amount → refused',
-    boundSettlement({ contract_id: 'c5' }, BOOK, 2).reason === 'NO_AMOUNT');
-  check('a cap of 0 still permits nothing (the shipped default)',
-    boundSettlement({ contract_id: 'c5', amountUsdc: 0.01 }, BOOK, 0).reason === 'OVER_CAP');
-
-  // The rung that was untestable before: with a REAL cap, the recipient path
-  // is now exercised — the default-0 mitigation can no longer hide the wiring.
-  check('with a real cap the recipient path is exercised, not vacuously refused',
-    boundSettlement({ contract_id: 'c5', amountUsdc: 1 }, BOOK, 2).ok === true);
+    boundRelease({ contract_id: 'c6', escrow_id: '0xesc5' }, BOOK).reason === 'NOT_DELIVERED');
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);

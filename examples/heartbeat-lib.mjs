@@ -48,44 +48,49 @@ export function modeForChain(chainId) {
  * action. No typed amount → refused. Over the cap you set → refused.
  */
 export function permittedValueAction(action, ownerCapUsdc) {
+  // Codex S102 F2: `amount > NaN` is false for EVERY amount, so an invalid
+  // cap (a mistyped env var) silently became "no cap". A cap that is not a
+  // finite non-negative number permits nothing — a broken guard fails closed.
+  if (!Number.isFinite(ownerCapUsdc) || ownerCapUsdc < 0) return false;
   if (!action || typeof action.amountUsdc !== 'number' || !(action.amountUsdc > 0)) return false;
   return action.amountUsdc <= ownerCapUsdc;
 }
 
 /**
- * The settlement binding — the payee is a WORLD FACT, never a decision field.
+ * The release binding — value moves by ESCROW RELEASE, never a fresh payment.
  *
- * The cap above was the only rung, and it binds the AMOUNT; nothing bound the
- * RECIPIENT. A model that reads board prose and emits `settle.to` closed the
- * loop from untrusted text to a real payment with one field — and the shipped
- * cap default of 0 meant no run could ever exercise that path to notice
- * (S102: the fourth fail-closed-hides-the-seam in eleven days).
+ * Two defects died here (S102, codex F1/F3). First: nothing bound the
+ * RECIPIENT — a model that read board prose and emitted `settle.to` closed
+ * the loop from untrusted text to a real payment. Second, and deeper: any
+ * direct `basic.pay()` on a delivered contract is a SECOND value channel
+ * beside the escrow — an attached contract later released would pay twice,
+ * and an unbound one could be paid again every beat (no world state moves).
  *
- * So `to` stops being something the model supplies AT ALL. A settle decision
- * names its OBLIGATION — a contract_id — and this function resolves it against
- * your authenticated book (a served world fact). It binds, by refusal:
- *   · the contract exists in YOUR book, on the REQUESTER side (a provider
- *     never pays — the requester releases value for work delivered);
- *   · the state is 'delivered' — the only state in which payment is owed.
- *     'settled' is terminal and refuses by its own name: never retry a
- *     terminal transaction;
- *   · the amount is typed, positive, and within the owner cap (the cap stays,
- *     as the second rung — it was never the wrong idea, it was the only rung).
+ * So the canonical loop performs the lifecycle's OWN verb and nothing else:
+ * `client.release(escrowId)` — the escrow YOU created and funded, whose
+ * payee and amount the KERNEL fixed at funding. There is no address to
+ * steer, no amount to inflate, and no second channel: releasing a terminal
+ * escrow refuses on-chain, so a replayed release cannot double-pay.
  *
- * Returns { ok: true, counterparty_id, amountUsdc } — an AGENT ID, not an
- * address. The caller resolves the wallet from the public register
- * (GET /api/dossier/:id → wallet, bound at the anchored join), so prose can
- * never reach the payee: there is no field for it to reach.
+ * This function binds the release to your authenticated book, by refusal:
+ * the contract is YOURS as requester (a provider never releases) · state is
+ * 'delivered' — the only state in which release is owed ('settled' refuses
+ * by its own name: never retry a terminal tx) · the escrow id is the one
+ * YOUR records carry from when you created and attached it (write-once,
+ * poster-only — the world's attach receipt is your durable copy).
+ *
+ * The owner cap is not consulted here: the amount was capped when YOUR
+ * wallet funded the escrow. The cap governs escrow CREATION, not release.
  */
-export function boundSettlement(settle, book, ownerCapUsdc) {
+export function boundRelease(settle, book) {
   if (!settle || typeof settle.contract_id !== 'string' || settle.contract_id.length === 0) {
     return { ok: false, reason: 'NO_CONTRACT_ID' };
   }
-  if (typeof settle.amountUsdc !== 'number' || !(settle.amountUsdc > 0)) {
-    return { ok: false, reason: 'NO_AMOUNT' };
+  if (typeof settle.escrow_id !== 'string' || settle.escrow_id.length === 0) {
+    return { ok: false, reason: 'NO_ESCROW_ID' };
   }
-  // A provider never pays: check the provider side FIRST so a contract you
-  // carry both ways (impossible today, cheap to refuse anyway) refuses loudly.
+  // A provider never releases: check the provider side FIRST so a contract
+  // carried both ways (impossible today, cheap to refuse) refuses loudly.
   if ((book?.as_provider ?? []).some((c) => c.id === settle.contract_id)) {
     return { ok: false, reason: 'PAYER_IS_PROVIDER' };
   }
@@ -94,10 +99,8 @@ export function boundSettlement(settle, book, ownerCapUsdc) {
   if (contract.state === 'settled') return { ok: false, reason: 'ALREADY_SETTLED' };
   if (contract.state !== 'delivered') return { ok: false, reason: 'NOT_DELIVERED' };
   if (typeof contract.provider_id !== 'string' || contract.provider_id.length === 0) {
-    // delivered implies claimed implies a provider — but absence must deny,
-    // never assume the implication held.
+    // delivered implies claimed implies a provider — but absence must deny.
     return { ok: false, reason: 'NO_COUNTERPARTY' };
   }
-  if (settle.amountUsdc > ownerCapUsdc) return { ok: false, reason: 'OVER_CAP' };
-  return { ok: true, counterparty_id: contract.provider_id, amountUsdc: settle.amountUsdc };
+  return { ok: true, escrow_id: settle.escrow_id };
 }

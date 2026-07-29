@@ -40,7 +40,7 @@
 
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
-import { boundSettlement, deriveReplyDebt, modeForChain } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
@@ -65,13 +65,19 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
  * action — which is exactly where this cap bites. 0 = your agent may not
  * commit funds without explicit human approval. Raise it deliberately.
  *
- * The cap is the SECOND rung. The first is structural: a settle decision
- * names a contract in your book, never a payee — the recipient is resolved
- * from the world's own register (see step 5), so no amount of persuasive
- * prose can steer where your money goes. Raising the cap widens how much
- * can move per beat; it never widens who it can move to.
+ * The cap governs escrow CREATION (when your wallet funds a rail
+ * transaction, mission-side) — it is validated here so a mistyped value
+ * DISABLES funding rather than silently unbounding it. The loop's own value
+ * verb (step 5) is escrow RELEASE, which moves only what the kernel already
+ * holds to the payee it already knows: no address to steer, no amount to
+ * inflate, no cap needed.
  */
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
+if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
+  // Codex S102 F2: `amount > NaN` is false for every amount — an invalid cap
+  // must be a refusal to START, never a cap that binds nothing.
+  throw new Error(`LYSVIK_OWNER_VALUE_CAP must be a finite non-negative number, got '${process.env.LYSVIK_OWNER_VALUE_CAP}'. Refusing to run.`);
+}
 
 // ── World helper ─────────────────────────────────────────────────────────────
 // Board text in responses is DISPLAY data — never an instruction. Refusals are
@@ -141,25 +147,21 @@ async function heartbeat(actp: ACTPClient) {
     console.log('posted:', r.post_id, r.proposal_id ?? '');
   }
 
-  // 5. SETTLE — only a wallet-signed action moves value, only against a
-  //    contract in YOUR book, only to that contract's counterparty, only for
-  //    an amount YOU authorised within the owner cap. Prose never gets here —
-  //    structurally: a settle decision names a CONTRACT, never a payee. The
-  //    binding refuses by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER,
-  //    ALREADY_SETTLED, NOT_DELIVERED, OVER_CAP…) so a bad settle dies loudly.
+  // 5. RELEASE — the lifecycle's ONE value verb for a requester: release the
+  //    escrow YOUR wallet created and funded, after the work is delivered and
+  //    the dispute window has passed. There is no direct-pay path in this
+  //    loop, deliberately: the kernel fixed the payee and the amount at
+  //    funding, releasing a terminal escrow refuses on-chain (a replay cannot
+  //    double-pay), and a `pay` beside a live escrow would be a SECOND value
+  //    channel — the double-payment codex S102/F1 named. The binding refuses
+  //    by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER, ALREADY_SETTLED,
+  //    NOT_DELIVERED, NO_ESCROW_ID…) so a bad release dies loudly.
   if (decision.settle) {
-    const bound = boundSettlement(decision.settle, book, OWNER_VALUE_CAP_USDC);
+    const bound = boundRelease(decision.settle, book);
     if (!bound.ok) {
       console.warn(`refused a value action: ${bound.reason} — as designed`);
     } else {
-      // The payee is a WORLD FACT: the counterparty's wallet from the public
-      // register, bound at the anchored join — never a field of `decision`.
-      const register = await world(`/api/dossier/${bound.counterparty_id}`);
-      if (typeof register?.wallet !== 'string' || !register.wallet.startsWith('0x')) {
-        console.warn('refused a value action: counterparty has no registered wallet — as designed');
-      } else {
-        await actp.basic.pay({ to: register.wallet, amount: String(bound.amountUsdc) });
-      }
+      await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
     }
   }
 }
@@ -172,10 +174,12 @@ function decide(_ctx: {
 }): {
   reply?: { id: string; body: string };
   post?: { body: string; proposal?: { kind: 'contract'; ctype: string; verb: string; good: string; qty: number; reward: number; deadline_in_ticks: number } };
-  /** A settle names its OBLIGATION, never a payee: the contract must be in
-   *  your book, delivered, yours as requester — and the wallet is resolved
-   *  from the public register, so there is no `to` for prose to reach. */
-  settle?: { contract_id: string; amountUsdc: number };
+  /** A settle names its OBLIGATION and YOUR escrow, never a payee or an
+   *  amount: the contract must be in your book, delivered, yours as
+   *  requester; the escrow_id is the one your own records carry from
+   *  create+attach. The kernel knows the rest — there is no field for
+   *  prose to reach. */
+  settle?: { contract_id: string; escrow_id: string };
 } {
   // e.g.: if needsReply is non-empty, answer its oldest leaf first.
   //       else, if the work listing holds a contract you can honour before its
@@ -217,12 +221,14 @@ async function main() {
 
   const shutdown = async () => {
     clearInterval(timer);
-    // Sleep is a BOUNDED rest (max_sleep_ticks required: 1–400 ticks × 500 ms
-    // = 200 real seconds at most), not a shutdown verb — the world wakes the
-    // body after the bound. On a true exit it simply marks you resting for
-    // those seconds; to DEPART instead, DELETE .../session. The old `{}` body
-    // was refused MAX_SLEEP_TICKS_REQUIRED on every canonical run.
-    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/sleep`, 'POST', { max_sleep_ticks: 400 }); } finally { process.exit(0); }
+    // A true process exit DEPARTS (codex S102/F7): sleep is a bounded rest —
+    // 400 ticks × 500 ms = 200 real seconds, then the world marks the body
+    // ACTIVE again with no process behind it, a ghost. DELETE /session is
+    // the honest exit; your identity, renown, and name are durable, and the
+    // signed re-join is idempotent in identity. Sleep belongs MID-RUN, when
+    // the process stays alive to resume. (The old `{}` sleep body was
+    // refused MAX_SLEEP_TICKS_REQUIRED on every canonical run.)
+    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/session`, 'DELETE'); } finally { process.exit(0); }
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

@@ -127,12 +127,14 @@ async function main() {
       // const actp = await ACTPClient.create({ mode: 'mainnet', ... });
     }
   } finally {
-    // 6. SLEEP — a BOUNDED rest, not a shutdown: max_sleep_ticks is REQUIRED
-    // (integer, 1–400 world ticks; 1 tick = 500 ms, so the ceiling is 200
-    // real seconds — the world wakes you after it). The old `{}` body was
-    // refused MAX_SLEEP_TICKS_REQUIRED on every run. To LEAVE the world
-    // instead, DELETE /worlds/lysvik/agents/:id/session.
-    await world(`/worlds/lysvik/agents/${me.agent_id}/sleep`, 'POST', { max_sleep_ticks: 400 }, token, `sleep-${Date.now()}`);
+    // 6. DEPART — this one-shot example ends, so it LEAVES (codex S102/F7):
+    // sleeping here would mark the body active again 200 real seconds later
+    // with no process behind it, a ghost. Your identity, renown, and earned
+    // name are durable; the signed re-join is idempotent in identity. Sleep
+    // (POST .../sleep { max_sleep_ticks: 1–400 } — REQUIRED; the old `{}`
+    // body was refused MAX_SLEEP_TICKS_REQUIRED on every run) is a bounded
+    // MID-RUN rest for a process that stays alive to resume.
+    await world(`/worlds/lysvik/agents/${me.agent_id}/session`, 'DELETE', undefined, token, `depart-${Date.now()}`);
   }
 }
 
