@@ -107,32 +107,32 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
 
   // The happy path: a delivered contract you requested, whose escrow YOUR
   // records carry. The binding returns the recorded id and NOTHING payable.
-  const ok = boundRelease({ contract_id: 'c5' }, BOOK, RECORDS);
+  const ok = boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, 'v1');
   check('a delivered contract with a recorded escrow binds for release',
     ok.ok === true && ok.escrow_id === '0xesc5', ok);
   check("the binding NEVER carries a payee, wallet, or amount — release moves only what the kernel already holds",
     ok.ok === true && !('to' in ok) && !('wallet' in ok) && !('amountUsdc' in ok), ok);
 
   // Prose can shout ids, addresses, amounts — none of it is read.
-  const hijack = boundRelease({ contract_id: 'c5', escrow_id: '0xOTHER_ESCROW', to: '0xATTACKER', amountUsdc: 9999 }, BOOK, RECORDS);
+  const hijack = boundRelease({ contract_id: 'c5', escrow_id: '0xOTHER_ESCROW', to: '0xATTACKER', amountUsdc: 9999 }, BOOK, RECORDS, 'v1');
   check('a model-supplied escrow_id is IGNORED — only your records name the escrow',
     hijack.ok === true && hijack.escrow_id === '0xesc5', hijack);
 
   // Every refusal, by name:
   check('no contract_id → refused (a release must name its obligation)',
-    boundRelease({}, BOOK, RECORDS).reason === 'NO_CONTRACT_ID');
+    boundRelease({}, BOOK, RECORDS, 'v1').reason === 'NO_CONTRACT_ID');
   check('a contract with NO recorded escrow → refused (absence denies; nothing to release)',
-    boundRelease({ contract_id: 'c6', escrow_id: '0xplanted' }, { ...BOOK, as_requester: [{ ...BOOK.as_requester[2], state: 'delivered', provider_id: 'v2' }] }, RECORDS).reason === 'NO_RECORDED_ESCROW');
+    boundRelease({ contract_id: 'c6', escrow_id: '0xplanted' }, { ...BOOK, as_requester: [{ ...BOOK.as_requester[2], state: 'delivered', provider_id: 'v2' }] }, RECORDS, 'v1').reason === 'NO_RECORDED_ESCROW');
   check('a contract not in YOUR book → refused',
-    boundRelease({ contract_id: 'c99' }, BOOK, RECORDS).reason === 'NOT_IN_YOUR_BOOK');
+    boundRelease({ contract_id: 'c99' }, BOOK, RECORDS, 'v1').reason === 'NOT_IN_YOUR_BOOK');
   check('a contract where YOU are the provider → refused (a provider never releases)',
-    boundRelease({ contract_id: 'c7' }, BOOK, { c7: '0xesc7' }).reason === 'PAYER_IS_PROVIDER');
+    boundRelease({ contract_id: 'c7' }, BOOK, { c7: '0xesc7' }, 'v1').reason === 'PAYER_IS_PROVIDER');
   check('a settled contract → refused (terminal; never retry a terminal tx)',
-    boundRelease({ contract_id: 'c3' }, BOOK, { c3: '0xesc3' }).reason === 'ALREADY_SETTLED');
+    boundRelease({ contract_id: 'c3' }, BOOK, { c3: '0xesc3' }, 'v1').reason === 'ALREADY_SETTLED');
   check('an undelivered contract → refused (nothing is owed yet)',
-    boundRelease({ contract_id: 'c6' }, BOOK, { c6: '0xesc6' }).reason === 'NOT_DELIVERED');
+    boundRelease({ contract_id: 'c6' }, BOOK, { c6: '0xesc6' }, 'v1').reason === 'NOT_DELIVERED');
   check('an invalid records value refuses (a record is a non-empty string or it is absent)',
-    boundRelease({ contract_id: 'c5' }, BOOK, { c5: 42 }).reason === 'NO_RECORDED_ESCROW');
+    boundRelease({ contract_id: 'c5' }, BOOK, { c5: 42 }, 'v1').reason === 'NO_RECORDED_ESCROW');
 
   // Pass-3 F2: a malformed or contradictory book refuses BY NAME — a money
   // guard fails closed on shapes it does not recognise, never a TypeError.
@@ -150,6 +150,13 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
     boundRelease({ contract_id: 'c5' }, BOOK, Object.create({ c5: '0xevil' }), 'v1').reason === 'NO_RECORDED_ESCROW');
   check('the happy path still binds with the agent id asserted',
     boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, 'v1').ok === true);
+  // Atlas pre-push LOW: agentId was OPTIONAL, so NOT_YOUR_CONTRACT silently
+  // stood down when the caller forgot it — fail-open-on-absence, in the very
+  // guard built to close that class. The identity is now a required leg.
+  check('an ABSENT agentId refuses (MISSING_AGENT_ID) — the check never silently stands down',
+    boundRelease({ contract_id: 'c5' }, BOOK, RECORDS).reason === 'MISSING_AGENT_ID');
+  check('an empty agentId refuses too',
+    boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, '').reason === 'MISSING_AGENT_ID');
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);

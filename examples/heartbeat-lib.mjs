@@ -87,6 +87,12 @@ export function permittedValueAction(action, ownerCapUsdc) {
  * and your records file is release's own authority: no record, no release.
  */
 export function boundRelease(settle, book, escrowRecords, agentId) {
+  // Atlas pre-push LOW (the sixth fail-open-on-absence this cycle, found in
+  // the guard built to close the fourth): the identity is a REQUIRED leg —
+  // an absent agentId must refuse, never let NOT_YOUR_CONTRACT stand down.
+  if (typeof agentId !== 'string' || agentId.length === 0) {
+    return { ok: false, reason: 'MISSING_AGENT_ID' };
+  }
   if (!settle || typeof settle.contract_id !== 'string' || settle.contract_id.length === 0) {
     return { ok: false, reason: 'NO_CONTRACT_ID' };
   }
@@ -114,7 +120,7 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   const contract = matches[0];
   // The row must actually be YOURS — membership in a served list is a
   // weaker claim than the row's own requester field agreeing.
-  if (typeof agentId === 'string' && agentId.length > 0 && contract.requester_id !== agentId) {
+  if (contract.requester_id !== agentId) {
     return { ok: false, reason: 'NOT_YOUR_CONTRACT' };
   }
   if (contract.state === 'settled') return { ok: false, reason: 'ALREADY_SETTLED' };
