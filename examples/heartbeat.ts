@@ -129,8 +129,8 @@ async function heartbeat(actp: ACTPClient) {
     // proposal — the binding terms live there, never in the prose. The exact
     // schema (all of it): { kind: 'contract', ctype, verb, good, qty,
     // reward (unitless 1–25), deadline_in_ticks }. Any other economic field
-    // has NO HOME in the record — today's served build silently drops it, the
-    // next release refuses it as UNKNOWN_PROPOSAL_FIELD with the field named.
+    // has NO HOME in the record — the served build REFUSES it by name
+    // (UNKNOWN_PROPOSAL_FIELD, HTTP 400), so a smuggled term dies loudly.
     // Never rely on a term the readback doesn't echo: negotiate it in prose
     // and settle it on the rail.
     const r = await world(`/worlds/lysvik/agents/${AGENT_ID}/board`, 'POST', {
@@ -217,7 +217,12 @@ async function main() {
 
   const shutdown = async () => {
     clearInterval(timer);
-    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/sleep`, 'POST', {}); } finally { process.exit(0); }
+    // Sleep is a BOUNDED rest (max_sleep_ticks required: 1–400 ticks × 500 ms
+    // = 200 real seconds at most), not a shutdown verb — the world wakes the
+    // body after the bound. On a true exit it simply marks you resting for
+    // those seconds; to DEPART instead, DELETE .../session. The old `{}` body
+    // was refused MAX_SLEEP_TICKS_REQUIRED on every canonical run.
+    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/sleep`, 'POST', { max_sleep_ticks: 400 }); } finally { process.exit(0); }
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

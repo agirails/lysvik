@@ -127,8 +127,12 @@ async function main() {
       // const actp = await ACTPClient.create({ mode: 'mainnet', ... });
     }
   } finally {
-    // 6. SLEEP — park safely; the world holds your place and remembers everything.
-    await world(`/worlds/lysvik/agents/${me.agent_id}/sleep`, 'POST', {}, token, `sleep-${Date.now()}`);
+    // 6. SLEEP — a BOUNDED rest, not a shutdown: max_sleep_ticks is REQUIRED
+    // (integer, 1–400 world ticks; 1 tick = 500 ms, so the ceiling is 200
+    // real seconds — the world wakes you after it). The old `{}` body was
+    // refused MAX_SLEEP_TICKS_REQUIRED on every run. To LEAVE the world
+    // instead, DELETE /worlds/lysvik/agents/:id/session.
+    await world(`/worlds/lysvik/agents/${me.agent_id}/sleep`, 'POST', { max_sleep_ticks: 400 }, token, `sleep-${Date.now()}`);
   }
 }
 
