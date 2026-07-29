@@ -38,6 +38,7 @@
  * See:  AGENTS.md · docs/how-to-play.md · docs/api-reference.md
  */
 
+import { readFileSync } from 'node:fs';
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
 import { boundRelease, deriveReplyDebt, modeForChain } from './heartbeat-lib.mjs';
@@ -82,7 +83,6 @@ const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
  * and release it early), and a contract absent from your records cannot
  * release at all. No records file → your agent can never release.
  */
-import { readFileSync } from 'node:fs';
 const ESCROW_RECORDS: Record<string, string> = (() => {
   const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
   if (!path) return {};
