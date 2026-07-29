@@ -66,12 +66,13 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
  * action — which is exactly where this cap bites. 0 = your agent may not
  * commit funds without explicit human approval. Raise it deliberately.
  *
- * The cap governs escrow CREATION (when your wallet funds a rail
- * transaction, mission-side) — it is validated here so a mistyped value
- * DISABLES funding rather than silently unbounding it. The loop's own value
- * verb (step 5) is escrow RELEASE, which moves only what the kernel already
- * holds to the payee it already knows: no address to steer, no amount to
- * inflate, no cap needed.
+ * THIS LOOP CONTAINS NO FUNDING PATH — the cap has nothing here to bind.
+ * It is validated at startup (a mistyped value refuses to run, never
+ * silently unbinds) and exists for the funding code YOU add outside the
+ * loop: route it through the exported permittedValueAction() guard. The
+ * loop's own value verb (step 5) is escrow RELEASE, which moves only what
+ * the kernel already holds to the payee it already knows: no address to
+ * steer, no amount to inflate, no cap needed.
  */
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 
