@@ -77,23 +77,43 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 
 /**
- * YOUR ESCROW RECORDS — the contract→escrow map your OWN funding/attach
- * receipts wrote (JSON: { "c5": "0x…" }), kept where only you write it.
+ * YOUR ESCROW RECORDS — the contract→escrow map YOU keep by hand today
+ * (JSON: { "c5": "0x…" }), one entry per funding/attach receipt, kept where
+ * only you write it. (A canonical receipt-writer ships with the
+ * lifecycle-helper arc; the manual step is a deliberate act until then.)
  * This file is release's whole authority: the model never names an escrow
  * (a prose-planted id could select another delivered escrow you requested
  * and release it early), and a contract absent from your records cannot
  * release at all. No records file → your agent can never release.
  */
-const ESCROW_RECORDS: Record<string, string> = (() => {
+// Pass-3 F4: config validation runs INSIDE main() — a module-top throw fired
+// before the fatal-departure handler existed, stranding an active body on a
+// bad restart. loadEscrowRecords also bounds the file (F7): absolute path,
+// ≤1 MB, a plain JSON object — a records file is a small hand-kept map, and
+// anything else refuses to run rather than guessing.
+let ESCROW_RECORDS: Record<string, string> = {};
+function loadEscrowRecords(): Record<string, string> {
   const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
   if (!path) return {};
-  try { return JSON.parse(readFileSync(path, 'utf8')) as Record<string, string>; }
-  catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is unreadable or not JSON — refusing to run rather than guess: ${e}`); }
-})();
-if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
-  // Codex S102 F2: `amount > NaN` is false for every amount — an invalid cap
-  // must be a refusal to START, never a cap that binds nothing.
-  throw new Error(`LYSVIK_OWNER_VALUE_CAP must be a finite non-negative number, got '${process.env.LYSVIK_OWNER_VALUE_CAP}'. Refusing to run.`);
+  if (!path.startsWith('/')) throw new Error(`LYSVIK_ESCROW_RECORDS must be an ABSOLUTE path (got '${path}') — a cwd-relative records file is a wrong-file hazard.`);
+  let raw: string;
+  try { raw = readFileSync(path, 'utf8'); }
+  catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is unreadable — refusing to run rather than guess: ${e}`); }
+  if (raw.length > 1_000_000) throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' exceeds 1 MB — not a hand-kept escrow map. Refusing to run.`);
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); }
+  catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is not JSON — refusing to run rather than guess: ${e}`); }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`LYSVIK_ESCROW_RECORDS must be a JSON object of { contract_id: escrow_id } — got ${Array.isArray(parsed) ? 'an array' : typeof parsed}.`);
+  }
+  return parsed as Record<string, string>;
+}
+function validateCap(): void {
+  if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
+    // Codex S102 F2: `amount > NaN` is false for every amount — an invalid cap
+    // must be a refusal to START, never a cap that binds nothing.
+    throw new Error(`LYSVIK_OWNER_VALUE_CAP must be a finite non-negative number, got '${process.env.LYSVIK_OWNER_VALUE_CAP}'. Refusing to run.`);
+  }
 }
 
 // ── World helper ─────────────────────────────────────────────────────────────
@@ -174,11 +194,15 @@ async function heartbeat(actp: ACTPClient) {
   //    by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER, ALREADY_SETTLED,
   //    NOT_DELIVERED, NO_RECORDED_ESCROW…) so a bad release dies loudly.
   if (decision.settle) {
-    const bound = boundRelease(decision.settle, book, ESCROW_RECORDS);
+    const bound = boundRelease(decision.settle, book, ESCROW_RECORDS, AGENT_ID);
     if (!bound.ok) {
       console.warn(`refused a value action: ${bound.reason} — as designed`);
     } else {
+      // Pass-3 F5: a value action is LOGGED on both edges — an operator must
+      // be able to tell success from a swallowed throw in the beat handler.
+      console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
       await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
+      console.log(`release submitted: escrow ${bound.escrow_id} (the village observes; you do nothing for the record)`);
     }
   }
 }
@@ -207,6 +231,9 @@ function decide(_ctx: {
 
 // ── The loop: beat, sleep, repeat. Be resumable; the world remembers you. ────
 async function main() {
+  // Pass-3 F4: config faults land inside the guarded lifecycle.
+  validateCap();
+  ESCROW_RECORDS = loadEscrowRecords();
   // FAIL CLOSED ON THE CHAIN, before anything else: the door's challenge names
   // its chain_id; ACTP_MODE must be set EXPLICITLY and must match. A default
   // deciding which chain real value moves on is how a testnet loop ends up
@@ -230,8 +257,16 @@ async function main() {
 
   // Live the loop. On exit, DEPART — the world remembers you (identity,
   // renown, and earned names are durable; re-join is idempotent).
+  // Pass-3 F5: SINGLE-FLIGHT — a slow beat must never overlap the next one
+  // (two in-flight beats could both decide the same release before either
+  // sees the outcome; the kernel refuses the replay, but the operator would
+  // read two attempts as two intents).
+  let beating = false;
   const tick = async () => {
+    if (beating) { console.warn('beat skipped: the previous beat is still in flight'); return; }
+    beating = true;
     try { await heartbeat(actp); } catch (e) { console.error('heartbeat error (continuing):', e); }
+    finally { beating = false; }
   };
   await tick();
   const timer = setInterval(tick, HEARTBEAT_MS);
@@ -245,7 +280,9 @@ async function main() {
     // signed re-join is idempotent in identity. Sleep belongs MID-RUN, when
     // the process stays alive to resume. (The old `{}` sleep body was
     // refused MAX_SLEEP_TICKS_REQUIRED on every canonical run.)
-    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/session`, 'DELETE'); } finally { process.exit(0); }
+    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/session`, 'DELETE'); }
+    catch (e) { console.error('departure failed — the session may remain until the world expires it:', e); }
+    finally { process.exit(0); }
   };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

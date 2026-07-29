@@ -133,6 +133,23 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
     boundRelease({ contract_id: 'c6' }, BOOK, { c6: '0xesc6' }).reason === 'NOT_DELIVERED');
   check('an invalid records value refuses (a record is a non-empty string or it is absent)',
     boundRelease({ contract_id: 'c5' }, BOOK, { c5: 42 }).reason === 'NO_RECORDED_ESCROW');
+
+  // Pass-3 F2: a malformed or contradictory book refuses BY NAME — a money
+  // guard fails closed on shapes it does not recognise, never a TypeError.
+  check('a non-array role container → BAD_BOOK, not a crash',
+    boundRelease({ contract_id: 'c5' }, { as_requester: 'not-an-array', as_provider: [] }, RECORDS, 'v1').reason === 'BAD_BOOK');
+  check('a null row in the book → BAD_BOOK, not a crash',
+    boundRelease({ contract_id: 'c5' }, { as_requester: [null], as_provider: [] }, RECORDS, 'v1').reason === 'BAD_BOOK');
+  check('duplicate rows for one contract → AMBIGUOUS_BOOK (never first-row-wins)',
+    boundRelease({ contract_id: 'c5' }, { ...BOOK, as_requester: [BOOK.as_requester[1], { ...BOOK.as_requester[1], state: 'settled' }] }, RECORDS, 'v1').reason === 'AMBIGUOUS_BOOK');
+  check("a row whose requester_id is not YOURS → NOT_YOUR_CONTRACT (membership in a list is a weaker claim than the row agreeing)",
+    boundRelease({ contract_id: 'c5' }, { ...BOOK, as_requester: [{ ...BOOK.as_requester[1], requester_id: 'someone-else' }] }, RECORDS, 'v1').reason === 'NOT_YOUR_CONTRACT');
+  check('a whitespace provider → NO_COUNTERPARTY (an absence wearing a string)',
+    boundRelease({ contract_id: 'c5' }, { ...BOOK, as_requester: [{ ...BOOK.as_requester[1], provider_id: '  ' }] }, RECORDS, 'v1').reason === 'NO_COUNTERPARTY');
+  check('an INHERITED records key never releases (own-property lookup only)',
+    boundRelease({ contract_id: 'c5' }, BOOK, Object.create({ c5: '0xevil' }), 'v1').reason === 'NO_RECORDED_ESCROW');
+  check('the happy path still binds with the agent id asserted',
+    boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, 'v1').ok === true);
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);

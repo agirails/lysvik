@@ -86,24 +86,48 @@ export function permittedValueAction(action, ownerCapUsdc) {
  * wallet funded the escrow. The cap governs escrow CREATION, not release —
  * and your records file is release's own authority: no record, no release.
  */
-export function boundRelease(settle, book, escrowRecords) {
+export function boundRelease(settle, book, escrowRecords, agentId) {
   if (!settle || typeof settle.contract_id !== 'string' || settle.contract_id.length === 0) {
     return { ok: false, reason: 'NO_CONTRACT_ID' };
   }
+  // Pass-3 F2: a MALFORMED book must refuse by name, never satisfy the
+  // predicate or throw a bare TypeError — a money guard fails closed on
+  // shapes it does not recognise.
+  const rows = (side) => {
+    const arr = book?.[side];
+    if (!Array.isArray(arr)) return null;
+    return arr.every((c) => c !== null && typeof c === 'object' && !Array.isArray(c)) ? arr : null;
+  };
+  const asProvider = rows('as_provider');
+  const asRequester = rows('as_requester');
+  if (asProvider === null || asRequester === null) return { ok: false, reason: 'BAD_BOOK' };
   // A provider never releases: check the provider side FIRST so a contract
   // carried both ways (impossible today, cheap to refuse) refuses loudly.
-  if ((book?.as_provider ?? []).some((c) => c.id === settle.contract_id)) {
+  if (asProvider.some((c) => c.id === settle.contract_id)) {
     return { ok: false, reason: 'PAYER_IS_PROVIDER' };
   }
-  const contract = (book?.as_requester ?? []).find((c) => c.id === settle.contract_id);
-  if (!contract) return { ok: false, reason: 'NOT_IN_YOUR_BOOK' };
+  // Exactly ONE requester row may carry the id — duplicates are a
+  // contradiction, and .find() would silently pick whichever came first.
+  const matches = asRequester.filter((c) => c.id === settle.contract_id);
+  if (matches.length === 0) return { ok: false, reason: 'NOT_IN_YOUR_BOOK' };
+  if (matches.length > 1) return { ok: false, reason: 'AMBIGUOUS_BOOK' };
+  const contract = matches[0];
+  // The row must actually be YOURS — membership in a served list is a
+  // weaker claim than the row's own requester field agreeing.
+  if (typeof agentId === 'string' && agentId.length > 0 && contract.requester_id !== agentId) {
+    return { ok: false, reason: 'NOT_YOUR_CONTRACT' };
+  }
   if (contract.state === 'settled') return { ok: false, reason: 'ALREADY_SETTLED' };
   if (contract.state !== 'delivered') return { ok: false, reason: 'NOT_DELIVERED' };
-  if (typeof contract.provider_id !== 'string' || contract.provider_id.length === 0) {
-    // delivered implies claimed implies a provider — but absence must deny.
+  if (typeof contract.provider_id !== 'string' || contract.provider_id.trim().length === 0) {
+    // delivered implies claimed implies a provider — but absence must deny,
+    // and a whitespace provider is an absence wearing a string's clothes.
     return { ok: false, reason: 'NO_COUNTERPARTY' };
   }
-  const recorded = escrowRecords?.[settle.contract_id];
+  // Own-property lookup only: a records file is data, never a prototype walk.
+  const recorded = escrowRecords !== null && typeof escrowRecords === 'object'
+    && Object.prototype.hasOwnProperty.call(escrowRecords, settle.contract_id)
+    ? escrowRecords[settle.contract_id] : undefined;
   if (typeof recorded !== 'string' || recorded.length === 0) {
     return { ok: false, reason: 'NO_RECORDED_ESCROW' };
   }
