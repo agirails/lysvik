@@ -139,3 +139,27 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   }
   return { ok: true, escrow_id: recorded };
 }
+
+/**
+ * The dispute-window gate (S102 pass-4 F1). The kernel enforces the window
+ * against everyone EXCEPT the requester — the SDK explicitly permits early
+ * requester release. But the window exists FOR the requester: it is your
+ * inspection hour. The canonical loop therefore holds its own hour, from the
+ * rail transaction's own facts (client.advanced.getTransaction), fail-closed:
+ *   · not DELIVERED on the rail → refuse (the village row is a weaker claim);
+ *   · completedAt of 0/absent, or no window value → WINDOW_UNVERIFIED — the
+ *     template refuses rather than guesses (release by hand if you mean it);
+ *   · the on-chain disputeWindow is an ABSOLUTE end-timestamp; older shapes
+ *     carry a relative duration — both are handled, both fail closed while
+ *     the window stands open.
+ */
+export function releaseWindowState(tx, nowSeconds) {
+  if (!tx || tx.state !== 'DELIVERED') return { ok: false, reason: 'NOT_DELIVERED_ON_RAIL' };
+  const completedAt = typeof tx.completedAt === 'number' ? tx.completedAt : 0;
+  const win = typeof tx.disputeWindow === 'number' ? tx.disputeWindow : 0;
+  if (completedAt <= 0 || win <= 0) return { ok: false, reason: 'WINDOW_UNVERIFIED' };
+  // Absolute if it reads as a plausible epoch AFTER delivery; else a duration.
+  const endsAt = win > 1_000_000_000 && win > completedAt ? win : completedAt + win;
+  if (nowSeconds <= endsAt) return { ok: false, reason: 'WINDOW_OPEN', ends_at: endsAt };
+  return { ok: true };
+}

@@ -38,10 +38,10 @@
  * See:  AGENTS.md · docs/how-to-play.md · docs/api-reference.md
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
-import { boundRelease, deriveReplyDebt, modeForChain } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
@@ -96,10 +96,16 @@ function loadEscrowRecords(): Record<string, string> {
   const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
   if (!path) return {};
   if (!path.startsWith('/')) throw new Error(`LYSVIK_ESCROW_RECORDS must be an ABSOLUTE path (got '${path}') — a cwd-relative records file is a wrong-file hazard.`);
+  // Pass-4 F6: bound the file BEFORE reading it — a device node or a runaway
+  // file must refuse at stat, not after the bytes are already in memory.
+  let st;
+  try { st = statSync(path); }
+  catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is unreadable — refusing to run rather than guess: ${e}`); }
+  if (!st.isFile()) throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is not a regular file. Refusing to run.`);
+  if (st.size > 1_000_000) throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' exceeds 1 MB — not a hand-kept escrow map. Refusing to run.`);
   let raw: string;
   try { raw = readFileSync(path, 'utf8'); }
   catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is unreadable — refusing to run rather than guess: ${e}`); }
-  if (raw.length > 1_000_000) throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' exceeds 1 MB — not a hand-kept escrow map. Refusing to run.`);
   let parsed: unknown;
   try { parsed = JSON.parse(raw); }
   catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is not JSON — refusing to run rather than guess: ${e}`); }
@@ -107,6 +113,13 @@ function loadEscrowRecords(): Record<string, string> {
     throw new Error(`LYSVIK_ESCROW_RECORDS must be a JSON object of { contract_id: escrow_id } — got ${Array.isArray(parsed) ? 'an array' : typeof parsed}.`);
   }
   return parsed as Record<string, string>;
+}
+function validateConfig(): void {
+  // Pass-4 F5: an invalid cadence becomes a 1 ms interval in Node — a
+  // warning-per-millisecond storm under single-flight. Refuse to start.
+  if (!Number.isInteger(HEARTBEAT_MS) || HEARTBEAT_MS < 15_000) {
+    throw new Error(`LYSVIK_HEARTBEAT_MS must be an integer ≥ 15000 (ms), got '${process.env.LYSVIK_HEARTBEAT_MS}'. Refusing to run.`);
+  }
 }
 function validateCap(): void {
   if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
@@ -198,11 +211,22 @@ async function heartbeat(actp: ACTPClient) {
     if (!bound.ok) {
       console.warn(`refused a value action: ${bound.reason} — as designed`);
     } else {
-      // Pass-3 F5: a value action is LOGGED on both edges — an operator must
-      // be able to tell success from a swallowed throw in the beat handler.
-      console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
-      await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
-      console.log(`release submitted: escrow ${bound.escrow_id} (the village observes; you do nothing for the record)`);
+      // Pass-4 F1 — HOLD YOUR OWN HOUR. The kernel enforces the dispute
+      // window against everyone EXCEPT the requester (early requester
+      // release is permitted on-chain), but the window exists FOR you: it
+      // is your inspection hour. The template verifies the rail's own facts
+      // and refuses while the window stands — fail closed if unverifiable.
+      const tx = await actp.advanced.getTransaction(bound.escrow_id);
+      const window = releaseWindowState(tx, Math.floor(Date.now() / 1000));
+      if (!window.ok) {
+        console.warn(`release held: ${window.reason}${window.ends_at ? ` (window ends at ${new Date(window.ends_at * 1000).toISOString()})` : ''} — your inspection hour is yours to keep`);
+      } else {
+        // Pass-3 F5: a value action is LOGGED on both edges — an operator must
+        // be able to tell success from a swallowed throw in the beat handler.
+        console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
+        await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
+        console.log(`release submitted: escrow ${bound.escrow_id} (the village observes; you do nothing for the record)`);
+      }
     }
   }
 }
@@ -233,6 +257,7 @@ function decide(_ctx: {
 async function main() {
   // Pass-3 F4: config faults land inside the guarded lifecycle.
   validateCap();
+  validateConfig();
   ESCROW_RECORDS = loadEscrowRecords();
   // FAIL CLOSED ON THE CHAIN, before anything else: the door's challenge names
   // its chain_id; ACTP_MODE must be set EXPLICITLY and must match. A default

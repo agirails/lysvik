@@ -17,7 +17,7 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -157,6 +157,28 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
     boundRelease({ contract_id: 'c5' }, BOOK, RECORDS).reason === 'MISSING_AGENT_ID');
   check('an empty agentId refuses too',
     boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, '').reason === 'MISSING_AGENT_ID');
+}
+
+console.log('§dispute-window · the requester keeps their own protection');
+{
+  // Pass-4 F1: the SDK permits the REQUESTER to release early — the canonical
+  // template must therefore hold its own hour. The predicate is pure; the
+  // loop feeds it client.advanced.getTransaction(escrowId) + now.
+  const NOW = 2_000_000_000; // an arbitrary 'now', seconds
+  check('an open window refuses (absolute end-timestamp shape, the on-chain form)',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 100, disputeWindow: NOW + 3500 }, NOW).reason === 'WINDOW_OPEN');
+  check('an elapsed window permits (absolute shape)',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 7200, disputeWindow: NOW - 60 }, NOW).ok === true);
+  check('an open window refuses (relative duration shape)',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 100, disputeWindow: 3600 }, NOW).reason === 'WINDOW_OPEN');
+  check('an elapsed window permits (relative shape)',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: 3600 }, NOW).ok === true);
+  check('a rail state that is not DELIVERED refuses',
+    releaseWindowState({ state: 'SETTLED', completedAt: NOW - 4000, disputeWindow: 3600 }, NOW).reason === 'NOT_DELIVERED_ON_RAIL');
+  check('an UNVERIFIABLE window fails closed (completedAt 0 = indexing absent — refuse, never guess)',
+    releaseWindowState({ state: 'DELIVERED', completedAt: 0, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
+  check('a missing disputeWindow fails closed too',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000 }, NOW).reason === 'WINDOW_UNVERIFIED');
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
