@@ -17,7 +17,7 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
+import { boundSettlement, deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -68,6 +68,65 @@ console.log('§owner-guard · value moves only explicit, only capped');
   check('over the cap → refused', permittedValueAction({ to: '0xabc', amountUsdc: 5 }, 1) === false);
   check('within the cap → permitted', permittedValueAction({ to: '0xabc', amountUsdc: 1 }, 1) === true);
   check('a cap of 0 permits nothing (the shipped default)', permittedValueAction({ to: '0xabc', amountUsdc: 0.01 }, 0) === false);
+}
+
+console.log('§settlement-binding · the payee is a world fact, never a decision field');
+{
+  // fixture: the served book shape (world.contractsView — machine fields only,
+  // agent ids not wallets; the wallet lives on the public register /api/dossier).
+  const BOOK = {
+    as_requester: [
+      { id: 'c3', ctype: 'service', verb: 'serve', good: 'scribe_commission', qty: 1, reward: 3,
+        state: 'settled', reason: 'settled', requester_id: 'v1', provider_id: 'v2',
+        posted_tick: 57382, deadline_tick: 62182 },
+      { id: 'c5', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3,
+        state: 'delivered', reason: null, requester_id: 'v1', provider_id: 'v2',
+        posted_tick: 486000, deadline_tick: 514800 },
+      { id: 'c6', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3,
+        state: 'committed', reason: null, requester_id: 'v1', provider_id: null,
+        posted_tick: 487000, deadline_tick: 515800 },
+    ],
+    as_provider: [
+      { id: 'c7', ctype: 'service', verb: 'serve', good: 'charts', qty: 1, reward: 3,
+        state: 'delivered', reason: null, requester_id: 'v2', provider_id: 'v1',
+        posted_tick: 487100, deadline_tick: 515900 },
+    ],
+    tick: 487800,
+  };
+
+  // The happy path: a delivered contract you requested, within the cap.
+  const ok = boundSettlement({ contract_id: 'c5', amountUsdc: 1 }, BOOK, 2);
+  check('a delivered contract you requested binds', ok.ok === true && ok.counterparty_id === 'v2', ok);
+  check("the binding NEVER carries a payee address — 'to' is not its field to give",
+    ok.ok === true && !('to' in ok) && !('wallet' in ok), ok);
+
+  // Prose can shout an address all it likes: a supplied `to` is not read.
+  const hijack = boundSettlement({ contract_id: 'c5', amountUsdc: 1, to: '0xATTACKER' }, BOOK, 2);
+  check('a model-supplied `to` is ignored — the counterparty derives from the book row',
+    hijack.ok === true && hijack.counterparty_id === 'v2' && !('to' in hijack), hijack);
+
+  // Every refusal, by name:
+  check('no contract_id → refused (payment must name its obligation)',
+    boundSettlement({ amountUsdc: 1 }, BOOK, 2).reason === 'NO_CONTRACT_ID');
+  check('a contract not in YOUR book → refused',
+    boundSettlement({ contract_id: 'c99', amountUsdc: 1 }, BOOK, 2).reason === 'NOT_IN_YOUR_BOOK');
+  check('a contract where YOU are the provider → refused (a provider never pays)',
+    boundSettlement({ contract_id: 'c7', amountUsdc: 1 }, BOOK, 2).reason === 'PAYER_IS_PROVIDER');
+  check('a settled contract → refused (terminal; never retry a terminal tx)',
+    boundSettlement({ contract_id: 'c3', amountUsdc: 1 }, BOOK, 2).reason === 'ALREADY_SETTLED');
+  check('an undelivered contract → refused (nothing is owed yet)',
+    boundSettlement({ contract_id: 'c6', amountUsdc: 1 }, BOOK, 2).reason === 'NOT_DELIVERED');
+  check('over the owner cap → refused (the cap stays, as the second rung)',
+    boundSettlement({ contract_id: 'c5', amountUsdc: 5 }, BOOK, 2).reason === 'OVER_CAP');
+  check('no typed amount → refused',
+    boundSettlement({ contract_id: 'c5' }, BOOK, 2).reason === 'NO_AMOUNT');
+  check('a cap of 0 still permits nothing (the shipped default)',
+    boundSettlement({ contract_id: 'c5', amountUsdc: 0.01 }, BOOK, 0).reason === 'OVER_CAP');
+
+  // The rung that was untestable before: with a REAL cap, the recipient path
+  // is now exercised — the default-0 mitigation can no longer hide the wiring.
+  check('with a real cap the recipient path is exercised, not vacuously refused',
+    boundSettlement({ contract_id: 'c5', amountUsdc: 1 }, BOOK, 2).ok === true);
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);

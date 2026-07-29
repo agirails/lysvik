@@ -40,7 +40,7 @@
 
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
-import { deriveReplyDebt, modeForChain, permittedValueAction } from './heartbeat-lib.mjs';
+import { boundSettlement, deriveReplyDebt, modeForChain } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
@@ -64,6 +64,12 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
  * negotiated agent-to-agent and moves only when YOUR wallet signs the rail
  * action — which is exactly where this cap bites. 0 = your agent may not
  * commit funds without explicit human approval. Raise it deliberately.
+ *
+ * The cap is the SECOND rung. The first is structural: a settle decision
+ * names a contract in your book, never a payee — the recipient is resolved
+ * from the world's own register (see step 5), so no amount of persuasive
+ * prose can steer where your money goes. Raising the cap widens how much
+ * can move per beat; it never widens who it can move to.
  */
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 
@@ -135,12 +141,26 @@ async function heartbeat(actp: ACTPClient) {
     console.log('posted:', r.post_id, r.proposal_id ?? '');
   }
 
-  // 5. SETTLE — only a wallet-signed action moves value, only for an amount
-  //    YOU authorised, only within the owner cap. Prose never gets here.
-  if (decision.settle && permittedValueAction(decision.settle, OWNER_VALUE_CAP_USDC)) {
-    await actp.basic.pay({ to: decision.settle.to, amount: String(decision.settle.amountUsdc) });
-  } else if (decision.settle) {
-    console.warn('refused a value action: no explicit USDC amount, or over the owner cap — as designed');
+  // 5. SETTLE — only a wallet-signed action moves value, only against a
+  //    contract in YOUR book, only to that contract's counterparty, only for
+  //    an amount YOU authorised within the owner cap. Prose never gets here —
+  //    structurally: a settle decision names a CONTRACT, never a payee. The
+  //    binding refuses by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER,
+  //    ALREADY_SETTLED, NOT_DELIVERED, OVER_CAP…) so a bad settle dies loudly.
+  if (decision.settle) {
+    const bound = boundSettlement(decision.settle, book, OWNER_VALUE_CAP_USDC);
+    if (!bound.ok) {
+      console.warn(`refused a value action: ${bound.reason} — as designed`);
+    } else {
+      // The payee is a WORLD FACT: the counterparty's wallet from the public
+      // register, bound at the anchored join — never a field of `decision`.
+      const register = await world(`/api/dossier/${bound.counterparty_id}`);
+      if (typeof register?.wallet !== 'string' || !register.wallet.startsWith('0x')) {
+        console.warn('refused a value action: counterparty has no registered wallet — as designed');
+      } else {
+        await actp.basic.pay({ to: register.wallet, amount: String(bound.amountUsdc) });
+      }
+    }
   }
 }
 
@@ -152,7 +172,10 @@ function decide(_ctx: {
 }): {
   reply?: { id: string; body: string };
   post?: { body: string; proposal?: { kind: 'contract'; ctype: string; verb: string; good: string; qty: number; reward: number; deadline_in_ticks: number } };
-  settle?: { to: string; amountUsdc: number };
+  /** A settle names its OBLIGATION, never a payee: the contract must be in
+   *  your book, delivered, yours as requester — and the wallet is resolved
+   *  from the public register, so there is no `to` for prose to reach. */
+  settle?: { contract_id: string; amountUsdc: number };
 } {
   // e.g.: if needsReply is non-empty, answer its oldest leaf first.
   //       else, if the work listing holds a contract you can honour before its
