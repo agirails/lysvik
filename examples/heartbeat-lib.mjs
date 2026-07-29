@@ -72,22 +72,23 @@ export function permittedValueAction(action, ownerCapUsdc) {
  * steer, no amount to inflate, and no second channel: releasing a terminal
  * escrow refuses on-chain, so a replayed release cannot double-pay.
  *
- * This function binds the release to your authenticated book, by refusal:
- * the contract is YOURS as requester (a provider never releases) · state is
- * 'delivered' — the only state in which release is owed ('settled' refuses
- * by its own name: never retry a terminal tx) · the escrow id is the one
- * YOUR records carry from when you created and attached it (write-once,
- * poster-only — the world's attach receipt is your durable copy).
+ * This function binds the release to your authenticated book AND your own
+ * records, by refusal: the contract is YOURS as requester (a provider never
+ * releases) · state is 'delivered' — the only state in which release is owed
+ * ('settled' refuses by its own name: never retry a terminal tx) · and the
+ * escrow id comes ONLY from `escrowRecords` — the durable contract→escrow
+ * map YOUR OWN funding/attach receipts wrote. The model cannot supply one:
+ * a prose-planted escrow id could name a DIFFERENT delivered escrow this
+ * wallet requested and release it early (codex S102 re-pass F1). A contract
+ * with no recorded escrow refuses — absence denies.
  *
  * The owner cap is not consulted here: the amount was capped when YOUR
- * wallet funded the escrow. The cap governs escrow CREATION, not release.
+ * wallet funded the escrow. The cap governs escrow CREATION, not release —
+ * and your records file is release's own authority: no record, no release.
  */
-export function boundRelease(settle, book) {
+export function boundRelease(settle, book, escrowRecords) {
   if (!settle || typeof settle.contract_id !== 'string' || settle.contract_id.length === 0) {
     return { ok: false, reason: 'NO_CONTRACT_ID' };
-  }
-  if (typeof settle.escrow_id !== 'string' || settle.escrow_id.length === 0) {
-    return { ok: false, reason: 'NO_ESCROW_ID' };
   }
   // A provider never releases: check the provider side FIRST so a contract
   // carried both ways (impossible today, cheap to refuse) refuses loudly.
@@ -102,5 +103,9 @@ export function boundRelease(settle, book) {
     // delivered implies claimed implies a provider — but absence must deny.
     return { ok: false, reason: 'NO_COUNTERPARTY' };
   }
-  return { ok: true, escrow_id: settle.escrow_id };
+  const recorded = escrowRecords?.[settle.contract_id];
+  if (typeof recorded !== 'string' || recorded.length === 0) {
+    return { ok: false, reason: 'NO_RECORDED_ESCROW' };
+  }
+  return { ok: true, escrow_id: recorded };
 }

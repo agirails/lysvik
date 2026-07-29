@@ -73,6 +73,22 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
  * inflate, no cap needed.
  */
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
+
+/**
+ * YOUR ESCROW RECORDS — the contract→escrow map your OWN funding/attach
+ * receipts wrote (JSON: { "c5": "0x…" }), kept where only you write it.
+ * This file is release's whole authority: the model never names an escrow
+ * (a prose-planted id could select another delivered escrow you requested
+ * and release it early), and a contract absent from your records cannot
+ * release at all. No records file → your agent can never release.
+ */
+import { readFileSync } from 'node:fs';
+const ESCROW_RECORDS: Record<string, string> = (() => {
+  const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
+  if (!path) return {};
+  try { return JSON.parse(readFileSync(path, 'utf8')) as Record<string, string>; }
+  catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is unreadable or not JSON — refusing to run rather than guess: ${e}`); }
+})();
 if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
   // Codex S102 F2: `amount > NaN` is false for every amount — an invalid cap
   // must be a refusal to START, never a cap that binds nothing.
@@ -155,9 +171,9 @@ async function heartbeat(actp: ACTPClient) {
   //    double-pay), and a `pay` beside a live escrow would be a SECOND value
   //    channel — the double-payment codex S102/F1 named. The binding refuses
   //    by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER, ALREADY_SETTLED,
-  //    NOT_DELIVERED, NO_ESCROW_ID…) so a bad release dies loudly.
+  //    NOT_DELIVERED, NO_RECORDED_ESCROW…) so a bad release dies loudly.
   if (decision.settle) {
-    const bound = boundRelease(decision.settle, book);
+    const bound = boundRelease(decision.settle, book, ESCROW_RECORDS);
     if (!bound.ok) {
       console.warn(`refused a value action: ${bound.reason} — as designed`);
     } else {
@@ -174,12 +190,11 @@ function decide(_ctx: {
 }): {
   reply?: { id: string; body: string };
   post?: { body: string; proposal?: { kind: 'contract'; ctype: string; verb: string; good: string; qty: number; reward: number; deadline_in_ticks: number } };
-  /** A settle names its OBLIGATION and YOUR escrow, never a payee or an
-   *  amount: the contract must be in your book, delivered, yours as
-   *  requester; the escrow_id is the one your own records carry from
-   *  create+attach. The kernel knows the rest — there is no field for
-   *  prose to reach. */
-  settle?: { contract_id: string; escrow_id: string };
+  /** A settle names its OBLIGATION and nothing else: the contract must be
+   *  in your book, delivered, yours as requester — and the escrow resolves
+   *  from YOUR records file, never from this decision. The kernel knows the
+   *  rest. There is no field for prose to reach. */
+  settle?: { contract_id: string };
 } {
   // e.g.: if needsReply is non-empty, answer its oldest leaf first.
   //       else, if the work listing holds a contract you can honour before its
@@ -212,7 +227,8 @@ async function main() {
     requesterAddress: process.env.REQUESTER_ADDRESS ?? '0x0000000000000000000000000000000000000000',
   });
 
-  // Live the loop. On exit, sleep so the world holds your place.
+  // Live the loop. On exit, DEPART — the world remembers you (identity,
+  // renown, and earned names are durable; re-join is idempotent).
   const tick = async () => {
     try { await heartbeat(actp); } catch (e) { console.error('heartbeat error (continuing):', e); }
   };
@@ -234,4 +250,13 @@ async function main() {
   process.on('SIGTERM', shutdown);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch(async (err) => {
+  console.error(err);
+  // Codex S102 re-pass F3: a fatal exit must not strand an ACTIVE body with
+  // no process behind it. Best-effort departure; the world's own timers are
+  // the backstop if even this fails.
+  if (SESSION_TOKEN && AGENT_ID) {
+    try { await world(`/worlds/lysvik/agents/${AGENT_ID}/session`, 'DELETE'); } catch { /* the backstop's job */ }
+  }
+  process.exit(1);
+});

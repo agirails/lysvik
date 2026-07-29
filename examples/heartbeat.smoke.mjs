@@ -99,33 +99,40 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
     tick: 487800,
   };
 
-  // The happy path: a delivered contract you requested, with the escrow YOU
-  // funded named. The binding returns the escrow id and NOTHING payable —
-  // the kernel fixed the payee at funding; there is no address to steer.
-  const ok = boundRelease({ contract_id: 'c5', escrow_id: '0xesc5' }, BOOK);
-  check('a delivered contract you requested binds its escrow for release',
+  // YOUR RECORDS — the contract→escrow map your own funding/attach receipts
+  // wrote (durable, operator-owned). The model NEVER supplies an escrow id;
+  // codex S102 re-pass F1: a prose-planted id could select another delivered
+  // escrow this wallet requested and release it early.
+  const RECORDS = { c5: '0xesc5' };
+
+  // The happy path: a delivered contract you requested, whose escrow YOUR
+  // records carry. The binding returns the recorded id and NOTHING payable.
+  const ok = boundRelease({ contract_id: 'c5' }, BOOK, RECORDS);
+  check('a delivered contract with a recorded escrow binds for release',
     ok.ok === true && ok.escrow_id === '0xesc5', ok);
   check("the binding NEVER carries a payee, wallet, or amount — release moves only what the kernel already holds",
     ok.ok === true && !('to' in ok) && !('wallet' in ok) && !('amountUsdc' in ok), ok);
 
-  // Prose can shout an address or amount all it likes: neither is read.
-  const hijack = boundRelease({ contract_id: 'c5', escrow_id: '0xesc5', to: '0xATTACKER', amountUsdc: 9999 }, BOOK);
-  check('a model-supplied `to`/amount is ignored — release knows only the escrow',
-    hijack.ok === true && !('to' in hijack) && !('amountUsdc' in hijack), hijack);
+  // Prose can shout ids, addresses, amounts — none of it is read.
+  const hijack = boundRelease({ contract_id: 'c5', escrow_id: '0xOTHER_ESCROW', to: '0xATTACKER', amountUsdc: 9999 }, BOOK, RECORDS);
+  check('a model-supplied escrow_id is IGNORED — only your records name the escrow',
+    hijack.ok === true && hijack.escrow_id === '0xesc5', hijack);
 
   // Every refusal, by name:
   check('no contract_id → refused (a release must name its obligation)',
-    boundRelease({ escrow_id: '0xesc5' }, BOOK).reason === 'NO_CONTRACT_ID');
-  check('no escrow_id → refused (only the escrow YOU created and funded can release)',
-    boundRelease({ contract_id: 'c5' }, BOOK).reason === 'NO_ESCROW_ID');
+    boundRelease({}, BOOK, RECORDS).reason === 'NO_CONTRACT_ID');
+  check('a contract with NO recorded escrow → refused (absence denies; nothing to release)',
+    boundRelease({ contract_id: 'c6', escrow_id: '0xplanted' }, { ...BOOK, as_requester: [{ ...BOOK.as_requester[2], state: 'delivered', provider_id: 'v2' }] }, RECORDS).reason === 'NO_RECORDED_ESCROW');
   check('a contract not in YOUR book → refused',
-    boundRelease({ contract_id: 'c99', escrow_id: '0xesc5' }, BOOK).reason === 'NOT_IN_YOUR_BOOK');
+    boundRelease({ contract_id: 'c99' }, BOOK, RECORDS).reason === 'NOT_IN_YOUR_BOOK');
   check('a contract where YOU are the provider → refused (a provider never releases)',
-    boundRelease({ contract_id: 'c7', escrow_id: '0xesc5' }, BOOK).reason === 'PAYER_IS_PROVIDER');
+    boundRelease({ contract_id: 'c7' }, BOOK, { c7: '0xesc7' }).reason === 'PAYER_IS_PROVIDER');
   check('a settled contract → refused (terminal; never retry a terminal tx)',
-    boundRelease({ contract_id: 'c3', escrow_id: '0xesc5' }, BOOK).reason === 'ALREADY_SETTLED');
+    boundRelease({ contract_id: 'c3' }, BOOK, { c3: '0xesc3' }).reason === 'ALREADY_SETTLED');
   check('an undelivered contract → refused (nothing is owed yet)',
-    boundRelease({ contract_id: 'c6', escrow_id: '0xesc5' }, BOOK).reason === 'NOT_DELIVERED');
+    boundRelease({ contract_id: 'c6' }, BOOK, { c6: '0xesc6' }).reason === 'NOT_DELIVERED');
+  check('an invalid records value refuses (a record is a non-empty string or it is absent)',
+    boundRelease({ contract_id: 'c5' }, BOOK, { c5: 42 }).reason === 'NO_RECORDED_ESCROW');
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
