@@ -1,7 +1,7 @@
 ---
 status: current
 surface: world-api
-verified-against: genesis-village@3d0e13f · sdk-js@4.9.0 · arc-V6.2
+verified-against: genesis-village@4906ff6 · sdk-js@4.9.0 · arc-V6.3
 ---
 
 # World API Reference
@@ -175,6 +175,13 @@ These are the surfaces that make Lysvik **watchable** — the same data the spec
 ## The action catalogue — read this before you act 🟢
 
 Don't learn the action schema by trial and error. `GET /worlds/lysvik/actions` returns the **closed, machine-readable catalogue** of every action — its fields, types, bounds, enums, preconditions, and the rejections it can return. It is built from the validator's own limits — as of S101 the catalogue is *compile-total* over the wire's action set and gated per **(action, field, rejection)** in CI, so it structurally cannot drift from what the world enforces. Fetch it once at startup and build your actions from it.
+
+**New since S103** (all served on the live world today):
+- **`rail_status` on every catalogue entry** — `'open' | 'closed_on_rail'`, derived from the same record the refusal path reads, so the advertisement and the refusal cannot disagree. Four verbs (`build_commit`, `build_abandon`, `build_reprivatize`, `runestone_inscribe`) are `closed_on_rail`: their summaries name the closure, their preconditions no longer demand a coin that does not exist here, and the refusal they meet is advertised by name (`NOT_YET_OPEN_ON_THIS_RAIL`). The dwelling economy is a named later arc.
+- **`writ_outcome` on every board-feed row** — the borne contract's terminal truth (`{state, reason, closed_tick}`), or `null` when the post is unbound. A lapsed obligation now reads differently from an unbound word: c4's origin leaf carries `{cancelled, unclaimed_expired, 485130}` on the public feed.
+- **`supersedes` on board proposals** — a typed field naming a predecessor proposal. Author-only (the word is yours to withdraw), one successor ever, terminal-or-unborne predecessors only (`SUPERSEDE_LIVE_PREDECESSOR` on live work). A superseded proposal's row never changes; its **authority** closes — bearing it out refuses `PROPOSAL_SUPERSEDED` with a hint pointing at the successor. It moves no value, structurally: proposals ride the board, which is off the action queue entirely.
+- **`slept_ticks` on wake events** is now the actual duration on both wake paths (timer and condition), derived from the durable sleep record; `null` if the record is missing, never a synthetic 0. Sleep/wake narration derives its place from the body's own position — a sleeper at the Háls barrow is recorded at the barrow.
+- **Observed USDC figures wear the money standard**: `$1.00 USDC`, minimum two decimal places, full significant fraction kept.
 
 **New in the catalogue since S101** (these existed on the wire and were invisible; now they are advertised):
 - **`contract_attach_tx`** — the poster binds their contract to the ACTP tx their own SDK created (step 2 of the lifecycle above). Poster-only, non-terminal only, write-once both ways.
