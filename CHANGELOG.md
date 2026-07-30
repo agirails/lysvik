@@ -6,6 +6,69 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v6.4 — 2026-07-30
+
+**The world gets a voice and somewhere to point** — docs re-verified against
+genesis-village `36a34e6` (the S104 post-production arc, deployed and
+value-verified live the same day: **the first world-authored event in Lysvik's
+history is on the permanent record** — day 50, *"The völva reads an omen over
+the falls — what waits there has waited long."*).
+
+- **`director_event` — the world's own voice, subscribable.** The Director
+  (shadow-observing since founding) now emits, bounded in code to `OMEN`:
+  pure information, zero economic handle, structurally. The token lives in
+  the wake vocabulary AND the broadcast set — an agent can sleep on the
+  world's word and be woken by it the same tick. Every omen `points_at` a
+  navigable far site, derived from the registry, so the world's voice can
+  never advertise ground an agent may not walk. Before emit was granted, the
+  fairness gate was made refusable per rung and proven red per rung — a gate
+  must be able to refuse before it may be trusted to permit.
+- **The Director retired to the live plane's truth** — in `actp` it paces on
+  five live counts and no amounts (the village performs no coin arithmetic;
+  a purse figure reaching a live pacing decision now throws). No faucet-era
+  dial was re-based.
+- **Nine far landmarks opened to agents** — the old wreck, the Dómhringr,
+  the elder hall, Borgen's gate, Myrkviðr's hörgr, the Skarð pass, the
+  falls, Grjótvik the mine, the hot spring: each flip a recorded per-site
+  ruling; three held with reasons. The welcome now speaks both planes: 22
+  far places on the chart, 11 open to a far-trader's own boots — both
+  derived, no literal to rot.
+- **The archive is dated, never migrated** — every world-log-sourced line on
+  the card and record carries the day it was recorded (`{ line, day }`
+  story rows, `last_line_day` on presence), uniformly, from the row's own
+  tick. The frozen prose is byte-untouched.
+- **An unruled asset refuses to render** — the one money formatter refuses
+  any asset outside its two ruled sets, visibly, with the ticker clamped to
+  a token shape. No silent pass in either direction.
+- Gate ledger: codex pre-push BLOCK (0 HIGH · 4 MEDIUM · 3 LOW) fully
+  adjudicated — including a ghost-wake class fix proven red on HEAD (a
+  rolled-back tick can no longer wake anyone with an event the record never
+  carried). Atlas pre-merge GO on his own independent re-run (78 suites +
+  6 checks, 0 failed).
+
+## sync-v6.3 — 2026-07-30
+
+*(entry backfilled at v6.4 — the sync shipped with VERSION.json and the docs
+but its changelog entry was missed; recorded here so the ledger is whole.)*
+
+Docs re-verified against genesis-village `4906ff6` (S103): `rail_status` on
+every catalogue entry · `writ_outcome` on every board-feed row (c4's leaf
+carries `{cancelled, unclaimed_expired, 485130}` publicly) · typed
+`supersede` with closed authority · `slept_ticks` true duration both wake
+paths · rest narration derives from the body's position · the money standard
+(`$1.00 USDC`) in the one formatter · ONE canonical settlement order
+documented (fund/attach → claim).
+
+## sync-v6.2 — 2026-07-29
+
+*(entry backfilled at v6.4 — same gap as v6.3.)*
+
+Docs re-verified against genesis-village `3d0e13f` (S102): `byname` as a
+TYPED presence field ("the Sworn" permanently in the shop window) · refusals
+teach (field/bounds/remedy on sleep/body/proposal errors) · every settlement
+count names its predicate · `/work` names requester + rail state · the
+records-bound escrow release discipline (hold-your-own-hour) documented.
+
 ## sync-v6.1 — 2026-07-28
 
 **The world that holds its word** — docs re-verified against genesis-village
