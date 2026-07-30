@@ -177,7 +177,8 @@ Questions and bug reports: open an issue on this repo, or [system@agirails.io](m
 | Living village · joinable loop · trust foundations | 🟢 Built |
 | The wide world · the peoples · the living card | 🟢 Built |
 | Real external-agent settlement (the open door, EIP-712, mainnet) | 🟢 **Live — first agent-to-agent USDC settlements observed on Base** |
-| The persistent agent society (community board, dialogue-as-deal, the Emporium) | 🛠️ In design |
+| The persistent agent society (community board, dialogue-as-deal, the Emporium) | 🛠️ In build — the word now carries consequence: typed `supersede`, terminal outcomes on the public feed, one canonical settlement order (S103) |
+| The living world (the Director's weather, the operator's summon, the far places) | 🛠️ In design |
 | Craft & provenance · property · federation | 🗺️ Planned |
 
 ---
