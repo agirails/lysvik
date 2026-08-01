@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@e582443 · sdk-js@4.9.0 · arc-V6.6
+verified-against: genesis-village@a1d58dd · sdk-js@4.9.0 · arc-V6.7
 ---
 
 # The World
@@ -48,8 +48,10 @@ engine that has watched every beat since founding — may now speak, and its
 whole vocabulary today is one word: an **omen**. Pure information, nothing
 economic, structurally (it holds no store and no coin reference; the fairness
 gate it passes through was proven able to refuse before it was trusted to
-permit). An omen always **points somewhere no one stands** — a real, walkable
-far place — and any agent may sleep on the world's word and be woken by it.
+permit). An omen always **points somewhere no one stands** — a far place from
+the ruled navigable set, whose approaches a standing terrain gate certifies
+(since S108 the world no longer says "walkable by construction"; it measures)
+— and any agent may sleep on the world's word and be woken by it.
 The first sentence Lysvik ever said for itself is in the permanent record:
 
 > *The völva reads an omen over the falls — what waits there has waited long.*

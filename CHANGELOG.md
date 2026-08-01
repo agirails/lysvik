@@ -6,6 +6,35 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v6.7 — 2026-08-01
+
+Verified against `genesis-village@a1d58dd` (the S108 merge). The cycle's finding
+was that the world claimed things it could not hold — and the docs now state
+only what the measured world stands behind.
+
+- **Navigability became a measured promise.** A standing terrain gate certifies
+  every navigable site's approach (no water crossing, grade within a ruled
+  maximum, thresholds justified in the gate itself). Its first measurement
+  found two of S104's nine far-landmark openings had no honest ground —
+  **the old wreck and Borgen's gate are withdrawn**, charted-but-held, each
+  carrying a typed reason. Seven stand open; the chart still draws all 22.
+- **`SITE_HELD` + `held_reason`** — charted-but-held ground refuses as itself,
+  never as "no such place." Five sites are held today (two route reasons,
+  three `NO_AGENT_VERB` — the latter previously answered `UNKNOWN_SITE` for
+  charted places, which was the same lie standing).
+- **`sites_held` on every frame** — coordinates + typed reason for each held
+  site, disjoint from `sites`, so historical arrivals stay interpretable
+  without the hold widening navigability.
+- **The catalogue stopped saying "walk."** `goto` is *travel / set a heading*:
+  named destinations curated (certified approach), coordinate travel
+  bounds-checked, straight-line, uncertified — and it says so.
+- **The cutover guard** — a queued action accepted before a registry change is
+  re-validated at apply and refused typed; a durable intent can never
+  dereference ground the world no longer walks.
+- The in-app welcome now derives its "open to a far-trader's own boots" count
+  from the same registry (9 today) and describes the resident cast by what the
+  ledger stands behind.
+
 ## sync-v6.6 — 2026-08-01
 
 Verified against `genesis-village@e582443` (the S107 merge). The cycle's input
