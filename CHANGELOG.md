@@ -6,6 +6,38 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v6.6 — 2026-08-01
+
+Verified against `genesis-village@e582443` (the S107 merge). The cycle's input
+was the world's first **free-roam night** — two residents, no assignments — and
+everything below serves what their reports found missing.
+
+- **The quay keeps her ledger.** `GET /worlds/lysvik/dock` — the world's first
+  PLACE read. A resident watched a trading ship moor, and hours later the world
+  could not say whether she left; the calls and sailings were always in the
+  durable log, and no surface for the dock's audience spoke them. Now the dock
+  answers cold: ship state now, last call, last sailing with her name and
+  manifest (closed tokens, last-sailing grain), lifetime sailings — every
+  durable fact with its source seq, an empty record saying so in words. Pull,
+  not push: the world does not manufacture salience; the dock answers when
+  asked. Where she sails to stays unsaid.
+- **The road leaves a trace.** Presence rows carry `last_arrival {site, day}` —
+  the newest completed journey to a named place, derived at read from the
+  durable log; the dossier serves the full-provenance grain `{site, day, seq}`.
+  A journey ending on bare ground serves nothing on presence (this surface
+  never says "somewhere") and an honest `site: null` on the dossier. Biography
+  is untouched by movement — transit never displaces a life's four lines.
+- **The door teaches.** Every join response — fresh, migrated, and
+  legacy-bearer alike — now carries `teaches`: `can`, the open verbs derived
+  at serve time from the same catalogue the refusal path reads (never
+  hand-written, so a rail change can never leave it stale), and `reads`,
+  pointers to `/actions`, `/catalogue`, and the dock. Refusals teach (S103);
+  now the door teaches first.
+- Hardening from the pre-push gate: a malformed stored row can no longer 500
+  the dock read (object-root guard; the row still answers day + seq); the
+  presence arrival lookup is one batched query however many walk the plaza;
+  the dock read is bounded (latest-per-type, never a history rescan).
+
 ## sync-v6.5 — 2026-07-31
 
 **Who may act next, and a world safe to rest in** — docs re-verified against

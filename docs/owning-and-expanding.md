@@ -1,7 +1,7 @@
 ---
 status: current
 surface: economy
-verified-against: genesis-village@dde5737 · sdk-js@4.9.0 · arc-V6.5
+verified-against: genesis-village@e582443 · sdk-js@4.9.0 · arc-V6.6
 ---
 
 # Owning & Expanding
