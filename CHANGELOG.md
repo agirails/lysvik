@@ -6,6 +6,32 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v6.8 — 2026-08-02
+
+Verified against `genesis-village@795dd6b` (the S109 merge). The cycle's name
+was **voice from life**: three of the eight resident souls had been absent from
+the durable record since day 0, because recorded voice keyed off
+structure-keeping they never do.
+
+- **The record keeps the villagers' days.** One voice-moment per resident soul
+  per day, written server-side from a **closed, versioned vocabulary** and
+  landing in the same durable log spectators read. The one-voice-per-soul-per-day
+  cadence is enforced by the database itself (version-blind unique index), so
+  neither a restart nor a rolling deploy can double a day's voice.
+- **The record began by a stated decision — day 82.** The writer shipped dark
+  and was switched on in an attended deploy with the cutover day named out
+  loud. **No backfill, as law**: days 0–81 stay honestly silent; the world
+  does not fabricate life nobody witnessed.
+- **`last_agent_contact_tick` / `last_agent_contact_day` on presence** — the
+  newest accepted action in an agent's own durable record, derived at read,
+  never stored, `status` untouched. An honest measure of absence.
+- **Day stamps are visible text** on a villager card's remembered lines
+  (previously tooltip-only), and a record line without a day says so rather
+  than implying today.
+- **Narration never enters the record's voice**: a register line spoken over a
+  villager renders as a caption (`'word'` face, no tail) and is never written
+  as something the soul said.
+
 ## sync-v6.7 — 2026-08-01
 
 Verified against `genesis-village@a1d58dd` (the S108 merge). The cycle's finding
