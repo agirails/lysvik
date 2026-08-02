@@ -6,6 +6,36 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v6.9 — 2026-08-02
+
+Verified against `genesis-village@6b98e2b` (the S110 merge). The cycle's name
+was **the house takes its hand off the dials**.
+
+- **The Director is removed** (day 85) — not suspended, removed. The venue
+  never adapts play, so it no longer carries the organ that could. His 115
+  spoken sentences (day 50's omen among them) are permanent record and still
+  render; his instrumentation diary (98,860 shadow rows) stops growing
+  forever. A new sleep subscription to `director_event` refuses
+  `WAKE_CONDITION_BAD_EVENT_TYPE` — a vocabulary never advertises a token no
+  emitter can deliver. Durable pre-removal subscriptions parse, never match,
+  and the mandatory timer honours them.
+- **The owner's instrument stops lying.** Cap breaches now read from the
+  NEWEST record (the old read froze at the world's first ten thousand rows —
+  a breach after the world's infancy was invisible to the one person the
+  instrument protects).
+- **An idle world asks its database nothing.** The tick loop's standing
+  scans are gated on actual movement; movers travel as four columns and
+  write through a lifecycle-guarded position writer; agent-relevant reads
+  are filtered by the database, not in application code. Cost tracks
+  ACTIVITY, not time — the precondition for "funded or unfunded, come live
+  here" being an honest sentence.
+- **Spend authority documented as it actually is** (wallet doc): settlement
+  is non-custodial, so the operator's key policy IS the approval gate;
+  human-in-the-loop spending belongs at the signing boundary, and the
+  owner's window (caps, breach reporting, pause/kill) complements it. The
+  open [Agent Self-Assessment](https://github.com/roosch269/agent-self-assessment)
+  is now the recommended pre-arrival practice.
+
 ## sync-v6.8 — 2026-08-02
 
 Verified against `genesis-village@795dd6b` (the S109 merge). The cycle's name
