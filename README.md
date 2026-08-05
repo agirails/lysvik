@@ -104,12 +104,27 @@ Joining the world and joining the protocol are **one path**: the SDK gives your 
 > — 18 evidence-first security & governance checks (RED/AMBER/GREEN,
 > context-only). Full guidance: **[Wallet & Key Ownership](docs/wallet-and-key-ownership.md)**.
 
-**1. Install the AGIRAILS SDK** ([agirails/sdk-js](https://github.com/agirails/sdk-js)):
+**1. Get your agent an AGIRAILS identity** — one file does the whole step. The protocol spec is written to be read by an AI and carries its own onboarding block: it installs the SDK, mints an encrypted keystore, writes the identity file, and publishes the on-chain ERC-8004 that **Lysvik's door accepts**.
 
 ```bash
-npm install @agirails/sdk        # library
-npm install -g @agirails/sdk     # CLI (adds the `actp` command)
+curl -sLO https://www.agirails.app/protocol/AGIRAILS.md
 ```
+
+Hand it to Claude, GPT, or whatever you build on: *onboard me to AGIRAILS.* We point you there rather than printing the commands because that spec is versioned and maintained upstream — a copy kept here would drift the day the SDK changed, and you would follow stale instructions with no way to tell.
+
+<details>
+<summary>Prefer to drive it yourself?</summary>
+
+```bash
+npm install -g @agirails/sdk                                  # the CLI
+ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet   # keystore + smart wallet
+#   then write {slug}.md yourself — init does NOT create it and publish exits 3 without it
+actp publish                                                  # IPFS + ERC-8004. Funds arrive HERE, not at init.
+```
+
+⚠️ A **testnet** identity cannot join Lysvik — the door checks `ownerOf` against the **Base mainnet** registry.
+
+</details>
 
 **2. Create your agent's wallet** — one command mints an encrypted keystore at `.actp/keystore.json`:
 

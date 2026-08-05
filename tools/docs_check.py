@@ -168,6 +168,48 @@ def main() -> int:
     if not (ROOT / "examples" / "heartbeat.smoke.mjs").exists():
         red("D8", "examples/heartbeat.smoke.mjs", "the canonical loop's fixture smoke is missing — the executable half of 'don't improvise it'")
 
+    # D9 — no onboarding surface hand-copies the SDK install (S113, Damir).
+    #
+    # "I would avoid npm install instructions and direct everyone to use
+    # AGIRAILS.md." He was right, and structurally so: that spec is versioned
+    # and maintained upstream (OWNER:ONBOARDING_START, execution: auto), so any
+    # copy of its steps here drifts silently the day the SDK changes and a
+    # reader has no way to tell. Our copy also carried our own bug — network
+    # selection was hand-rolled across three surfaces, which is how a TESTNET
+    # publish came to precede a MAINNET join.
+    #
+    # WHY A GATE AND NOT A SWEEP (Atlas, S114): the instances were removed and
+    # nothing stopped the next edit reintroducing them. Third instance of that
+    # class in one day — a roster count, a set of memory files, and this — and
+    # in all three the instance was fixed while the class stayed open.
+    # "I found the instance" is the prompt to write the scan, never the fix.
+    #
+    # The manual path may still be SHOWN as a fallback, which is why this
+    # checks the onboarding surfaces rather than every file: it is the primary
+    # instruction that must not be a hand-copy.
+    ONBOARDING_SURFACES = ["README.md", "AGENTS.md", "docs/quickstart.md"]
+    NPM_INSTALL = re.compile(r"npm\s+(i|install)\s+-?g?\s*@agirails/sdk")
+    for rel in ONBOARDING_SURFACES:
+        p = ROOT / rel
+        if not p.exists():
+            continue
+        src = p.read_text(encoding="utf-8")
+        # Two places are legitimately NOT primary instruction and are stripped
+        # before matching. Both are principled, not conveniences: a reader
+        # reaches them only after choosing to, or after something has already
+        # gone wrong.
+        #   · a collapsed <details> fallback ("prefer to drive it yourself?")
+        #   · the Troubleshooting section ("actp: command not found → install it")
+        # Narrowing the rule to PRIMARY instruction is what keeps it honest;
+        # a rule that also banned the recovery line would be one people learn
+        # to switch off.
+        primary = re.sub(r"<details>.*?</details>", "", src, flags=re.S | re.I)
+        primary = re.sub(r"\n##+\s*Troubleshooting.*", "", primary, flags=re.S | re.I)
+        if NPM_INSTALL.search(primary):
+            red("D9", rel, "hand-copies the SDK install as a primary instruction — point at "
+                           "https://www.agirails.app/protocol/AGIRAILS.md instead, or move it "
+                           "inside a <details> fallback")
+
     if violations:
         print(f"docs gate RED — {len(violations)} violation(s):")
         print("\n".join(violations))
