@@ -30,10 +30,17 @@ def probe(name: str, mutate, want_rule: str | None) -> None:
     global passed, failed
     with tempfile.TemporaryDirectory() as td:
         tree = Path(td)
-        for part in ("docs", "tools", "contracts", "examples"):
-            shutil.copytree(ROOT / part, tree / part)
-        for f in ("VERSION.json", "README.md", "CHANGELOG.md", ".env.example", "LICENSE"):
-            shutil.copy(ROOT / f, tree / f)
+        for part in ("docs", "tools", "contracts", "examples", "config",
+                     "scripts", "fixtures"):
+            src = ROOT / part
+            if src.exists():
+                shutil.copytree(src, tree / part)
+        for f in ("VERSION.json", "README.md", "CHANGELOG.md",
+                  "LYSVIK.md", "AGENTS.md",
+                  ".env.example", "LICENSE"):
+            src = ROOT / f
+            if src.exists():
+                shutil.copy(src, tree / f)
         mutate(tree)
         code, out = run_gate(tree)
         if want_rule is None:
@@ -124,6 +131,110 @@ probe("D6: a ghost route enters the reference", lambda t: edit(
 
 probe("D7: a served public route vanishes from the reference", lambda t: edit(
     t / "docs" / "api-reference.md", "/worlds/lysvik/rail", "/worlds/lysvik/ra_il"), "D7")
+
+
+# ── D10 probes ───────────────────────────────────────────────────────────────
+
+def d10_missing_world_status(t: Path) -> None:
+    vp = t / "VERSION.json"
+    v = json.loads(vp.read_text())
+    del v["world_status"]
+    vp.write_text(json.dumps(v, indent=2))
+
+
+probe("D10: world_status absent from VERSION.json", d10_missing_world_status, "D10")
+
+
+def d10_invalid_world_status(t: Path) -> None:
+    vp = t / "VERSION.json"
+    v = json.loads(vp.read_text())
+    v["world_status"] = "unknown"
+    vp.write_text(json.dumps(v, indent=2))
+
+
+probe("D10: world_status set to invalid value", d10_invalid_world_status, "D10")
+
+
+def d10_paused_without_banner(t: Path) -> None:
+    """Set world_status=paused and strip the paused banner from a doc that has one."""
+    vp = t / "VERSION.json"
+    v = json.loads(vp.read_text())
+    v["world_status"] = "paused"
+    vp.write_text(json.dumps(v, indent=2))
+    # Strip the paused banner from faq.md (it has a liveness claim + banner)
+    p = t / "docs" / "faq.md"
+    text = p.read_text()
+    text = re.sub(r"^> ⚠️ \*\*World paused\*\*.*\n\n?", "", text, flags=re.M)
+    p.write_text(text)
+
+
+probe("D10: world_status=paused but doc with liveness claim has no paused banner",
+      d10_paused_without_banner, "D10")
+
+
+def d10_live_with_paused_banner(t: Path) -> None:
+    """Set world_status=live but leave a paused banner in a doc."""
+    vp = t / "VERSION.json"
+    v = json.loads(vp.read_text())
+    v["world_status"] = "live"
+    vp.write_text(json.dumps(v, indent=2))
+    # Add a paused banner to quickstart.md (which won't have one when world is live)
+    p = t / "docs" / "quickstart.md"
+    text = p.read_text()
+    # Inject after the title
+    m = re.search(r"^# ", text, re.M)
+    p.write_text(text[:m.end()] + "Quickstart\n\n> ⚠️ **World paused** — test.\n" + text[m.end():])
+
+
+probe("D10: world_status=live but doc carries a paused banner", d10_live_with_paused_banner, "D10")
+
+
+# ── D6-config probe ──────────────────────────────────────────────────────────
+
+def d6_config_ghost_route(t: Path) -> None:
+    """Inject a ghost GET route into config/endpoints.example.json."""
+    p = t / "config" / "endpoints.example.json"
+    data = json.loads(p.read_text())
+    # Inject a GET for a path that only exists as POST in the contract
+    data["world"]["spectator"]["ghost"] = "GET /api/agents"
+    p.write_text(json.dumps(data, indent=2))
+
+
+probe("D6: ghost route in config/endpoints.example.json", d6_config_ghost_route, "D6")
+
+
+# ── D11 probes ───────────────────────────────────────────────────────────────
+
+def d11_lysvik_md_missing(t: Path) -> None:
+    (t / "LYSVIK.md").unlink()
+
+
+probe("D11: LYSVIK.md missing", d11_lysvik_md_missing, "D11")
+
+
+def d11_generated_block_hand_edited(t: Path) -> None:
+    """Hand-edit a GENERATED block in LYSVIK.md."""
+    p = t / "LYSVIK.md"
+    text = p.read_text()
+    # Corrupt the actions block
+    text = text.replace(
+        "- `idle`",
+        "- `idle`\n- `invented_action_that_does_not_exist`",
+        1,
+    )
+    p.write_text(text)
+
+
+probe("D11: generated block hand-edited in LYSVIK.md", d11_generated_block_hand_edited, "D11")
+
+
+def d11_fixture_missing(t: Path) -> None:
+    import shutil as _sh
+    _sh.rmtree(t / "fixtures")
+
+
+probe("D11: fixtures directory missing", d11_fixture_missing, "D11")
+
 
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

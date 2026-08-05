@@ -4,7 +4,8 @@ behaviour must go LOUDLY stale, and a doc that describes routes the world never
 served must go red the day it's written.
 
 Truth sources it holds the docs to:
-  VERSION.json                        — what the docs were verified against (the pin)
+  VERSION.json                        — what the docs were verified against (the pin),
+                                        and the world's current liveness status
   contracts/world-api.contract.json   — the served surface, generated + proven
                                         from genesis-village source (its gate
                                         keeps it fresh; we keep a committed copy)
@@ -20,9 +21,21 @@ Rules (each failure names its rule):
       non-concept doc must be status: stale (re-verify to flip back)
   D5  relative links resolve (docs/*.md + README.md)
   D6  documented ⇒ served: every /worlds/… or /api/… path in the docs exists
-      in the contract
+      in the contract; config/*.json method+path claims are held to the same
+      contract (ghost routes that fall through to SPA HTML are caught here)
   D7  served ⇒ documented: every contract route on a doc-required plane
       appears in docs/api-reference.md
+  D8  canonical examples held to the served surface (S100)
+  D9  no onboarding surface hand-copies the SDK install as primary instruction
+  D10 liveness rule: VERSION.json must carry world_status (live|paused); when
+      paused, every doc making a NOW-reachability claim must carry the paused
+      banner.  When live, no paused banners may remain.  The gate is fully
+      deterministic without network — the source of truth is the committed
+      world_status field, never a live probe.
+  D11 LYSVIK.md generation integrity: the generated blocks in LYSVIK.md must
+      match the output of scripts/generate-lysvik-md.py run against
+      fixtures/catalogue-pre-u1.json byte-for-byte.  Regeneration is the only
+      edit path; a hand-edit of a generated block is caught here.
 
 Run: python3 tools/docs_check.py     (from anywhere; repo-rooted; exit 1 on red)
 """
@@ -30,11 +43,30 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
+
+# D10 — patterns that assert NOW-reachability (the world is live and the door
+# is open today).  Architectural claims ("a zero-balance agent CAN claim…")
+# are rephrased in the docs to be timeless; these patterns catch the remainder
+# that are only true while world.lysvik.app is reachable.
+LIVENESS_CLAIM_RE = re.compile(
+    r"door is open"                       # faq.md, README.md
+    r"|world runs at\b"                   # faq.md
+    r"|world is live at\b"               # quickstart.md
+    r"|watch it in a browser"            # README.md
+    r"|watch it live\b"                  # README.md
+    r"|(?:are|is) live on Base mainnet"  # what-is-lysvik.md
+    r"|https://world\.lysvik\.app/worlds/"  # raw endpoint literals
+    r"|https://world\.lysvik\.app/api/",    # raw api literals
+    re.I,
+)
+# The paused banner must contain "World paused" (case-insensitive).
+PAUSED_BANNER_RE = re.compile(r"^> ⚠️.*[Ww]orld paused", re.M)
 
 STATUSES = {"current", "stale", "superseded"}
 SURFACES = {"world-api", "sdk-cli", "economy", "operator-window", "concept"}
@@ -75,6 +107,14 @@ def main() -> int:
     pinned_gv = version["verified_against"]["genesis-village"]
     pinned_sdk = version["verified_against"]["sdk-js"]
     upstream_gv = version["upstream"]["genesis-village"]
+
+    # D10 — world_status must be present in VERSION.json
+    world_status = version.get("world_status")
+    VALID_WORLD_STATUSES = {"live", "paused"}
+    if world_status not in VALID_WORLD_STATUSES:
+        red("D10", "VERSION.json",
+            f"world_status is {world_status!r} — must be one of {sorted(VALID_WORLD_STATUSES)}. "
+            "The gate cannot silently default to 'live'; set the field explicitly.")
 
     # D3 (artifact half): the committed contract must come from the pinned commit
     if contract["generated_from"] != f"genesis-village@{pinned_gv}":
@@ -187,7 +227,9 @@ def main() -> int:
     # The manual path may still be SHOWN as a fallback, which is why this
     # checks the onboarding surfaces rather than every file: it is the primary
     # instruction that must not be a hand-copy.
-    ONBOARDING_SURFACES = ["README.md", "AGENTS.md", "docs/quickstart.md"]
+    # D9 (S115): LYSVIK.md is also an onboarding surface — it must point at
+    # AGIRAILS.md upstream rather than hand-copying install instructions.
+    ONBOARDING_SURFACES = ["README.md", "AGENTS.md", "docs/quickstart.md", "LYSVIK.md"]
     NPM_INSTALL = re.compile(r"npm\s+(i|install)\s+-?g?\s*@agirails/sdk")
     for rel in ONBOARDING_SURFACES:
         p = ROOT / rel
@@ -209,6 +251,94 @@ def main() -> int:
             red("D9", rel, "hand-copies the SDK install as a primary instruction — point at "
                            "https://www.agirails.app/protocol/AGIRAILS.md instead, or move it "
                            "inside a <details> fallback")
+
+    # D10 — liveness rule (continued): scan docs and README for NOW-claims vs banner
+    if world_status in VALID_WORLD_STATUSES:
+        liveness_surfaces = [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]
+        for md in liveness_surfaces:
+            text = md.read_text()
+            # Strip the paused banner itself before scanning so the banner text
+            # does not self-match the liveness-claim patterns.
+            body_without_banner = PAUSED_BANNER_RE.sub("", text)
+            has_liveness_claim = bool(LIVENESS_CLAIM_RE.search(body_without_banner))
+            has_paused_banner = bool(PAUSED_BANNER_RE.search(text))
+            rel = str(md.relative_to(ROOT))
+            if world_status == "paused" and has_liveness_claim and not has_paused_banner:
+                red("D10", rel,
+                    "world_status=paused but this doc makes a NOW-reachability claim without "
+                    "the paused banner (> ⚠️ **World paused** — …). "
+                    "Add the banner or rephrase the claim to be timeless.")
+            if world_status == "live" and has_paused_banner:
+                red("D10", rel,
+                    "world_status=live but this doc carries a 'World paused' banner — remove it.")
+
+    # D6 (extended) — config/*.json method+path claims are held to the contract.
+    # A value like "GET /api/agents" asserts that route exists; if the contract
+    # only serves "POST /api/agents" (sim plane), the GET falls through to SPA
+    # HTML and is a ghost route.
+    CONFIG_ROUTE_RE = re.compile(
+        r"^\s*(GET|POST|PUT|DELETE|PATCH|HEAD|\*)\s+(/[A-Za-z0-9_/:-]+)")
+
+    def _extract_strings(obj):
+        if isinstance(obj, str):
+            yield obj
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                yield from _extract_strings(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                yield from _extract_strings(item)
+
+    for cfg in sorted((ROOT / "config").glob("*.json")):
+        rel = f"config/{cfg.name}"
+        try:
+            data = json.loads(cfg.read_text())
+        except json.JSONDecodeError as exc:
+            red("D6", rel, f"invalid JSON: {exc}")
+            continue
+        for val in _extract_strings(data):
+            m = CONFIG_ROUTE_RE.match(val)
+            if not m:
+                continue
+            method, path = m.group(1), normalize(m.group(2))
+            if (method, path) not in routes:
+                red("D6", rel,
+                    f"config claims '{method} {path}' but the contract serves no such route "
+                    f"(check method — a different HTTP verb may exist for this path)")
+
+    # D11 — LYSVIK.md generation integrity.
+    # The generated blocks in LYSVIK.md must match the output of
+    # scripts/generate-lysvik-md.py run against fixtures/catalogue-pre-u1.json.
+    # Regeneration is the only valid edit path for those blocks.
+    lysvik_md = ROOT / "LYSVIK.md"
+    fixture_path = ROOT / "fixtures" / "catalogue-pre-u1.json"
+    generator = ROOT / "scripts" / "generate-lysvik-md.py"
+    GEN_BLOCK_RE = re.compile(
+        r"<!-- GENERATED:(\w+):START -->(.*?)<!-- GENERATED:\1:END -->",
+        re.DOTALL,
+    )
+    if not lysvik_md.exists():
+        red("D11", "LYSVIK.md", "file is missing — create it via the generator")
+    elif not fixture_path.exists():
+        red("D11", "fixtures/catalogue-pre-u1.json",
+            "fixture is missing — commit a catalogue snapshot as proof-of-mechanism")
+    elif not generator.exists():
+        red("D11", "scripts/generate-lysvik-md.py",
+            "generator is missing — LYSVIK.md's generated blocks have no regeneration path")
+    else:
+        # Run the generator against the fixture and compare the generated blocks.
+        try:
+            result = subprocess.run(
+                [sys.executable, str(generator), str(fixture_path), "--check"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if result.returncode != 0:
+                red("D11", "LYSVIK.md",
+                    f"generated blocks do not match the fixture: {result.stdout.strip()}{result.stderr.strip()}")
+        except subprocess.TimeoutExpired:
+            red("D11", "LYSVIK.md", "generator timed out (30s)")
+        except Exception as exc:
+            red("D11", "LYSVIK.md", f"generator error: {exc}")
 
     if violations:
         print(f"docs gate RED — {len(violations)} violation(s):")
