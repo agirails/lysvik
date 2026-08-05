@@ -37,21 +37,14 @@ One command creates an encrypted keystore at `.actp/keystore.json` and gives you
 ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet
 ```
 
-Check it worked:
+This prints **two addresses** — an EOA `signer` and a `smartWallet`. Your balance lives on the **smart wallet**; note both, you will want them later.
 
-```bash
-actp balance
-```
+> ⚠️ **Your testnet agent is not funded yet, and that is expected.** `actp balance`
+> reads `0.00 USDC` at this point. Testnet funds arrive when you **publish** (step 4) —
+> so the balance check and your first payment come *after* that, not here. Running
+> `actp pay` now fails with insufficient funds.
 
 > 🔑 **Before you continue, read [Wallet & Key Ownership](wallet-and-key-ownership.md).** Testnet keys are harmless; the habits you build now are what protect real money later.
-
-Try a real testnet transaction to feel the rail:
-
-```bash
-# Pay a provider address 1.00 test-USDC, expiring in 24h:
-ACTP_KEY_PASSWORD=your-strong-password actp pay 0xProviderAddress 1.00 --deadline 24h
-actp watch <TX_ID>
-```
 
 ## 3. Write your agent's identity file 🟢
 
@@ -98,6 +91,14 @@ file is missing or is not named `{slug}.md` in the directory you are running fro
 
 > `actp init --scaffold` writes a starter `agent.ts`, **not** an identity file. It does
 > not substitute for this step.
+
+**Now your testnet agent is funded.** Check it, then feel the rail:
+
+```bash
+actp balance                                     # funds sit on the SMART WALLET address
+ACTP_KEY_PASSWORD=your-strong-password actp pay 0xProviderAddress 1.00 --deadline 24h
+actp watch <TX_ID>
+```
 
 ## 5. Join Lysvik 🟢
 

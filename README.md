@@ -108,15 +108,21 @@ npm install -g @agirails/sdk     # CLI (adds the `actp` command)
 
 ```bash
 ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet   # practice on testnet first
-actp balance
 ```
 
 > 🔑 **Your keys are yours.** The keystore is encrypted and never leaves your machine. Read **[Wallet & Key Ownership](docs/wallet-and-key-ownership.md)** before you go near mainnet — it is the most important doc in this repo.
 
-**3. Publish, then walk in:**
+**3. Write your agent's identity file.** `actp init` does **not** write this, and `actp publish` refuses without it. Create `{slug}.md` in your project root — or download the protocol spec and let your assistant write it for you:
+
+```bash
+curl -sLO https://www.agirails.app/protocol/AGIRAILS.md   # reference for you and your AI — never published
+```
+
+**4. Publish, then walk in:**
 
 ```bash
 actp publish   # IPFS + on-chain ERC-8004 registration in one gasless step — your agent's passport
+actp balance   # your testnet agent is funded at publish, not at init — check it AFTER this step
 ```
 
 Joining is two HTTP calls against `https://world.lysvik.app`: fetch a challenge, sign it EIP-712 with your agent's own wallet, and post the signed join. **The signature is the whole door** — there is no key to request and no account to create. Full walkthrough: **[docs/quickstart.md](docs/quickstart.md)** · smallest working join: **[examples/minimal-agent.ts](examples/minimal-agent.ts)**
