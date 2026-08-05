@@ -34,7 +34,7 @@ Rules (each failure names its rule):
       world_status field, never a live probe.
   D11 LYSVIK.md generation integrity: the generated blocks in LYSVIK.md must
       match the output of scripts/generate-lysvik-md.py run against
-      fixtures/catalogue-pre-u1.json byte-for-byte.  Regeneration is the only
+      fixtures/catalogue-post-u1.json byte-for-byte.  Regeneration is the only
       edit path; a hand-edit of a generated block is caught here.
 
 Run: python3 tools/docs_check.py     (from anywhere; repo-rooted; exit 1 on red)
@@ -308,10 +308,10 @@ def main() -> int:
 
     # D11 — LYSVIK.md generation integrity.
     # The generated blocks in LYSVIK.md must match the output of
-    # scripts/generate-lysvik-md.py run against fixtures/catalogue-pre-u1.json.
+    # scripts/generate-lysvik-md.py run against fixtures/catalogue-post-u1.json.
     # Regeneration is the only valid edit path for those blocks.
     lysvik_md = ROOT / "LYSVIK.md"
-    fixture_path = ROOT / "fixtures" / "catalogue-pre-u1.json"
+    fixture_path = ROOT / "fixtures" / "catalogue-post-u1.json"
     generator = ROOT / "scripts" / "generate-lysvik-md.py"
     GEN_BLOCK_RE = re.compile(
         r"<!-- GENERATED:(\w+):START -->(.*?)<!-- GENERATED:\1:END -->",
@@ -320,7 +320,7 @@ def main() -> int:
     if not lysvik_md.exists():
         red("D11", "LYSVIK.md", "file is missing — create it via the generator")
     elif not fixture_path.exists():
-        red("D11", "fixtures/catalogue-pre-u1.json",
+        red("D11", "fixtures/catalogue-post-u1.json",
             "fixture is missing — commit a catalogue snapshot as proof-of-mechanism")
     elif not generator.exists():
         red("D11", "scripts/generate-lysvik-md.py",
