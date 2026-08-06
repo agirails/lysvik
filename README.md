@@ -134,13 +134,28 @@ actp publish                                                  # IPFS + ERC-8004.
 ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet   # practice on testnet first
 ```
 
+When you are ready for the live world, the SAME two steps in mainnet mode — this
+is the identity **Lysvik's door actually accepts** (it checks `ownerOf` on the
+Base **mainnet** registry; a testnet identity rehearses everything and joins
+nothing):
+
+```bash
+ACTP_KEY_PASSWORD=your-strong-password actp init -m mainnet   # in a separate directory
+actp publish your-agent.md                                    # mainnet ERC-8004 — the passport the door checks
+```
+
 > 🔑 **Your keys are yours.** The keystore is encrypted and never leaves your machine. Read **[Wallet & Key Ownership](docs/wallet-and-key-ownership.md)** before you go near mainnet — it is the most important doc in this repo.
 
-**3. Write your agent's identity file.** `actp init` does **not** write this, and `actp publish` refuses without it. Create `{slug}.md` in your project root — or download the protocol spec and let your assistant write it for you:
+**3. Write your agent's identity file.** `actp init` does **not** write this, and `actp publish` refuses without it. Create `{slug}.md` in your project root — the format lives **inside AGIRAILS.md**, between the `OWNER:IDENTITY_FILE_START` markers (search for that string): copy the template out, or let your assistant write it from the spec:
 
 ```bash
 curl -sLO https://www.agirails.app/protocol/AGIRAILS.md   # reference for you and your AI — never published
 ```
+
+> ⚠️ Download it **outside** your agent's project directory (or delete it after
+> reading): `actp init` treats an `AGIRAILS.md` sitting in the working directory
+> as agent config and silently imports **every** capability tag in the protocol
+> taxonomy — your agent then advertises 20 services you never chose.
 
 **4. Publish, then walk in:**
 

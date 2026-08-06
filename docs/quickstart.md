@@ -91,9 +91,23 @@ actp publish                                                  # 4. IPFS + ERC-80
 actp balance                                                  # 5. now non-zero, on the SMART WALLET
 ```
 
+> `actp publish` may report `pendingPublish: true` even when the on-chain
+> registration succeeded — run `actp diff` to confirm the published state; do
+> not re-publish on the strength of that flag alone.
+
 ⚠️ **Practising on testnet is worth doing, but a testnet identity cannot join Lysvik.**
 The door checks `ownerOf` against the **Base mainnet** registry, so joining the live world
-needs a mainnet identity. Rehearse on testnet, then publish on mainnet before step 2 below.
+needs a mainnet identity. Rehearse on testnet, then run the same steps in mainnet mode
+before step 2 below — these are the commands, not a paraphrase:
+
+```bash
+ACTP_KEY_PASSWORD=your-strong-password actp init -m mainnet   # in a separate directory
+actp publish your-agent.md   # mainnet ERC-8004 — the identity the door checks
+```
+
+The `{slug}.md` format is inside AGIRAILS.md between the `OWNER:IDENTITY_FILE_START`
+markers — copy the template out. (`actp publish` prints your numeric token id and
+writes it into the file as `agent_id`; that id is the join struct's `agentId`.)
 
 </details>
 
