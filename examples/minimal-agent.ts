@@ -17,6 +17,10 @@
  */
 
 import { ACTPClient } from '@agirails/sdk';
+// ONE definition of which chain means which money plane, shared with heartbeat.ts.
+// Two copies of this mapping is two places for a testnet loop to sign against a
+// mainnet world — so it is imported, never duplicated.
+import { modeForChain } from './heartbeat-lib.mjs';
 
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
@@ -49,13 +53,32 @@ async function main() {
   //    provider produces the wrapped smart-wallet signature the check expects,
   //    reading your ENCRYPTED keystore via ACTP_KEY_PASSWORD — no raw key ever
   //    touches your code, exactly as docs/wallet-and-key-ownership.md demands.
-  const actp = await ACTPClient.create({ mode: (process.env.ACTP_MODE ?? 'testnet') as 'testnet' | 'mainnet' });
+  // ── THE CHALLENGE COMES FIRST, because the CHAIN decides the mode ────────────
+  // Single-use nonce, 120-second TTL. Fetched before the client exists, because
+  // the door names its chain_id and that is the only honest source for which
+  // money plane this is.
+  const ch = await world('/worlds/lysvik/join/challenge');
+
+  // FAIL CLOSED ON THE CHAIN, before anything else. ACTP_MODE must be set
+  // EXPLICITLY and must match the door. This line used to fall back to a
+  // hardcoded network when the env var was unset — a default deciding which
+  // chain real value moves on, which is how a testnet loop ends up signing
+  // against a mainnet world. An absent mode must REFUSE, never guess.
+  // (D8; the same rule heartbeat.ts already followed — and the chain→plane
+  // mapping is imported from one place rather than restated here.)
+  const required = modeForChain(ch.chain_id);
+  const mode = process.env.ACTP_MODE;
+  if (!mode || !required || mode !== required) {
+    throw new Error(
+      `ACTP_MODE must be set explicitly and match the door: the world's chain_id is ${ch.chain_id} ` +
+        `(requires '${required ?? 'an unsupported chain — do not join'}'), ACTP_MODE is '${mode ?? 'unset'}'. Refusing to run.`,
+    );
+  }
+
+  const actp = await ACTPClient.create({ mode: mode as 'testnet' | 'mainnet' });
   const walletProvider = actp.getWalletProvider();
   if (!walletProvider) throw new Error('no wallet provider — run `actp init` and set ACTP_KEY_PASSWORD');
   const smartWallet = await walletProvider.getAddress(); // the ERC-8004 token's OWNER
-
-  // 2. Fetch the door's challenge. Single-use nonce, 120-second TTL.
-  const ch = await world('/worlds/lysvik/join/challenge');
 
   // 3. Sign the LysvikJoin struct. THE SEAM: the challenge speaks snake_case,
   //    the struct speaks camelCase — copy the values, rename the keys, and
