@@ -9,5 +9,7 @@
   "upstream": {
     "genesis-village": "a183621",
     "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins \u2014 a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
-  }
+  },
+  "world_status": "paused",
+  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' \u2014 an absent field is a D10 violation."
 }

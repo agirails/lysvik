@@ -17,7 +17,10 @@
  */
 
 import { ACTPClient } from '@agirails/sdk';
-import { Wallet } from 'ethers';
+// ONE definition of which chain means which money plane, shared with heartbeat.ts.
+// Two copies of this mapping is two places for a testnet loop to sign against a
+// mainnet world — so it is imported, never duplicated.
+import { modeForChain } from './heartbeat-lib.mjs';
 
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
@@ -40,14 +43,42 @@ async function world(path: string, method = 'GET', body?: unknown, token?: strin
 }
 
 async function main() {
-  // 1. Your wallet. The SDK reads your encrypted keystore; here we also need
-  //    the signer for the EIP-712 join. NOTHING can move funds without this
-  //    key — guard it (see the key doc). The wallet must OWN your ERC-8004
-  //    identity token (`actp publish` registered one).
-  const agentWallet = new Wallet(/* your key management here — never hardcode */ process.env.AGENT_PRIVATE_KEY!);
-
-  // 2. Fetch the door's challenge. Single-use nonce, 120-second TTL.
+  // 1. Your wallet — THROUGH THE SDK, never as a raw key. `actp init` minted a
+  //    Coinbase SMART WALLET and `actp publish` registered your ERC-8004 token
+  //    to IT — so `ownerOf(agentId)` is the smart wallet, and the door verifies
+  //    your signature against that contract via ERC-1271. A raw EOA signature
+  //    (`new Wallet(key).signTypedData`) can NEVER pass that check: the door
+  //    answers 403 UNPUBLISHED or 401 SIGNATURE_INVALID and no doc used to say
+  //    why (found by a cold-operator walk, 2026-08-06). The SDK's wallet
+  //    provider produces the wrapped smart-wallet signature the check expects,
+  //    reading your ENCRYPTED keystore via ACTP_KEY_PASSWORD — no raw key ever
+  //    touches your code, exactly as docs/wallet-and-key-ownership.md demands.
+  // ── THE CHALLENGE COMES FIRST, because the CHAIN decides the mode ────────────
+  // Single-use nonce, 120-second TTL. Fetched before the client exists, because
+  // the door names its chain_id and that is the only honest source for which
+  // money plane this is.
   const ch = await world('/worlds/lysvik/join/challenge');
+
+  // FAIL CLOSED ON THE CHAIN, before anything else. ACTP_MODE must be set
+  // EXPLICITLY and must match the door. This line used to fall back to a
+  // hardcoded network when the env var was unset — a default deciding which
+  // chain real value moves on, which is how a testnet loop ends up signing
+  // against a mainnet world. An absent mode must REFUSE, never guess.
+  // (D8; the same rule heartbeat.ts already followed — and the chain→plane
+  // mapping is imported from one place rather than restated here.)
+  const required = modeForChain(ch.chain_id);
+  const mode = process.env.ACTP_MODE;
+  if (!mode || !required || mode !== required) {
+    throw new Error(
+      `ACTP_MODE must be set explicitly and match the door: the world's chain_id is ${ch.chain_id} ` +
+        `(requires '${required ?? 'an unsupported chain — do not join'}'), ACTP_MODE is '${mode ?? 'unset'}'. Refusing to run.`,
+    );
+  }
+
+  const actp = await ACTPClient.create({ mode: mode as 'testnet' | 'mainnet' });
+  const walletProvider = actp.getWalletProvider();
+  if (!walletProvider) throw new Error('no wallet provider — run `actp init` and set ACTP_KEY_PASSWORD');
+  const smartWallet = await walletProvider.getAddress(); // the ERC-8004 token's OWNER
 
   // 3. Sign the LysvikJoin struct. THE SEAM: the challenge speaks snake_case,
   //    the struct speaks camelCase — copy the values, rename the keys, and
@@ -82,15 +113,19 @@ async function main() {
     mode: ch.mode,
     identityRegistry: ch.identity_registry,
     agentRegistry: ch.agent_registry,
-    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id (decimal string)
-    wallet: agentWallet.address,
+    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — printed by `actp publish`, and written into your {slug}.md as `agent_id`
+    wallet: smartWallet, // MUST equal ownerOf(agentId) — the smart wallet, not your EOA signer
     nonce: ch.nonce,
     issuedAt: ch.issued_at,
     expiresAt: ch.expires_at,
     agentName: AGENT_NAME, // the name goes HERE, in the signature — not the body
     lookId: '', // '' = dealt a garment
   };
-  const signature = await agentWallet.signTypedData(domain, types, signedObject);
+  // The wrapped ERC-1271 smart-wallet signature — ~450 bytes, not a 65-byte
+  // ECDSA sig. This is the key the door's lock is actually built for.
+  const signature = await walletProvider.signTypedData({
+    domain, types, primaryType: 'LysvikJoin', message: signedObject,
+  });
 
   // 4. Walk in. The signature IS the door — no key to request.
   const me = await world('/worlds/lysvik/join', 'POST', { signed_object: signedObject, signature });

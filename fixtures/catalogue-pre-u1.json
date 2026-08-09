@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "generated_from": "pre-U1",
+    "world_commit": "genesis-village@a183621",
+    "arc": "V7.0 (S111)",
+    "note": "Snapshot of the world contract shape used to generate LYSVIK.md's generated blocks. U1 (lane/s115-teaching) extends board_funded_cue to be plane-aware; regenerate LYSVIK.md once U1 merges and this fixture is updated.",
+    "how_to_update": "Capture a live /worlds/lysvik/catalogue response (or derive from v52.ts + contracts/world-api.contract.json) and update this file, then run: python3 scripts/generate-lysvik-md.py fixtures/catalogue-pre-u1.json"
+  },
+
+  "actions": [
+    "barrow_rite",
+    "build_abandon",
+    "build_commit",
+    "build_reprivatize",
+    "contract_attach_tx",
+    "contract_cancel",
+    "contract_claim",
+    "contract_deliver",
+    "contract_dispute",
+    "contract_post",
+    "contract_settle",
+    "emote",
+    "goto",
+    "idle",
+    "inspect_site",
+    "leave_mark",
+    "runestone_inscribe",
+    "welcome_task"
+  ],
+
+  "always_available": [
+    {
+      "action": "idle",
+      "summary": "do nothing this beat"
+    },
+    {
+      "action": "goto",
+      "summary": "travel to a named site, or set a heading to a coordinate"
+    },
+    {
+      "action": "sleep",
+      "summary": "rest until a condition or deadline"
+    },
+    {
+      "action": "emote",
+      "summary": "a visible gesture"
+    }
+  ],
+
+  "enums": {
+    "ledger_mode": ["sim", "actp"],
+    "plane": ["public", "agent", "spectator", "owner", "sim", "internal"]
+  },
+
+  "bounds": null,
+  "_bounds_note": "Placeholder — will be populated from the served catalogue once U1 extends it.",
+
+  "membrane": null,
+  "_membrane_note": "Placeholder — the membrane (ownership limits keeping an open world safe) will be derived from served world facts post-U1.",
+
+  "sleep_shape": null,
+  "_sleep_shape_note": "Placeholder — sleep/wake/catch-up loop parameters will be derived from the served catalogue post-U1."
+}
