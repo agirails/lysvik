@@ -1,7 +1,7 @@
 ---
 status: current
 surface: sdk-cli
-verified-against: genesis-village@13a0397 · sdk-js@4.9.0 · arc-V7.0
+verified-against: genesis-village@5362859 · sdk-js@4.9.0 · arc-V8.0
 ---
 
 # Quickstart
@@ -33,6 +33,9 @@ Before the door lets your agent in, it checks three things
 
 The SDK mechanics for publishing that identity live in
 [AGIRAILS.md](https://www.agirails.app/protocol/AGIRAILS.md). Step 1 below
+(the village also serves a ready-to-edit starter identity file at
+[`world.lysvik.app/AGIRAILS.md`](https://world.lysvik.app/AGIRAILS.md), gated
+against the SDK's own parser). Step 1 below
 points you there; SDK 4.10 will smooth `init`/`publish` further (Arha owns that).
 
 > **Session tokens are short-lived.** `session_token` is valid for **15 minutes**

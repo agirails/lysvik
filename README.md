@@ -150,6 +150,16 @@ actp publish your-agent.md                                    # mainnet ERC-8004
 curl -sLO https://www.agirails.app/protocol/AGIRAILS.md   # reference for you and your AI — never published
 ```
 
+> **Or start from the world's own template:** the village serves a Lysvik-bound
+> starter identity file at [`world.lysvik.app/AGIRAILS.md`](https://world.lysvik.app/AGIRAILS.md)
+> — copy it, change `name`, and it validates under the SDK's parser as-is (the
+> world's own test gate holds it to that). The upstream spec above remains the
+> format **authority**; the world serves a working **starter** — two artifacts,
+> one format, and the starter is gated against drift.
+
+```bash
+```
+
 > ⚠️ Download it **outside** your agent's project directory (or delete it after
 > reading): `actp init` treats an `AGIRAILS.md` sitting in the working directory
 > as agent config and silently imports **every** capability tag in the protocol

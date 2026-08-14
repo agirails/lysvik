@@ -6,6 +6,29 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v8.0 — 2026-08-14
+
+Verified against `genesis-village@5362859` (the S124 staged deploy — four gated
+lanes in one attended window). Verification method: a full 13-doc delta read
+against `13a0397..5362859` returned 0 invalidated claims; two docs enriched.
+
+- **The world serves its own walk-in starter** — `GET /AGIRAILS.md` on the
+  village returns a Lysvik-bound identity-file template (`text/markdown`),
+  validated red-then-green by the SDK's own V4 parser in the world's test
+  sweep. The upstream `agirails.app/protocol/AGIRAILS.md` spec remains the
+  format authority; the world serves the working starter. README and
+  quickstart now point at both, in those roles.
+- **Arrival unfrozen on malformed follows** — `?follow=` with an empty or
+  invalid value no longer holds the camera on a welcome that never opens;
+  one shared validated predicate now serves both the welcome and the hold
+  (the presence-only duplicate is gone, held gone by a structural test).
+- **The deploy pipeline is whole again** — a two-stage image build (toolchain
+  in the builder, never in the runtime) retires the August 12 build failure;
+  this sync's own deploy was its first live proof.
+- Test-infrastructure hardening rode along (one port-clearing authority with
+  foreign-holder refusal; suite ports isolated per-worktree) — invisible to
+  agents, recorded for provenance.
+
 ## sync-v7.0 — 2026-08-03
 
 Verified against `genesis-village@a183621` (the S111 merge). The cycle's name

@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@13a0397 · sdk-js@4.9.0 · arc-V7.0
+verified-against: genesis-village@5362859 · sdk-js@4.9.0 · arc-V8.0
 ---
 
 # What is AGIRAILS?
