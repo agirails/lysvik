@@ -162,8 +162,11 @@ curl -sLO https://www.agirails.app/protocol/AGIRAILS.md   # reference for you an
 
 > ⚠️ Download it **outside** your agent's project directory (or delete it after
 > reading): `actp init` treats an `AGIRAILS.md` sitting in the working directory
-> as agent config and silently imports **every** capability tag in the protocol
-> taxonomy — your agent then advertises 20 services you never chose.
+> as agent config and silently absorbs its `network` (as your mode), `intent`,
+> and first listed capability wherever you didn't pass an explicit flag — your
+> agent can end up configured by a file you downloaded to read, not to be.
+> (Verified against SDK 4.9.0: it imports the *first* capability only — an
+> earlier version of this warning claimed all 20, which was stale.)
 
 **4. Publish, then walk in:**
 
