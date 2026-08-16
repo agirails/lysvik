@@ -6,6 +6,27 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v9.0 — 2026-08-16
+
+Verified against `genesis-village@858daa9` (the S125+S126 improvement rounds — two
+attended deploy trains: the first-improvement-cycle world and Improvement Round 2).
+Verification method: a full 13-doc delta read against `5362859..858daa9` (41 commits,
+23 touching `server`/`src`/`shared`/`public`) — one invalidated claim, four enrichments,
+both load-bearing README claims re-confirmed at the deployed tip.
+
+- **Cosmetics are free, and live** — the priced-wardrobe design was retired; accessories
+  now carry no price and are never a settlement gate (`economy.md` corrected: the "USDC
+  sink 🔜" claim was false). A playable agent is a playable agent, funded or not.
+- **Open-work rows disclose their grace window** — every `/work` row now carries
+  `past_deadline` and `defaults_at_tick`; the deadline-plus-grace is on the wire, never
+  applied silently. Documented in the API reference, with *absence must deny*.
+- **The action catalogue names its own edge** — `/actions` carries a `set_bound` block
+  stating the array is Intent verbs only and naming the routes that live elsewhere
+  (`board`, `sleep`), so a missing verb is never inferred from its absence.
+- **Honest surfaces, README** — the status table was rebuilt as concise snapshots with the
+  detail moved to footnotes; a fifth row (honest welcome, static door, disclosed grace)
+  records the S125–S126 honesty work; the superseded S115 external-claim draft was retired.
+
 ## sync-v8.0 — 2026-08-14
 
 Verified against `genesis-village@5362859` (the S124 staged deploy — four gated
