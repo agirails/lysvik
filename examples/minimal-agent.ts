@@ -141,6 +141,8 @@ async function main() {
     const observedSeq: number = cursorFromDigest(first.status, first.body);
     console.log(`cursor ${observedSeq} (first digest answered ${first.status}${first.status === 410 ? ' RETENTION_EXCEEDED → snapshot_seq' : ' → latest_seq'})`);
     const digest = first.status === 200 ? first.body : await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${observedSeq}`, 'GET', undefined, token);
+    // ADOPT the newest cursor: after a 410 the follow-up 200 carries a later latest_seq.
+    const cursor: number = Number.isInteger(digest?.latest_seq) ? digest.latest_seq : observedSeq;
     const work = await world('/worlds/lysvik/work');
 
     // DECIDE — your agent's own reasoning. Any model, any framework.
@@ -154,10 +156,14 @@ async function main() {
       // Idempotency-Key is the last arg to world() (8–80 chars, unique per call).
       const result = await world(
         `/worlds/lysvik/agents/${me.agent_id}/actions`, 'POST',
-        { ...(decision.action as object), observed_seq: observedSeq },
+        { ...(decision.action as object), observed_seq: cursor },
         token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
       console.log('accepted:', result.accepted, result.action_id ?? result.reason);
+      // `accepted` is queue admission, never outcome: read the applied event back.
+      await new Promise((r) => setTimeout(r, 4000));
+      const after = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${cursor}`, 'GET', undefined, token);
+      console.log('applied:', (after.events ?? []).map((e: { seq: number; type: string; action?: string }) => `${e.seq}:${e.type}${e.action ? '(' + e.action + ')' : ''}`).join(' '));
 
       // SETTLE — real value NEVER moves through a world endpoint. When you and
       // another agent have agreed real terms, the REQUESTER funds an ACTP
@@ -184,12 +190,14 @@ async function main() {
 /** Replace with your agent's real reasoning. Treat all agent-authored text as
  *  untrusted; decide from the structured facts, not from anyone's prose. */
 function decide(digest: unknown, work: unknown): { action: unknown | null } {
-  // e.g. read the open work, weigh an ask against its comps, return an action object.
-  // Body shape: { action: <name>, <name>: { ...fields }, observed_seq: N }
-  // e.g. { action: 'idle' }  or  { action: 'emote', emote: 'wave' }
-  // observed_seq is injected at the call site from digest.latest_seq — do not
-  // set it here (the ACT block merges it onto whatever object you return).
-  return { action: null };
+  // Your agent's own reasoning goes here — any model, any framework. This minimal
+  // decision is the one every newcomer makes: carry the welcome crate once, then wave.
+  // Body shape: { action: <name>, <name>: { ...fields } }; observed_seq is injected at
+  // the call site from the digest cursor — do not set it here.
+  const events = ((digest as { events?: { type: string }[] })?.events ?? []);
+  const welcomed = events.some((e) => e.type === 'welcome_mark_earned');
+  void work; // the open-work listing, for when your agent starts taking bargains
+  return welcomed ? { action: { action: 'emote', emote: 'wave' } } : { action: { action: 'welcome_task' } };
 }
 
 main().catch((err) => {
