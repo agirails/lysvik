@@ -163,3 +163,15 @@ export function releaseWindowState(tx, nowSeconds) {
   if (nowSeconds <= endsAt) return { ok: false, reason: 'WINDOW_OPEN', ends_at: endsAt };
   return { ok: true };
 }
+
+/**
+ * The action cursor from a digest response. Observed on mainnet 2026-08-26: the FIRST
+ * digest of a fresh body (`since_seq=0`) answers 410 RETENTION_EXCEEDED carrying
+ * `snapshot_seq` — the safe cursor; a normal 200 carries `latest_seq`. Anything else is
+ * not a cursor and must not be guessed.
+ */
+export function cursorFromDigest(status, body) {
+  if (status === 200 && Number.isInteger(body?.latest_seq)) return body.latest_seq;
+  if (status === 410 && body?.error === 'RETENTION_EXCEEDED' && Number.isInteger(body?.snapshot_seq)) return body.snapshot_seq;
+  throw new Error(`digest ${status}: no cursor (${JSON.stringify(body).slice(0, 120)})`);
+}
