@@ -1,5 +1,5 @@
 {
-  "_provenance": "captured from GET https://world.lysvik.app/worlds/lysvik/actions (genesis-village@1530b47) on 2026-08-26; the board proposal schema the world enforces. Re-capture at every sync; examples/heartbeat-lib.mjs reads THIS file, never its own numbers. Cross-field RULES from server/world.ts:1413-1428 (validateProposal) at the same pin: ctype fixes the verb, the good's vocabulary, and for capability/scroll the qty. Vocabularies from server/econ.ts GOOD_TYPES / RUNE_TYPES / SERVICE_TYPES. BOUND, named: the world's isTradeable() also admits heirloom ids (dynamic); this file lists the static goods only, so an heirloom-good proposal is dropped by the client extraction \u2014 a known narrowing, not a claim about the world.",
+  "_provenance": "captured from GET https://world.lysvik.app/worlds/lysvik/actions (genesis-village@1530b47) on 2026-08-26; the board proposal schema the world enforces. Re-capture at every sync; examples/heartbeat-lib.mjs reads THIS file, never its own numbers. Cross-field RULES from server/world.ts:1413-1428 (validateProposal) at the same pin: ctype fixes the verb, the good's vocabulary, and for capability/scroll the qty. Vocabularies from server/econ.ts GOOD_TYPES / RUNE_TYPES / SERVICE_TYPES. Heirlooms trade as goods (econ.ts isTradeable = CRAFT_GOODS \u222a HEIRLOOM_TYPES; HEIRLOOMS at this pin is the closed static list ['armring_landnam']) \u2014 included in goods.good_in.",
   "ctype": [
     "goods",
     "capability",
@@ -74,8 +74,11 @@
         "stockfish",
         "rendered_oil",
         "lamp_oil",
-        "ale"
+        "ale",
+        "armring_landnam"
       ]
     }
-  }
+  },
+  "supersedes_pattern": "^pr_[0-9a-f]{6,64}$",
+  "_fields": "Server KNOWN_PROPOSAL_FIELDS = kind ctype verb good qty reward deadline_in_ticks supersedes. proposal_id is the WORLD's echo on served rows (readable), never a field a client may send."
 }

@@ -156,7 +156,8 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
 // impossible one must never become a planner fact).
 import { readFileSync } from 'node:fs';
 const SCHEMA_FILE = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
-export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks, rules: SCHEMA_FILE.rules });
+export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks, rules: SCHEMA_FILE.rules, supersedes_pattern: SCHEMA_FILE.supersedes_pattern });
+const SUPERSEDES_RE = new RegExp(SCHEMA_FILE.supersedes_pattern);
 // Veyra R2 (8ddb249): enums alone admitted capability+fish, service+haul, scroll+serve, goods+carve —
 // the world's validateProposal couples ctype → verb → good vocabulary (→ qty). Same rules, from the file.
 function crossFieldOk(p) {
@@ -171,24 +172,31 @@ function crossFieldOk(p) {
 }
 const inBand = (v, band) => Number.isInteger(v) && v >= band.min && v <= band.max;
 const PROPOSAL_KEYS = ['kind', 'ctype', 'verb', 'good', 'qty', 'reward', 'deadline_in_ticks'];
-const PROPOSAL_OPTIONAL = ['proposal_id', 'supersedes'];
-function typedProposal(raw) {
+// Veyra R2-final: `supersedes` is the one optional field a client may SEND (exact ^pr_[0-9a-f]{6,64}$;
+// a wrong type or value refuses by name, never silently dropped). `proposal_id` is the WORLD's echo on
+// served rows — extraction reads it; a decision that carries it is refused (server: UNKNOWN_PROPOSAL_FIELD).
+const PROPOSAL_OPTIONAL = ['supersedes'];
+const SERVED_ONLY = ['proposal_id'];
+function typedProposal(raw, { served = false } = {}) {
   let p = raw;
   if (typeof p === 'string') { try { p = JSON.parse(p); } catch { return null; } }
   if (p === null || typeof p !== 'object' || Array.isArray(p)) return null;
   const keys = Object.keys(p);
-  if (keys.some((k) => !PROPOSAL_KEYS.includes(k) && !PROPOSAL_OPTIONAL.includes(k))) return null;
+  const allowed = served ? [...PROPOSAL_KEYS, ...PROPOSAL_OPTIONAL, ...SERVED_ONLY] : [...PROPOSAL_KEYS, ...PROPOSAL_OPTIONAL];
+  if (keys.some((k) => !allowed.includes(k))) return null;
+  if (p.supersedes !== undefined && (typeof p.supersedes !== 'string' || !SUPERSEDES_RE.test(p.supersedes))) return null;
   if (PROPOSAL_KEYS.some((k) => !(k in p))) return null;
   if (p.kind !== 'contract') return null;
   if (!PROPOSAL_SCHEMA.ctype.includes(p.ctype)) return null;
   if (!PROPOSAL_SCHEMA.verb.includes(p.verb)) return null;
-  if (typeof p.good !== 'string' || p.good.length === 0 || p.good.length > 64) return null;
+  if (typeof p.good !== 'string' || p.good.length === 0) return null; // vocabulary/pattern bound per ctype in crossFieldOk
   if (!inBand(p.qty, PROPOSAL_SCHEMA.qty)) return null;
   if (!inBand(p.reward, PROPOSAL_SCHEMA.reward)) return null;
   if (!inBand(p.deadline_in_ticks, PROPOSAL_SCHEMA.deadline_in_ticks)) return null;
   if (!crossFieldOk(p)) return null;
   const out = { kind: 'contract', ctype: p.ctype, verb: p.verb, good: p.good, qty: p.qty, reward: p.reward, deadline_in_ticks: p.deadline_in_ticks };
-  for (const k of PROPOSAL_OPTIONAL) if (typeof p[k] === 'string') out[k] = p[k];
+  if (typeof p.supersedes === 'string') out.supersedes = p.supersedes;
+  if (served && typeof p.proposal_id === 'string') out.proposal_id = p.proposal_id;
   return out;
 }
 export function boardFacts(posts) {
@@ -200,7 +208,7 @@ export function boardFacts(posts) {
       author_id: p.author_id,
       reply_to: typeof p.reply_to === 'string' ? p.reply_to : null,
       created_tick: Number.isFinite(p.created_tick) ? p.created_tick : 0,
-      proposal: typedProposal(p.proposal),
+      proposal: typedProposal(p.proposal, { served: true }),
       has_body: typeof p.body === 'string' && p.body.length > 0,
     }));
 }
@@ -236,6 +244,7 @@ export function validateDecision(d, known) {
     const out = { post: { body: p.body } };
     if (p.proposal !== undefined) {
       if (!exact(p.proposal, [...PROPOSAL_KEYS, ...PROPOSAL_OPTIONAL])) return { ok: false, reason: 'UNKNOWN_KEY' };
+      if (p.proposal.supersedes !== undefined && (typeof p.proposal.supersedes !== 'string' || !SUPERSEDES_RE.test(p.proposal.supersedes))) return { ok: false, reason: 'BAD_SUPERSEDES' };
       const tp = typedProposal(p.proposal);
       if (tp === null) return { ok: false, reason: 'OUT_OF_RANGE' };
       out.post.proposal = tp;

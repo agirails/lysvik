@@ -294,7 +294,7 @@ console.log('§R1 · no bearer leaves before the origin is bound; the challenge 
 console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/board-proposal.schema.json — both directions');
 {
   const file = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
-  check('lib schema === committed schema file, rules included (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks, rules: file.rules }));
+  check('lib schema === committed schema file, rules included (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks, rules: file.rules, supersedes_pattern: file.supersedes_pattern }));
   const base = { kind: 'contract', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3, deadline_in_ticks: 4800 };
   const facts = (over) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify({ ...base, ...over }) }])[0].proposal;
   check('a valid live deadline of 50000 is KEPT (was dropped)', facts({ deadline_in_ticks: 50000 })?.deadline_in_ticks === 50000);
