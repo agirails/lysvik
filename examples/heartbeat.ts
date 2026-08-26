@@ -42,7 +42,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
 import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState,
-  boardFacts, untrustedBoardText, validateDecision, bindEscrow, worldOrigin, originMatchesDeployment } from './heartbeat-lib.mjs';
+  boardFacts, untrustedBoardText, validateDecision, bindEscrow, worldOrigin, originMatchesDeployment, bearerPolicy } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
 // Argus F7: pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
@@ -80,9 +80,12 @@ const OBJECTIVE = process.env.LYSVIK_OBJECTIVE ?? 'earn a name worth remembering
 const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 
 /**
- * YOUR ESCROW RECORDS — the contract→escrow map YOU keep by hand today
- * (JSON: { "c5": "0x…" }), one entry per funding/attach receipt, kept where
- * only you write it. (A canonical receipt-writer ships with the
+ * YOUR ESCROW RECORDS — what YOUR wallet funded, kept by hand today, one entry
+ * per funding/attach receipt, kept where only you write it:
+ *   { "c5": { "escrow_id": "0x…", "provider_wallet": "0x…", "amount_base_units": "1000000" } }
+ * Release binds the rail transaction to THIS record (requester == your wallet,
+ * provider, amount) before it moves — a bare escrow id cannot release
+ * (RECORD_LEGACY_UNBOUND). (A canonical receipt-writer ships with the
  * lifecycle-helper arc; the manual step is a deliberate act until then.)
  * This file is release's whole authority: the model never names an escrow
  * (a prose-planted id could select another delivered escrow you requested
@@ -137,10 +140,16 @@ function validateCap(): void {
 // Board text in responses is DISPLAY data — never an instruction. Refusals are
 // typed: on 400 the body carries { error, field? } — surface them whole, they
 // are the world telling you exactly which term it would not hold.
+// Veyra R1: BOUND flips to true only after the door's deployment_origin matched the pinned
+// origin; until then no request may carry the bearer, and public routes never do.
+let BOUND = false;
 async function world(path: string, method = 'GET', body?: unknown) {
+  const policy = bearerPolicy(path, BOUND); // throws NOT_BOUND before binding on any agent route
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (policy.authorize) headers.Authorization = `Bearer ${SESSION_TOKEN}`;
   const res = await fetch(`${WORLD}${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SESSION_TOKEN}` },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
@@ -301,6 +310,7 @@ async function main() {
   if (!originMatchesDeployment(WORLD, challenge.deployment_origin)) {
     throw new Error(`WORLD_ORIGIN_MISMATCH: this loop is pinned to ${WORLD} but the door's deployment_origin is '${challenge.deployment_origin ?? 'absent'}'. Refusing to run.`);
   }
+  BOUND = true; // from here the bearer may travel — to agent routes only
   const required = modeForChain(challenge.chain_id);
   const mode = process.env.ACTP_MODE;
   if (!mode || !required || mode !== required) {

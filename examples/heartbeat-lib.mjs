@@ -150,6 +150,14 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
 /** F2 — the board's STRUCTURAL facts, with the prose removed. The planner sees ids, authors,
  *  reply edges, ticks and a TYPED proposal (exact keys, bounded numbers) — never a body.
  *  A proposal that fails the schema is null: a smuggled term dies here, not in decide(). */
+// Veyra R2 (e23f012): the bands are the WORLD's, not this file's. contracts/board-proposal.schema.json
+// is captured from the served action contract at the pinned world; the smoke gate holds this
+// constant to that file in both directions (a valid live value must never be dropped; an
+// impossible one must never become a planner fact).
+import { readFileSync } from 'node:fs';
+const SCHEMA_FILE = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
+export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks });
+const inBand = (v, band) => Number.isInteger(v) && v >= band.min && v <= band.max;
 const PROPOSAL_KEYS = ['kind', 'ctype', 'verb', 'good', 'qty', 'reward', 'deadline_in_ticks'];
 const PROPOSAL_OPTIONAL = ['proposal_id', 'supersedes'];
 function typedProposal(raw) {
@@ -160,10 +168,12 @@ function typedProposal(raw) {
   if (keys.some((k) => !PROPOSAL_KEYS.includes(k) && !PROPOSAL_OPTIONAL.includes(k))) return null;
   if (PROPOSAL_KEYS.some((k) => !(k in p))) return null;
   if (p.kind !== 'contract') return null;
-  for (const k of ['ctype', 'verb', 'good']) if (typeof p[k] !== 'string' || p[k].length === 0 || p[k].length > 64) return null;
-  if (!Number.isInteger(p.qty) || p.qty < 1 || p.qty > 100) return null;
-  if (!Number.isInteger(p.reward) || p.reward < 1 || p.reward > 25) return null;
-  if (!Number.isInteger(p.deadline_in_ticks) || p.deadline_in_ticks < 1 || p.deadline_in_ticks > 43_200) return null;
+  if (!PROPOSAL_SCHEMA.ctype.includes(p.ctype)) return null;
+  if (!PROPOSAL_SCHEMA.verb.includes(p.verb)) return null;
+  if (typeof p.good !== 'string' || p.good.length === 0 || p.good.length > 64) return null;
+  if (!inBand(p.qty, PROPOSAL_SCHEMA.qty)) return null;
+  if (!inBand(p.reward, PROPOSAL_SCHEMA.reward)) return null;
+  if (!inBand(p.deadline_in_ticks, PROPOSAL_SCHEMA.deadline_in_ticks)) return null;
   const out = { kind: 'contract', ctype: p.ctype, verb: p.verb, good: p.good, qty: p.qty, reward: p.reward, deadline_in_ticks: p.deadline_in_ticks };
   for (const k of PROPOSAL_OPTIONAL) if (typeof p[k] === 'string') out[k] = p[k];
   return out;
@@ -248,8 +258,13 @@ export function bindEscrow(tx, record, ownWallet) {
   if (!tx || typeof tx !== 'object') return { ok: false, reason: 'NO_RAIL_TX' };
   if (!addrEq(tx.requester, ownWallet)) return { ok: false, reason: 'ESCROW_REQUESTER_MISMATCH' };
   if (!addrEq(tx.provider, record.provider_wallet)) return { ok: false, reason: 'ESCROW_PROVIDER_MISMATCH' };
+  // Veyra R4: BigInt() coerces true→1, "0x10"→16, a float→its integer — a money guard must
+  // accept only the two honest shapes: a bigint, or a plain decimal string (SDK 4.9.0's
+  // advanced runtime). Anything else is a mismatch by name, before any conversion.
   let amt;
-  try { amt = BigInt(tx.amount); } catch { return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' }; }
+  if (typeof tx.amount === 'bigint') amt = tx.amount;
+  else if (typeof tx.amount === 'string' && /^[0-9]+$/.test(tx.amount)) amt = BigInt(tx.amount);
+  else return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' };
   if (amt !== BigInt(record.amount_base_units)) return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' };
   return { ok: true };
 }
@@ -301,6 +316,18 @@ export function releaseWindowState(tx, nowSeconds) {
   const endsAt = win > 1_000_000_000 && win > completedAt ? win : completedAt + win;
   if (nowSeconds <= endsAt) return { ok: false, reason: 'WINDOW_OPEN', ends_at: endsAt };
   return { ok: true };
+}
+
+/** Veyra R1 (e23f012): no bearer may leave before the door has bound the origin — and a public
+ *  route never needs one. The helper decides per request, from the path and a BOUND flag the
+ *  loop sets only after originMatchesDeployment() passed: public routes → no Authorization,
+ *  ever; agent/owner routes → Authorization only when bound, else a refusal by name. */
+const PUBLIC_ROUTE = /^\/(?:worlds\/lysvik\/(?:join\/challenge|presence|work|board(?:\/facts)?|rail|sites|actions)(?:\?|$)|api\/|health(?:\?|$)|\.well-known\/)/;
+export function bearerPolicy(path, bound) {
+  if (typeof path !== 'string') throw new Error('NOT_BOUND: no path');
+  if (PUBLIC_ROUTE.test(path)) return { authorize: false };
+  if (bound !== true) throw new Error(`NOT_BOUND: refusing to send a bearer to ${path} before the door's deployment_origin is bound`);
+  return { authorize: true };
 }
 
 /** F4 — the digest's own recovery: a 410 RETENTION_EXCEEDED names snapshot_seq, the safe cursor.
