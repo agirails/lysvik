@@ -302,3 +302,14 @@ export function releaseWindowState(tx, nowSeconds) {
   if (nowSeconds <= endsAt) return { ok: false, reason: 'WINDOW_OPEN', ends_at: endsAt };
   return { ok: true };
 }
+
+/** F4 — the digest's own recovery: a 410 RETENTION_EXCEEDED names snapshot_seq, the safe cursor.
+ *  Given the refusal body (parsed, or the thrown error's text), return the seq to resume from,
+ *  or null when the refusal is something else. The live run of minimal-agent died here first
+ *  (since_seq=0 on a world with 120k events) — the world taught the remedy; the loop ignored it. */
+export function retentionCursor(refusal) {
+  let body = refusal;
+  if (typeof body === 'string') { const i = body.indexOf('{'); if (i < 0) return null; try { body = JSON.parse(body.slice(i)); } catch { return null; } }
+  if (!body || typeof body !== 'object' || body.error !== 'RETENTION_EXCEEDED') return null;
+  return Number.isInteger(body.snapshot_seq) && body.snapshot_seq >= 0 ? body.snapshot_seq : null;
+}

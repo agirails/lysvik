@@ -18,7 +18,7 @@
  * these together — the gate will insist.
  */
 import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState,
-  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment } from './heartbeat-lib.mjs';
+  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment, retentionCursor } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -255,6 +255,15 @@ console.log('§F6 · release binds the rail transaction to the contract semantic
   check('boundRelease: a bare escrow-id string record → RECORD_LEGACY_UNBOUND', boundRelease({ contract_id: 'c3' }, book, { c3: '0xesc' }, 'v1').reason === 'RECORD_LEGACY_UNBOUND');
   const br = boundRelease({ contract_id: 'c3' }, book, { c3: rec }, 'v1');
   check('boundRelease: a full record → ok with the record for binding', br.ok === true && br.escrow_id === '0xesc' && br.record?.provider_wallet === rec.provider_wallet, br);
+}
+
+console.log('§F4 · the digest teaches its own recovery: 410 RETENTION_EXCEEDED → resume at snapshot_seq (seen live, v7, 2026-08-26)');
+{
+  const live = 'world GET /worlds/lysvik/agents/v7/observations/digest?since_seq=0 → 410: {"error":"RETENTION_EXCEEDED","snapshot_seq":120313,"hint":"history before the retention window is gone — resume with since_seq=120313 (snapshot_seq is the safe cursor)"}';
+  check('the thrown error text yields the cursor', retentionCursor(live) === 120313);
+  check('a parsed refusal body yields the cursor', retentionCursor({ error: 'RETENTION_EXCEEDED', snapshot_seq: 7 }) === 7);
+  check('another refusal is null (never a guessed cursor)', retentionCursor({ error: 'SINCE_SEQ_REQUIRED' }) === null);
+  check('a non-integer snapshot_seq is null', retentionCursor({ error: 'RETENTION_EXCEEDED', snapshot_seq: 'soon' }) === null);
 }
 
 console.log('§F7 · the world origin is pinned; an override is explicit and must match the door');

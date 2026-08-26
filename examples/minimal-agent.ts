@@ -22,7 +22,7 @@ import { ACTPClient } from '@agirails/sdk';
 // mainnet world — so it is imported, never duplicated.
 import { modeForChain } from './heartbeat-lib.mjs';
 
-import { worldOrigin, originMatchesDeployment, actionOutcome } from './heartbeat-lib.mjs';
+import { worldOrigin, originMatchesDeployment, actionOutcome, retentionCursor } from './heartbeat-lib.mjs';
 // Argus F7: pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
 const WORLD = worldOrigin(process.env).url;
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
@@ -139,7 +139,14 @@ async function main() {
   try {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
-    const digest = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=0`, 'GET', undefined, token);
+    // Argus F4 (found live, v7): since_seq=0 on a world with 120k events answers 410
+    // RETENTION_EXCEEDED and NAMES the safe cursor (snapshot_seq). Take the world's remedy once;
+    // any other refusal still throws.
+    const digestSince = async (seq: number) => {
+      try { return await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${seq}`, 'GET', undefined, token); }
+      catch (e) { const cur = retentionCursor(String(e)); if (cur === null) throw e; console.log(`digest: history before ${cur} is gone — resuming at snapshot_seq=${cur}`); return world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${cur}`, 'GET', undefined, token); }
+    };
+    const digest = await digestSince(0);
     // digest.latest_seq is your cursor — thread it into every action POST as
     // observed_seq; 600 ticks stale → STALE_OBSERVATION, re-observe.
     const observedSeq: number = (digest as { latest_seq: number }).latest_seq;
