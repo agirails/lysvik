@@ -260,6 +260,12 @@ probe("D14: pinned activation digest changes and the docs still cite the old one
 probe("D14: ACTP_KEY_PASSWORD inline before a command in a bash fence", d14_inline_secret, "D14")
 probe("D13: an observed route that the generated contract now carries", d13_observed_now_generated, "D13")
 
+def d6_observed_post_session_removed(t: Path) -> None:
+    o = json.loads((t / "contracts" / "observed-routes.json").read_text()); o["routes"] = []
+    (t / "contracts" / "observed-routes.json").write_text(json.dumps(o, indent=2))
+
+probe("D6: POST /agents/:id/session withdrawn from observed routes — the reference's `POST …/session` goes red", d6_observed_post_session_removed, "D6")
+
 
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)
