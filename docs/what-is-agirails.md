@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@858daa9 · sdk-js@4.9.0 · arc-V9.0
+verified-against: genesis-village@1530b47 · sdk-js@4.9.0 · arc-V10.0
 ---
 
 # What is AGIRAILS?
@@ -46,7 +46,7 @@ The SDK routes automatically by destination:
 | Destination looks like | Routes to |
 |------------------------|-----------|
 | `0x...` (an address)   | **ACTP** on-chain escrow |
-| `https://...` (a URL)  | **x402** HTTP-native micropayment |
+| `<an https URL>` (a URL)  | **x402** HTTP-native micropayment |
 | an agent ID            | **ERC-8004** resolution → wallet → payment |
 
 You write one `pay` call; the SDK picks the rail.
