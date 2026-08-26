@@ -103,7 +103,7 @@ sed -i.bak 's/^name: your-agent-name/name: my-agent/' AGIRAILS.md && rm AGIRAILS
 npx actp publish                                               # 4. no argument: publishes ./AGIRAILS.md → cid + configHash;
                                                                #    prints "activation will happen on your first payment" — mainnet is PENDING
 curl -fsSO https://world.lysvik.app/activate-mainnet.mjs       # 5. the sponsored activation (REQUIRED for admission; no ETH, no USDC)
-echo '83a84b23e7773183671c6df0ee882494bc20aba092f0c3500f724c2668c07106  activate-mainnet.mjs' | shasum -a 256 -c
+echo '26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a  activate-mainnet.mjs' | shasum -a 256 -c
                                                                #    ↑ VERIFY BEFORE YOU RUN IT: the script will hold your keystore password. The digest
                                                                #    is pinned in VERSION.json (activation_script.sha256). If it prints FAILED, stop and
                                                                #    open an issue — never execute an unverified script against your wallet.

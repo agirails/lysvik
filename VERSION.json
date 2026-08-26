@@ -14,8 +14,9 @@
   "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' — an absent field is a D10 violation.",
   "activation_script": {
     "url": "https://world.lysvik.app/activate-mainnet.mjs",
-    "sha256": "83a84b23e7773183671c6df0ee882494bc20aba092f0c3500f724c2668c07106",
-    "verified": "2026-08-26",
-    "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value."
+    "sha256": "26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a",
+    "verified": "2026-08-27",
+    "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value.",
+    "world_commit": "141921a"
   }
 }
