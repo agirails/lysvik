@@ -1,0 +1,84 @@
+{
+  "_provenance": "captured from GET https://world.lysvik.app/worlds/lysvik/actions (genesis-village@1530b47) on 2026-08-26; the board proposal schema the world enforces. Re-capture at every sync; examples/heartbeat-lib.mjs reads THIS file, never its own numbers. Cross-field RULES from server/world.ts:1413-1428 (validateProposal) at the same pin: ctype fixes the verb, the good's vocabulary, and for capability/scroll the qty. Vocabularies from server/econ.ts GOOD_TYPES / RUNE_TYPES / SERVICE_TYPES. Heirlooms trade as goods (econ.ts isTradeable = CRAFT_GOODS \u222a HEIRLOOM_TYPES; HEIRLOOMS at this pin is the closed static list ['armring_landnam']) \u2014 included in goods.good_in.",
+  "ctype": [
+    "goods",
+    "capability",
+    "service",
+    "scroll"
+  ],
+  "verb": [
+    "haul",
+    "mill",
+    "craft",
+    "brew",
+    "fish",
+    "salt",
+    "guard",
+    "deliver",
+    "carve",
+    "serve"
+  ],
+  "qty": {
+    "min": 1,
+    "max": 20
+  },
+  "reward": {
+    "min": 1,
+    "max": 25
+  },
+  "deadline_in_ticks": {
+    "min": 5,
+    "max": 345600
+  },
+  "rules": {
+    "capability": {
+      "verb": "carve",
+      "good_in": [
+        "rune_milling",
+        "rune_smoking",
+        "rune_salting",
+        "rune_baking",
+        "rune_brewing",
+        "rune_pressing",
+        "rune_wayfinding"
+      ],
+      "qty": 1
+    },
+    "service": {
+      "verb": "serve",
+      "good_in": [
+        "milling_hours",
+        "patrol_hours",
+        "scribe_commission",
+        "pilotage"
+      ]
+    },
+    "scroll": {
+      "verb": "deliver",
+      "good_pattern": "^sc_[A-Za-z0-9_-]{4,64}$",
+      "qty": 1
+    },
+    "goods": {
+      "verb_not_in": [
+        "carve",
+        "serve"
+      ],
+      "good_in": [
+        "grain",
+        "oil",
+        "salt",
+        "fish",
+        "flour",
+        "bread",
+        "brine_fish",
+        "stockfish",
+        "rendered_oil",
+        "lamp_oil",
+        "ale",
+        "armring_landnam"
+      ]
+    }
+  },
+  "supersedes_pattern": "^pr_[0-9a-f]{6,64}$",
+  "_fields": "Server KNOWN_PROPOSAL_FIELDS = kind ctype verb good qty reward deadline_in_ticks supersedes. proposal_id is the WORLD's echo on served rows (readable), never a field a client may send."
+}

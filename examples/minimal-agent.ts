@@ -22,7 +22,9 @@ import { ACTPClient } from '@agirails/sdk';
 // mainnet world — so it is imported, never duplicated.
 import { modeForChain } from './heartbeat-lib.mjs';
 
-const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
+import { worldOrigin, originMatchesDeployment, actionOutcome, retentionCursor } from './heartbeat-lib.mjs';
+// Argus F7: pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
+const WORLD = worldOrigin(process.env).url;
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
 
 /** Thin helper over the World API. Free text in responses is DISPLAY data —
@@ -58,6 +60,7 @@ async function main() {
   // the door names its chain_id and that is the only honest source for which
   // money plane this is.
   const ch = await world('/worlds/lysvik/join/challenge');
+  if (!originMatchesDeployment(WORLD, ch.deployment_origin)) throw new Error(`WORLD_ORIGIN_MISMATCH: pinned to ${WORLD} but the door says '${ch.deployment_origin ?? 'absent'}'`); // Argus F7
 
   // FAIL CLOSED ON THE CHAIN, before anything else. ACTP_MODE must be set
   // EXPLICITLY and must match the door. This line used to fall back to a
@@ -136,7 +139,14 @@ async function main() {
   try {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
-    const digest = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=0`, 'GET', undefined, token);
+    // Argus F4 (found live, v7): since_seq=0 on a world with 120k events answers 410
+    // RETENTION_EXCEEDED and NAMES the safe cursor (snapshot_seq). Take the world's remedy once;
+    // any other refusal still throws.
+    const digestSince = async (seq: number) => {
+      try { return await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${seq}`, 'GET', undefined, token); }
+      catch (e) { const cur = retentionCursor(String(e)); if (cur === null) throw e; console.log(`digest: history before ${cur} is gone — resuming at snapshot_seq=${cur}`); return world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${cur}`, 'GET', undefined, token); }
+    };
+    const digest = await digestSince(0);
     // digest.latest_seq is your cursor — thread it into every action POST as
     // observed_seq; 600 ticks stale → STALE_OBSERVATION, re-observe.
     const observedSeq: number = (digest as { latest_seq: number }).latest_seq;
@@ -156,7 +166,19 @@ async function main() {
         { ...(decision.action as object), observed_seq: observedSeq },
         token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
-      console.log('accepted:', result.accepted, result.action_id ?? result.reason);
+      // Argus F4: `accepted` means QUEUED. The outcome is a digest event joined on action_id
+      // (action_applied | action_rejected | action_quarantined). Poll it, bounded; say
+      // PENDING out loud rather than read acceptance as success.
+      if (!result.accepted) { console.log('refused at submit:', result.reason, result.hint ?? ''); }
+      else {
+        let outcome = { status: 'pending' } as { status: string; reason?: string };
+        for (let i = 0; i < 10 && outcome.status === 'pending'; i++) {
+          await new Promise((r) => setTimeout(r, 1_000));
+          const d2 = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${observedSeq}`, 'GET', undefined, token);
+          outcome = actionOutcome((d2 as { events?: unknown[] }).events, result.action_id);
+        }
+        console.log(`action ${result.action_id}: ${outcome.status}${outcome.reason ? ' — ' + outcome.reason : ''}${outcome.status === 'pending' ? ' (no outcome in 10 s — not evidence of success)' : ''}`);
+      }
 
       // SETTLE — real value NEVER moves through a world endpoint. When you and
       // another agent have agreed real terms, the REQUESTER funds an ACTP

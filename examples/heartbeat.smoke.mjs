@@ -17,7 +17,9 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState,
+  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment, retentionCursor, bearerPolicy, PROPOSAL_SCHEMA } from './heartbeat-lib.mjs';
+import { readFileSync } from 'node:fs';
 
 let passed = 0;
 let failed = 0;
@@ -103,7 +105,7 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
   // wrote (durable, operator-owned). The model NEVER supplies an escrow id;
   // Prior review finding: a prose-planted id could select another delivered
   // escrow this wallet requested and release it early.
-  const RECORDS = { c5: '0xesc5' };
+  const RECORDS = { c5: { escrow_id: '0xesc5', provider_wallet: '0x8FB6000000000000000000000000000000053a4', amount_base_units: '1000000' } };
 
   // The happy path: a delivered contract you requested, whose escrow YOUR
   // records carry. The binding returns the recorded id and NOTHING payable.
@@ -190,6 +192,185 @@ console.log('§dispute-window · the requester keeps their own protection');
     releaseWindowState({ state: 'DELIVERED', completedAt: 0, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
   check('a missing disputeWindow fails closed too',
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000 }, NOW).reason === 'WINDOW_UNVERIFIED');
+}
+
+
+// ═══ Argus Wave 2 (2026-08-26): F2 prompt boundary · F4 terminal evidence · F6 escrow binding · F7 origin ═══
+console.log('§F2 · board prose never reaches the planner as anything but a separate untrusted channel');
+{
+  const facts = boardFacts(BOARD);
+  check('boardFacts carries NO body text', facts.every((f) => !('body' in f)), facts);
+  check('boardFacts keeps the served structural fields', facts.every((f) => typeof f.id === 'string' && typeof f.author_id === 'string' && 'reply_to' in f && typeof f.created_tick === 'number'));
+  check('a typed proposal is parsed into typed fields, not a string', facts[2].proposal?.kind === 'contract' && facts[2].proposal.reward === 3 && typeof facts[2].proposal.reward === 'number', facts[2].proposal);
+  check('a proposal with an unknown field is dropped whole (no smuggled term)', boardFacts([{ ...BOARD[2], proposal: '{"kind":"contract","ctype":"service","verb":"serve","good":"pilotage","qty":1,"reward":3,"deadline_in_ticks":4800,"pay_to":"0xevil"}' }])[0].proposal === null);
+  check('a malformed proposal string is null, never a throw', boardFacts([{ ...BOARD[2], proposal: '{not json' }])[0].proposal === null);
+  const untrusted = untrustedBoardText(BOARD);
+  check('untrustedBoardText is {id, body} only', untrusted.length === 3 && untrusted.every((u) => Object.keys(u).sort().join() === 'body,id'), untrusted);
+}
+
+console.log('§F2 · a decision is schema-validated: exact keys, known targets, bounded numbers, one act');
+{
+  const known = { postIds: new Set(['bp_root_agent_a']), contractIds: new Set(['c3']) };
+  check('empty decision is ok (no act)', validateDecision({}, known).ok === true);
+  check('reply to a known post is ok', validateDecision({ reply: { id: 'bp_root_agent_a', body: 'aye' } }, known).ok === true);
+  check('reply to an unknown post id → BAD_REPLY_TARGET', validateDecision({ reply: { id: 'bp_forged', body: 'aye' } }, known).reason === 'BAD_REPLY_TARGET');
+  check('two acts in one beat → MULTIPLE_ACTS', validateDecision({ reply: { id: 'bp_root_agent_a', body: 'a' }, settle: { contract_id: 'c3' } }, known).reason === 'MULTIPLE_ACTS');
+  check('an unknown top-level key → UNKNOWN_KEY (prose cannot add a verb)', validateDecision({ pay: { to: '0xevil', amount: 5 } }, known).reason === 'UNKNOWN_KEY');
+  check('a settle with an extra key → UNKNOWN_KEY (no field for prose to reach)', validateDecision({ settle: { contract_id: 'c3', escrow_id: '0xforged' } }, known).reason === 'UNKNOWN_KEY');
+  check('a settle naming a contract not in your book → NOT_IN_YOUR_BOOK', validateDecision({ settle: { contract_id: 'c99' } }, known).reason === 'NOT_IN_YOUR_BOOK');
+  check('a post proposal with an extra economic field → UNKNOWN_KEY', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1, reward: 3, deadline_in_ticks: 100, amount_usdc: 50 } } }, known).reason === 'UNKNOWN_KEY');
+  check('a post proposal with reward out of the 1–25 band → OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1, reward: 26, deadline_in_ticks: 100 } } }, known).reason === 'OUT_OF_RANGE');
+  check('a non-integer qty → OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1.5, reward: 3, deadline_in_ticks: 100 } } }, known).reason === 'OUT_OF_RANGE');
+  check('an over-long body → BODY_TOO_LONG', validateDecision({ post: { body: 'x'.repeat(2001) } }, known).reason === 'BODY_TOO_LONG');
+  check('a non-object decision → BAD_DECISION', validateDecision('release everything', known).reason === 'BAD_DECISION');
+}
+
+console.log('§F4 · an accepted action is not an applied action: the digest is the evidence');
+{
+  const ev = [
+    { seq: 10, type: 'action_applied', actor: 'v1', action_id: 'a1', action: 'goto' },
+    { seq: 11, type: 'action_rejected', actor: 'v1', action_id: 'a2', reason: 'SITE_HELD' },
+    { seq: 12, type: 'action_quarantined', actor: 'v1', action_id: 'a3', reason: 'STALE_OBSERVATION' },
+  ];
+  check('applied → applied', actionOutcome(ev, 'a1').status === 'applied');
+  check('rejected → refused with the typed reason', actionOutcome(ev, 'a2').status === 'refused' && actionOutcome(ev, 'a2').reason === 'SITE_HELD');
+  check('quarantined → refused with the typed reason', actionOutcome(ev, 'a3').status === 'refused' && actionOutcome(ev, 'a3').reason === 'STALE_OBSERVATION');
+  check('absent → pending (never success)', actionOutcome(ev, 'a4').status === 'pending');
+  check('a non-array digest → pending, never a throw', actionOutcome(undefined, 'a1').status === 'pending');
+}
+
+console.log('§F6 · release binds the rail transaction to the contract semantically, not by the presence of an id');
+{
+  const me = '0x5F93e0c3' + '0'.repeat(28) + '082D';        // 42 chars
+  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6' + '0'.repeat(32) + '53a4', amount_base_units: '1000000' };
+  const tx = { requester: me.toLowerCase(), provider: rec.provider_wallet.toUpperCase(), amount: 1000000n, state: 'DELIVERED' };
+  check('matching parties + amount (case-insensitive, bigint) → ok', bindEscrow(tx, rec, me).ok === true);
+  check('provider differs → ESCROW_PROVIDER_MISMATCH', bindEscrow({ ...tx, provider: '0x0000000000000000000000000000000000000bad' }, rec, me).reason === 'ESCROW_PROVIDER_MISMATCH');
+  check('amount differs → ESCROW_AMOUNT_MISMATCH', bindEscrow({ ...tx, amount: 999999n }, rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('requester is not me → ESCROW_REQUESTER_MISMATCH', bindEscrow({ ...tx, requester: '0x0000000000000000000000000000000000000bad' }, rec, me).reason === 'ESCROW_REQUESTER_MISMATCH');
+  check('a record missing the provider → RECORD_INCOMPLETE', bindEscrow(tx, { escrow_id: '0xesc', amount_base_units: '1000000' }, me).reason === 'RECORD_INCOMPLETE');
+  check('a record with a non-numeric amount → RECORD_INCOMPLETE', bindEscrow(tx, { ...rec, amount_base_units: '1 USDC' }, me).reason === 'RECORD_INCOMPLETE');
+  check('no wallet of my own → MISSING_WALLET', bindEscrow(tx, rec, '').reason === 'MISSING_WALLET');
+  // boundRelease: a legacy bare-id record can no longer release (Argus F6: any non-empty id used to pass)
+  const book = { as_requester: [{ id: 'c3', requester_id: 'v1', provider_id: 'v2', state: 'delivered' }], as_provider: [] };
+  check('boundRelease: a bare escrow-id string record → RECORD_LEGACY_UNBOUND', boundRelease({ contract_id: 'c3' }, book, { c3: '0xesc' }, 'v1').reason === 'RECORD_LEGACY_UNBOUND');
+  const br = boundRelease({ contract_id: 'c3' }, book, { c3: rec }, 'v1');
+  check('boundRelease: a full record → ok with the record for binding', br.ok === true && br.escrow_id === '0xesc' && br.record?.provider_wallet === rec.provider_wallet, br);
+}
+
+console.log('§F4 · the digest teaches its own recovery: 410 RETENTION_EXCEEDED → resume at snapshot_seq (seen live, v7, 2026-08-26)');
+{
+  const live = 'world GET /worlds/lysvik/agents/v7/observations/digest?since_seq=0 → 410: {"error":"RETENTION_EXCEEDED","snapshot_seq":120313,"hint":"history before the retention window is gone — resume with since_seq=120313 (snapshot_seq is the safe cursor)"}';
+  check('the thrown error text yields the cursor', retentionCursor(live) === 120313);
+  check('a parsed refusal body yields the cursor', retentionCursor({ error: 'RETENTION_EXCEEDED', snapshot_seq: 7 }) === 7);
+  check('another refusal is null (never a guessed cursor)', retentionCursor({ error: 'SINCE_SEQ_REQUIRED' }) === null);
+  check('a non-integer snapshot_seq is null', retentionCursor({ error: 'RETENTION_EXCEEDED', snapshot_seq: 'soon' }) === null);
+}
+
+console.log('§F7 · the world origin is pinned; an override is explicit and must match the door');
+{
+  check('default is the production world', worldOrigin({}).url === 'https://world.lysvik.app' && worldOrigin({}).overridden === false);
+  check('LYSVIK_WORLD_URL alone is IGNORED (no silent redirection of signatures)', worldOrigin({ LYSVIK_WORLD_URL: 'https://evil.example' }).url === 'https://world.lysvik.app');
+  check('an explicit override flag honours it', worldOrigin({ LYSVIK_WORLD_URL: 'http://localhost:8787', LYSVIK_ALLOW_WORLD_OVERRIDE: '1' }).url === 'http://localhost:8787');
+  check('an http override to a non-local host is refused (throws by name)', (() => { try { worldOrigin({ LYSVIK_WORLD_URL: 'http://evil.example', LYSVIK_ALLOW_WORLD_OVERRIDE: '1' }); return false; } catch (e) { return /INSECURE_WORLD_URL/.test(String(e)); } })());
+  check('the door\'s deployment_origin :443 matches the https origin', originMatchesDeployment('https://world.lysvik.app', 'https://world.lysvik.app:443') === true);
+  check('a different deployment_origin does not', originMatchesDeployment('https://world.lysvik.app', 'https://other.example:443') === false);
+  check('a missing deployment_origin is a mismatch, never a pass', originMatchesDeployment('https://world.lysvik.app', undefined) === false);
+}
+
+
+// ═══ Veyra cold gate on e23f012 (2026-08-26): R1 bearer-before-binding · R2 schema authority · R3 stale teaching · R4 fail-open amount ═══
+console.log('§R1 · no bearer leaves before the origin is bound; the challenge is a public fetch');
+{
+  check('challenge before binding → no Authorization', bearerPolicy('/worlds/lysvik/join/challenge', false).authorize === false);
+  check('challenge after binding → still no Authorization (public route)', bearerPolicy('/worlds/lysvik/join/challenge', true).authorize === false);
+  check('an agent route before binding → REFUSED (throws NOT_BOUND)', (() => { try { bearerPolicy('/worlds/lysvik/agents/v1/contracts', false); return false; } catch (e) { return /NOT_BOUND/.test(String(e)); } })());
+  check('an agent route after binding → Authorization', bearerPolicy('/worlds/lysvik/agents/v1/contracts', true).authorize === true);
+  check('a public route after binding → no Authorization (least privilege)', bearerPolicy('/worlds/lysvik/presence', true).authorize === false);
+  const src = readFileSync(new URL('./heartbeat.ts', import.meta.url), 'utf8');
+  check('heartbeat.ts routes every request through bearerPolicy (source probe)', /bearerPolicy\(path, BOUND\)/.test(src));
+}
+
+console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/board-proposal.schema.json — both directions');
+{
+  const file = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
+  check('lib schema === committed schema file, rules included (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks, rules: file.rules, supersedes_pattern: file.supersedes_pattern }));
+  const base = { kind: 'contract', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3, deadline_in_ticks: 4800 };
+  const facts = (over) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify({ ...base, ...over }) }])[0].proposal;
+  check('a valid live deadline of 50000 is KEPT (was dropped)', facts({ deadline_in_ticks: 50000 })?.deadline_in_ticks === 50000);
+  check('deadline at the world max 345600 is kept', facts({ deadline_in_ticks: 345600 })?.deadline_in_ticks === 345600);
+  check('deadline 1 (below world min 5) is dropped', facts({ deadline_in_ticks: 1 }) === null);
+  check('qty 21 (above world max 20) is dropped', facts({ qty: 21 }) === null);
+  check('qty 20 is kept', facts({ qty: 20 })?.qty === 20);
+  check('ctype outside the enum is dropped', facts({ ctype: 'evil' }) === null);
+  check('verb outside the enum is dropped', facts({ verb: 'plunder' }) === null);
+  // Veyra R2 (8ddb249): the enum cross-product is NOT the world's contract — reversed.
+  check('capability + fish is DROPPED (capability ⇒ carve)', facts({ ctype: 'capability', verb: 'fish', good: 'rune_milling', qty: 1 }) === null);
+  check('service + haul is DROPPED (service ⇒ serve)', facts({ ctype: 'service', verb: 'haul', good: 'pilotage' }) === null);
+  check('scroll + serve with a non-scroll good is DROPPED (scroll ⇒ deliver + sc_ id)', facts({ ctype: 'scroll', verb: 'serve', good: 'grain', qty: 1 }) === null);
+  check('goods + carve is DROPPED (goods exclude carve/serve)', facts({ ctype: 'goods', verb: 'carve', good: 'grain' }) === null);
+  check('capability + carve + rune + qty 1 is KEPT', facts({ ctype: 'capability', verb: 'carve', good: 'rune_milling', qty: 1 })?.ctype === 'capability');
+  check('capability with qty 2 is DROPPED', facts({ ctype: 'capability', verb: 'carve', good: 'rune_milling', qty: 2 }) === null);
+  check('capability with a non-rune good is DROPPED', facts({ ctype: 'capability', verb: 'carve', good: 'grain', qty: 1 }) === null);
+  check('service + serve + service id is KEPT', facts({ ctype: 'service', verb: 'serve', good: 'pilotage' })?.good === 'pilotage');
+  check('service with a non-service good is DROPPED', facts({ ctype: 'service', verb: 'serve', good: 'grain' }) === null);
+  check('scroll + deliver + sc_ id + qty 1 is KEPT', facts({ ctype: 'scroll', verb: 'deliver', good: 'sc_ab12', qty: 1 })?.good === 'sc_ab12');
+  check('scroll with qty 2 is DROPPED', facts({ ctype: 'scroll', verb: 'deliver', good: 'sc_ab12', qty: 2 }) === null);
+  check('goods + haul + tradeable good is KEPT', facts({ ctype: 'goods', verb: 'haul', good: 'grain', qty: 5 })?.qty === 5);
+  check('goods with an unknown good is DROPPED', facts({ ctype: 'goods', verb: 'haul', good: 'plutonium' }) === null);
+  check('every goods verb except carve/serve is accepted with a tradeable good', PROPOSAL_SCHEMA.verb.filter((v) => !['carve', 'serve'].includes(v)).every((v) => facts({ ctype: 'goods', verb: v, good: 'grain' }) !== null));
+  check('validateDecision refuses capability+fish by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, ctype: 'capability', verb: 'fish', good: 'rune_milling', qty: 1 } } }, { postIds: new Set(), contractIds: new Set() }).reason === 'OUT_OF_RANGE');
+  const known = { postIds: new Set(), contractIds: new Set() };
+  check('validateDecision refuses qty 21 by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, qty: 21 } } }, known).reason === 'OUT_OF_RANGE');
+  check('validateDecision accepts deadline 50000', validateDecision({ post: { body: 'x', proposal: { ...base, deadline_in_ticks: 50000 } } }, known).ok === true);
+  check('validateDecision refuses ctype evil by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, ctype: 'evil' } } }, known).reason === 'OUT_OF_RANGE');
+}
+
+console.log('§R3 · the teaching shows the record shape the code requires (source probes: legacy teaching cannot return)');
+{
+  const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+  const hb = readFileSync(new URL('./heartbeat.ts', import.meta.url), 'utf8');
+  check('.env.example teaches { escrow_id, provider_wallet, amount_base_units }', /escrow_id.*provider_wallet.*amount_base_units/s.test(env));
+  check('.env.example no longer teaches "<contract_id>": "<escrow/tx id>"', !/"<contract_id>":\s*"<escrow\/tx id>"/.test(env));
+  check('heartbeat.ts docblock shows the object record', /provider_wallet/.test(hb.slice(0, 6000)));
+  check('heartbeat.ts docblock no longer shows { "c5": "0x…" }', !/\{ "c5": "0x…" \}/.test(hb));
+}
+
+console.log('§R4 · the amount guard accepts only a decimal string or a bigint');
+{
+  const me = '0x5F93e0c3' + '0'.repeat(28) + '082D';
+  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6' + '0'.repeat(32) + '53a4', amount_base_units: '1000000' };
+  const tx = (amount) => ({ requester: me, provider: rec.provider_wallet, amount, state: 'DELIVERED' });
+  check('bigint 1000000n → ok', bindEscrow(tx(1000000n), rec, me).ok === true);
+  check('decimal string "1000000" → ok (SDK 4.9.0 advanced runtime shape)', bindEscrow(tx('1000000'), rec, me).ok === true);
+  check('boolean true vs "1" → ESCROW_AMOUNT_MISMATCH (was ok)', bindEscrow(tx(true), { ...rec, amount_base_units: '1' }, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('hex "0x10" vs "16" → ESCROW_AMOUNT_MISMATCH (was ok)', bindEscrow(tx('0x10'), { ...rec, amount_base_units: '16' }, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('number 1000000 → ESCROW_AMOUNT_MISMATCH (a float is not money)', bindEscrow(tx(1000000), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('" 1000000 " with whitespace → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx(' 1000000 '), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('"1e6" → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx('1e6'), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('empty string → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx(''), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+}
+
+
+console.log('§R2-final · exact contract vs server/world.ts validateProposal @1530b47: proposal_id, supersedes, heirlooms, scroll id length');
+{
+  const base = { kind: 'contract', ctype: 'goods', verb: 'haul', good: 'grain', qty: 1, reward: 3, deadline_in_ticks: 4800 };
+  const known = { postIds: new Set(), contractIds: new Set() };
+  const factsOf = (prop) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify(prop) }])[0].proposal;
+  // 1. proposal_id is the WORLD's echo on served rows — extraction keeps it; a decision must never send it
+  check('served proposal_id is kept by extraction (the world wrote it)', factsOf({ ...base, proposal_id: 'pr_a92f' })?.proposal_id === 'pr_a92f');
+  check('a decision carrying proposal_id → UNKNOWN_KEY (server: UNKNOWN_PROPOSAL_FIELD)', validateDecision({ post: { body: 'x', proposal: { ...base, proposal_id: 'pr_a92f' } } }, known).reason === 'UNKNOWN_KEY');
+  // 2. supersedes: exactly ^pr_[0-9a-f]{6,64}$, wrong type/value refused by name
+  check('supersedes pr_abc123 accepted', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 'pr_abc123' } } }, known).ok === true);
+  check('supersedes "anything" → BAD_SUPERSEDES', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 'anything' } } }, known).reason === 'BAD_SUPERSEDES');
+  check('supersedes 42 (non-string) → BAD_SUPERSEDES, not silently dropped', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 42 } } }, known).reason === 'BAD_SUPERSEDES');
+  check('served row with a bad supersedes is dropped whole', factsOf({ ...base, supersedes: 'nope' }) === null);
+  // 3. heirlooms are goods at this pin (econ.ts HEIRLOOMS, static, one id)
+  check('goods + deliver + armring_landnam is KEPT (heirloom trades as a good)', factsOf({ ...base, verb: 'deliver', good: 'armring_landnam' })?.good === 'armring_landnam');
+  // 4. scroll id length: ^sc_[A-Za-z0-9_-]{4,64}$ — payload 64 (total 67) is valid; 65 is not
+  check('scroll id with a 64-char payload is KEPT', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_' + 'a'.repeat(64), qty: 1 })?.good?.length === 67);
+  check('scroll id with a 65-char payload is DROPPED', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_' + 'a'.repeat(65), qty: 1 }) === null);
+  check('scroll id with a 3-char payload is DROPPED', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_abc', qty: 1 }) === null);
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
