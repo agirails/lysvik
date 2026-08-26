@@ -1,0 +1,33 @@
+{
+  "_provenance": "captured from GET https://world.lysvik.app/worlds/lysvik/actions (genesis-village@1530b47) on 2026-08-26; the board proposal schema the world enforces. Re-capture at every sync; examples/heartbeat-lib.mjs reads THIS file, never its own numbers.",
+  "ctype": [
+    "goods",
+    "capability",
+    "service",
+    "scroll"
+  ],
+  "verb": [
+    "haul",
+    "mill",
+    "craft",
+    "brew",
+    "fish",
+    "salt",
+    "guard",
+    "deliver",
+    "carve",
+    "serve"
+  ],
+  "qty": {
+    "min": 1,
+    "max": 20
+  },
+  "reward": {
+    "min": 1,
+    "max": 25
+  },
+  "deadline_in_ticks": {
+    "min": 5,
+    "max": 345600
+  }
+}

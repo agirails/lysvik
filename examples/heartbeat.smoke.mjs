@@ -18,7 +18,8 @@
  * these together — the gate will insist.
  */
 import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState,
-  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment, retentionCursor } from './heartbeat-lib.mjs';
+  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment, retentionCursor, bearerPolicy, PROPOSAL_SCHEMA } from './heartbeat-lib.mjs';
+import { readFileSync } from 'node:fs';
 
 let passed = 0;
 let failed = 0;
@@ -275,6 +276,64 @@ console.log('§F7 · the world origin is pinned; an override is explicit and mus
   check('the door\'s deployment_origin :443 matches the https origin', originMatchesDeployment('https://world.lysvik.app', 'https://world.lysvik.app:443') === true);
   check('a different deployment_origin does not', originMatchesDeployment('https://world.lysvik.app', 'https://other.example:443') === false);
   check('a missing deployment_origin is a mismatch, never a pass', originMatchesDeployment('https://world.lysvik.app', undefined) === false);
+}
+
+
+// ═══ Veyra cold gate on e23f012 (2026-08-26): R1 bearer-before-binding · R2 schema authority · R3 stale teaching · R4 fail-open amount ═══
+console.log('§R1 · no bearer leaves before the origin is bound; the challenge is a public fetch');
+{
+  check('challenge before binding → no Authorization', bearerPolicy('/worlds/lysvik/join/challenge', false).authorize === false);
+  check('challenge after binding → still no Authorization (public route)', bearerPolicy('/worlds/lysvik/join/challenge', true).authorize === false);
+  check('an agent route before binding → REFUSED (throws NOT_BOUND)', (() => { try { bearerPolicy('/worlds/lysvik/agents/v1/contracts', false); return false; } catch (e) { return /NOT_BOUND/.test(String(e)); } })());
+  check('an agent route after binding → Authorization', bearerPolicy('/worlds/lysvik/agents/v1/contracts', true).authorize === true);
+  check('a public route after binding → no Authorization (least privilege)', bearerPolicy('/worlds/lysvik/presence', true).authorize === false);
+  const src = readFileSync(new URL('./heartbeat.ts', import.meta.url), 'utf8');
+  check('heartbeat.ts routes every request through bearerPolicy (source probe)', /bearerPolicy\(path, BOUND\)/.test(src));
+}
+
+console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/board-proposal.schema.json — both directions');
+{
+  const file = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
+  check('lib schema === committed schema file (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks }));
+  const base = { kind: 'contract', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3, deadline_in_ticks: 4800 };
+  const facts = (over) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify({ ...base, ...over }) }])[0].proposal;
+  check('a valid live deadline of 50000 is KEPT (was dropped)', facts({ deadline_in_ticks: 50000 })?.deadline_in_ticks === 50000);
+  check('deadline at the world max 345600 is kept', facts({ deadline_in_ticks: 345600 })?.deadline_in_ticks === 345600);
+  check('deadline 1 (below world min 5) is dropped', facts({ deadline_in_ticks: 1 }) === null);
+  check('qty 21 (above world max 20) is dropped', facts({ qty: 21 }) === null);
+  check('qty 20 is kept', facts({ qty: 20 })?.qty === 20);
+  check('ctype outside the enum is dropped', facts({ ctype: 'evil' }) === null);
+  check('verb outside the enum is dropped', facts({ verb: 'plunder' }) === null);
+  check('each enum ctype/verb pair in the schema is accepted by extraction', PROPOSAL_SCHEMA.ctype.every((c) => facts({ ctype: c, verb: 'deliver' }) !== null) && PROPOSAL_SCHEMA.verb.every((v) => facts({ verb: v }) !== null));
+  const known = { postIds: new Set(), contractIds: new Set() };
+  check('validateDecision refuses qty 21 by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, qty: 21 } } }, known).reason === 'OUT_OF_RANGE');
+  check('validateDecision accepts deadline 50000', validateDecision({ post: { body: 'x', proposal: { ...base, deadline_in_ticks: 50000 } } }, known).ok === true);
+  check('validateDecision refuses ctype evil by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, ctype: 'evil' } } }, known).reason === 'OUT_OF_RANGE');
+}
+
+console.log('§R3 · the teaching shows the record shape the code requires (source probes: legacy teaching cannot return)');
+{
+  const env = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+  const hb = readFileSync(new URL('./heartbeat.ts', import.meta.url), 'utf8');
+  check('.env.example teaches { escrow_id, provider_wallet, amount_base_units }', /escrow_id.*provider_wallet.*amount_base_units/s.test(env));
+  check('.env.example no longer teaches "<contract_id>": "<escrow/tx id>"', !/"<contract_id>":\s*"<escrow\/tx id>"/.test(env));
+  check('heartbeat.ts docblock shows the object record', /provider_wallet/.test(hb.slice(0, 6000)));
+  check('heartbeat.ts docblock no longer shows { "c5": "0x…" }', !/\{ "c5": "0x…" \}/.test(hb));
+}
+
+console.log('§R4 · the amount guard accepts only a decimal string or a bigint');
+{
+  const me = '0x5F93e0c3' + '0'.repeat(28) + '082D';
+  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6' + '0'.repeat(32) + '53a4', amount_base_units: '1000000' };
+  const tx = (amount) => ({ requester: me, provider: rec.provider_wallet, amount, state: 'DELIVERED' });
+  check('bigint 1000000n → ok', bindEscrow(tx(1000000n), rec, me).ok === true);
+  check('decimal string "1000000" → ok (SDK 4.9.0 advanced runtime shape)', bindEscrow(tx('1000000'), rec, me).ok === true);
+  check('boolean true vs "1" → ESCROW_AMOUNT_MISMATCH (was ok)', bindEscrow(tx(true), { ...rec, amount_base_units: '1' }, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('hex "0x10" vs "16" → ESCROW_AMOUNT_MISMATCH (was ok)', bindEscrow(tx('0x10'), { ...rec, amount_base_units: '16' }, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('number 1000000 → ESCROW_AMOUNT_MISMATCH (a float is not money)', bindEscrow(tx(1000000), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('" 1000000 " with whitespace → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx(' 1000000 '), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('"1e6" → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx('1e6'), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('empty string → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx(''), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
