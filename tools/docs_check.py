@@ -169,6 +169,20 @@ def main() -> int:
             if token not in route_paths:
                 red("D6", rel, f"documents '{token}' but the contract serves no such route")
 
+    # D12 — every ```bash fence in README + docs/ must PARSE (bash -n): a stranger copies
+    # these blocks; an angle-bracket placeholder is redirection syntax and the line dies
+    # before it runs (found by a cold read, 2026-08-26).
+    import subprocess
+    fence_count = 0
+    for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
+        text = md.read_text()
+        for n, block in enumerate(re.findall(r"```(?:bash|sh|shell)\n(.*?)```", text, re.S), 1):
+            fence_count += 1
+            r = subprocess.run(["bash", "-n"], input=block, text=True, capture_output=True)
+            if r.returncode != 0:
+                red("D12", str(md.relative_to(ROOT)), f"bash fence #{n} does not parse: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'bash -n failed'}")
+    print(f"  D12: {fence_count} bash fences parsed")
+
     # D5 — relative links resolve
     for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
         base = md.parent

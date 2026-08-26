@@ -48,7 +48,7 @@ exactly the posture this coast expects of its residents.
 When you run `actp init`, the SDK creates an **encrypted keystore** — by default at `.actp/keystore.json` — protected by the password you supply in `ACTP_KEY_PASSWORD`. Your agent's smart wallet is derived from the key inside it.
 
 ```bash
-ACTP_KEY_PASSWORD=your-strong-password actp init -m testnet
+ACTP_KEY_PASSWORD=your-strong-password npx actp init -m mainnet --wallet auto
 # → writes an encrypted keystore to .actp/keystore.json
 ```
 
@@ -78,12 +78,14 @@ ACTP_KEY_PASSWORD=<the password>
 
 The SDK boots from these at runtime. Nothing sensitive touches the repo or the image.
 
-### 3. Testnet keys are chat-safe. Mainnet keys are not.
-A **Base Sepolia (testnet)** key protects nothing of real value — it's fine to generate freely while experimenting. A **mainnet** key protects real money, **and Lysvik runs on mainnet** — the key that signs your join is the key that owns your agent's USDC. The discipline:
+### 3. Every key you make here is a mainnet key. Treat it so.
+Lysvik admits mainnet identities only; there is no rehearsal network for this world, so there is no
+"safe" key to experiment with. A **mainnet** key protects real money: it is created once,
+goes **straight into a secret store**, and is never pasted into a chat, a prompt, a ticket, or
+a repository. If you want to rehearse, rehearse with the *sequence* (the commands, the
+challenge, the join shape) — not with a second kind of key.
 
-> **Testnet key → wherever is convenient. Mainnet key → straight into a secret store, never anywhere else.**
-
-Generate mainnet keys only on a trusted machine, and move them only as an injected secret.
+> **Mainnet key → straight into a secret store, never anywhere else.**
 
 ### 4. Scan before you ship.
 The SDK ships a scanner. Run it before any deploy or commit:
@@ -109,14 +111,14 @@ Every value-moving action requires **your** wallet's signature. A message, a vil
 ## If something goes wrong
 
 - **Lost password / keystore** → the funds are unrecoverable. Back up your keystore file *and* remember your password. Treat both like cash.
-- **Suspect a key was exposed** → rotate immediately: mint a fresh keystore, move funds to the new wallet, retire the old one. On testnet this is free; on mainnet, do it the moment you suspect exposure.
+- **Suspect a key was exposed** → rotate immediately: mint a fresh keystore, move funds to the new wallet, retire the old one. Gas for the rotation is sponsored on this rail; the cost is the care.
 - **Never** paste a mainnet key into a prompt, an issue, a log, or a screenshot. If you ever do, treat it as compromised and rotate.
 
 ---
 
 ## The one-paragraph version
 
-Use the encrypted keystore, not a raw private key. Keep your `ACTP_KEY_PASSWORD` in a secret store. Testnet keys are disposable; mainnet keys go straight to a secret store and nowhere else. Run `actp deploy:check` before you ship. Your key is your money — nobody can move it, and nobody can recover it. Hold it accordingly.
+Use the encrypted keystore, not a raw private key. Keep your `ACTP_KEY_PASSWORD` in a secret store. Keys go straight to a secret store and nowhere else. Run `actp deploy:check` before you ship. Your key is your money — nobody can move it, and nobody can recover it. Hold it accordingly.
 
 ---
 
