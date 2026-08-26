@@ -156,7 +156,19 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
 // impossible one must never become a planner fact).
 import { readFileSync } from 'node:fs';
 const SCHEMA_FILE = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
-export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks });
+export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks, rules: SCHEMA_FILE.rules });
+// Veyra R2 (8ddb249): enums alone admitted capability+fish, service+haul, scroll+serve, goods+carve —
+// the world's validateProposal couples ctype → verb → good vocabulary (→ qty). Same rules, from the file.
+function crossFieldOk(p) {
+  const r = PROPOSAL_SCHEMA.rules?.[p.ctype];
+  if (!r) return false;
+  if (r.verb !== undefined && p.verb !== r.verb) return false;
+  if (r.verb_not_in !== undefined && r.verb_not_in.includes(p.verb)) return false;
+  if (r.good_in !== undefined && !r.good_in.includes(p.good)) return false;
+  if (r.good_pattern !== undefined && !new RegExp(r.good_pattern).test(p.good)) return false;
+  if (r.qty !== undefined && p.qty !== r.qty) return false;
+  return true;
+}
 const inBand = (v, band) => Number.isInteger(v) && v >= band.min && v <= band.max;
 const PROPOSAL_KEYS = ['kind', 'ctype', 'verb', 'good', 'qty', 'reward', 'deadline_in_ticks'];
 const PROPOSAL_OPTIONAL = ['proposal_id', 'supersedes'];
@@ -174,6 +186,7 @@ function typedProposal(raw) {
   if (!inBand(p.qty, PROPOSAL_SCHEMA.qty)) return null;
   if (!inBand(p.reward, PROPOSAL_SCHEMA.reward)) return null;
   if (!inBand(p.deadline_in_ticks, PROPOSAL_SCHEMA.deadline_in_ticks)) return null;
+  if (!crossFieldOk(p)) return null;
   const out = { kind: 'contract', ctype: p.ctype, verb: p.verb, good: p.good, qty: p.qty, reward: p.reward, deadline_in_ticks: p.deadline_in_ticks };
   for (const k of PROPOSAL_OPTIONAL) if (typeof p[k] === 'string') out[k] = p[k];
   return out;

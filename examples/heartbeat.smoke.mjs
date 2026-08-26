@@ -294,7 +294,7 @@ console.log('§R1 · no bearer leaves before the origin is bound; the challenge 
 console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/board-proposal.schema.json — both directions');
 {
   const file = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
-  check('lib schema === committed schema file (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks }));
+  check('lib schema === committed schema file, rules included (no private numbers)', JSON.stringify(PROPOSAL_SCHEMA) === JSON.stringify({ ctype: file.ctype, verb: file.verb, qty: file.qty, reward: file.reward, deadline_in_ticks: file.deadline_in_ticks, rules: file.rules }));
   const base = { kind: 'contract', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3, deadline_in_ticks: 4800 };
   const facts = (over) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify({ ...base, ...over }) }])[0].proposal;
   check('a valid live deadline of 50000 is KEPT (was dropped)', facts({ deadline_in_ticks: 50000 })?.deadline_in_ticks === 50000);
@@ -304,7 +304,22 @@ console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/bo
   check('qty 20 is kept', facts({ qty: 20 })?.qty === 20);
   check('ctype outside the enum is dropped', facts({ ctype: 'evil' }) === null);
   check('verb outside the enum is dropped', facts({ verb: 'plunder' }) === null);
-  check('each enum ctype/verb pair in the schema is accepted by extraction', PROPOSAL_SCHEMA.ctype.every((c) => facts({ ctype: c, verb: 'deliver' }) !== null) && PROPOSAL_SCHEMA.verb.every((v) => facts({ verb: v }) !== null));
+  // Veyra R2 (8ddb249): the enum cross-product is NOT the world's contract — reversed.
+  check('capability + fish is DROPPED (capability ⇒ carve)', facts({ ctype: 'capability', verb: 'fish', good: 'rune_milling', qty: 1 }) === null);
+  check('service + haul is DROPPED (service ⇒ serve)', facts({ ctype: 'service', verb: 'haul', good: 'pilotage' }) === null);
+  check('scroll + serve with a non-scroll good is DROPPED (scroll ⇒ deliver + sc_ id)', facts({ ctype: 'scroll', verb: 'serve', good: 'grain', qty: 1 }) === null);
+  check('goods + carve is DROPPED (goods exclude carve/serve)', facts({ ctype: 'goods', verb: 'carve', good: 'grain' }) === null);
+  check('capability + carve + rune + qty 1 is KEPT', facts({ ctype: 'capability', verb: 'carve', good: 'rune_milling', qty: 1 })?.ctype === 'capability');
+  check('capability with qty 2 is DROPPED', facts({ ctype: 'capability', verb: 'carve', good: 'rune_milling', qty: 2 }) === null);
+  check('capability with a non-rune good is DROPPED', facts({ ctype: 'capability', verb: 'carve', good: 'grain', qty: 1 }) === null);
+  check('service + serve + service id is KEPT', facts({ ctype: 'service', verb: 'serve', good: 'pilotage' })?.good === 'pilotage');
+  check('service with a non-service good is DROPPED', facts({ ctype: 'service', verb: 'serve', good: 'grain' }) === null);
+  check('scroll + deliver + sc_ id + qty 1 is KEPT', facts({ ctype: 'scroll', verb: 'deliver', good: 'sc_ab12', qty: 1 })?.good === 'sc_ab12');
+  check('scroll with qty 2 is DROPPED', facts({ ctype: 'scroll', verb: 'deliver', good: 'sc_ab12', qty: 2 }) === null);
+  check('goods + haul + tradeable good is KEPT', facts({ ctype: 'goods', verb: 'haul', good: 'grain', qty: 5 })?.qty === 5);
+  check('goods with an unknown good is DROPPED', facts({ ctype: 'goods', verb: 'haul', good: 'plutonium' }) === null);
+  check('every goods verb except carve/serve is accepted with a tradeable good', PROPOSAL_SCHEMA.verb.filter((v) => !['carve', 'serve'].includes(v)).every((v) => facts({ ctype: 'goods', verb: v, good: 'grain' }) !== null));
+  check('validateDecision refuses capability+fish by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, ctype: 'capability', verb: 'fish', good: 'rune_milling', qty: 1 } } }, { postIds: new Set(), contractIds: new Set() }).reason === 'OUT_OF_RANGE');
   const known = { postIds: new Set(), contractIds: new Set() };
   check('validateDecision refuses qty 21 by OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { ...base, qty: 21 } } }, known).reason === 'OUT_OF_RANGE');
   check('validateDecision accepts deadline 50000', validateDecision({ post: { body: 'x', proposal: { ...base, deadline_in_ticks: 50000 } } }, known).ok === true);
