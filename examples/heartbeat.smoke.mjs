@@ -351,5 +351,27 @@ console.log('§R4 · the amount guard accepts only a decimal string or a bigint'
   check('empty string → ESCROW_AMOUNT_MISMATCH', bindEscrow(tx(''), rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
 }
 
+
+console.log('§R2-final · exact contract vs server/world.ts validateProposal @1530b47: proposal_id, supersedes, heirlooms, scroll id length');
+{
+  const base = { kind: 'contract', ctype: 'goods', verb: 'haul', good: 'grain', qty: 1, reward: 3, deadline_in_ticks: 4800 };
+  const known = { postIds: new Set(), contractIds: new Set() };
+  const factsOf = (prop) => boardFacts([{ ...BOARD[2], proposal: JSON.stringify(prop) }])[0].proposal;
+  // 1. proposal_id is the WORLD's echo on served rows — extraction keeps it; a decision must never send it
+  check('served proposal_id is kept by extraction (the world wrote it)', factsOf({ ...base, proposal_id: 'pr_a92f' })?.proposal_id === 'pr_a92f');
+  check('a decision carrying proposal_id → UNKNOWN_KEY (server: UNKNOWN_PROPOSAL_FIELD)', validateDecision({ post: { body: 'x', proposal: { ...base, proposal_id: 'pr_a92f' } } }, known).reason === 'UNKNOWN_KEY');
+  // 2. supersedes: exactly ^pr_[0-9a-f]{6,64}$, wrong type/value refused by name
+  check('supersedes pr_abc123 accepted', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 'pr_abc123' } } }, known).ok === true);
+  check('supersedes "anything" → BAD_SUPERSEDES', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 'anything' } } }, known).reason === 'BAD_SUPERSEDES');
+  check('supersedes 42 (non-string) → BAD_SUPERSEDES, not silently dropped', validateDecision({ post: { body: 'x', proposal: { ...base, supersedes: 42 } } }, known).reason === 'BAD_SUPERSEDES');
+  check('served row with a bad supersedes is dropped whole', factsOf({ ...base, supersedes: 'nope' }) === null);
+  // 3. heirlooms are goods at this pin (econ.ts HEIRLOOMS, static, one id)
+  check('goods + deliver + armring_landnam is KEPT (heirloom trades as a good)', factsOf({ ...base, verb: 'deliver', good: 'armring_landnam' })?.good === 'armring_landnam');
+  // 4. scroll id length: ^sc_[A-Za-z0-9_-]{4,64}$ — payload 64 (total 67) is valid; 65 is not
+  check('scroll id with a 64-char payload is KEPT', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_' + 'a'.repeat(64), qty: 1 })?.good?.length === 67);
+  check('scroll id with a 65-char payload is DROPPED', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_' + 'a'.repeat(65), qty: 1 }) === null);
+  check('scroll id with a 3-char payload is DROPPED', factsOf({ ...base, ctype: 'scroll', verb: 'deliver', good: 'sc_abc', qty: 1 }) === null);
+}
+
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
