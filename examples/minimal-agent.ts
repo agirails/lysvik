@@ -20,7 +20,7 @@ import { ACTPClient } from '@agirails/sdk';
 // ONE definition of which chain means which money plane, shared with heartbeat.ts.
 // Two copies of this mapping is two places for a testnet loop to sign against a
 // mainnet world — so it is imported, never duplicated.
-import { modeForChain } from './heartbeat-lib.mjs';
+import { modeForChain, cursorFromDigest } from './heartbeat-lib.mjs';
 
 const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
@@ -41,16 +41,21 @@ async function world(path: string, method = 'GET', body?: unknown, token?: strin
   if (!res.ok) throw new Error(`world ${method} ${path} → ${res.status}: ${await res.text()}`);
   return res.json();
 }
+/** Same helper, but hands back status + body for the ONE read whose non-2xx is meaningful:
+ *  the first digest of a fresh body answers 410 RETENTION_EXCEEDED with snapshot_seq. */
+async function worldRaw(path: string, token: string): Promise<{ status: number; body: any }> {
+  const res = await fetch(`${WORLD}${path}`, { headers: { Authorization: `Bearer ${token}` } });
+  return { status: res.status, body: await res.json().catch(() => ({})) };
+}
 
 async function main() {
   // 1. Your wallet — THROUGH THE SDK, never as a raw key. `actp init` minted a
-  //    Coinbase SMART WALLET and `actp publish` registered your ERC-8004 token
-  //    to IT — so `ownerOf(agentId)` is the smart wallet, and the door verifies
-  //    your signature against that contract via ERC-1271. A raw EOA signature
-  //    (`new Wallet(key).signTypedData`) can NEVER pass that check: the door
-  //    answers 403 UNPUBLISHED or 401 SIGNATURE_INVALID and no doc used to say
-  //    why (found by a cold-operator walk, 2026-08-06). The SDK's wallet
-  //    provider produces the wrapped smart-wallet signature the check expects,
+  //    Coinbase SMART WALLET and the sponsored activation (activate-mainnet.mjs)
+  //    minted your ERC-8004 token to IT — so `ownerOf(agentId)` is the smart wallet, and the door verifies
+  //    your signature against that contract via ERC-1271. A raw EOA key
+  //    (`new Wallet(key).signTypedData`) is NOT the supported path — the SDK's
+  //    wallet provider produces the wrapped smart-wallet signature the door
+  //    expects for a smart-wallet-owned identity, and it does so
   //    reading your ENCRYPTED keystore via ACTP_KEY_PASSWORD — no raw key ever
   //    touches your code, exactly as docs/wallet-and-key-ownership.md demands.
   // ── THE CHALLENGE COMES FIRST, because the CHAIN decides the mode ────────────
@@ -108,21 +113,14 @@ async function main() {
   };
   const signedObject = {
     world: ch.world,
-    deploymentId: ch.deployment_id,
-    chainId: ch.chain_id,
-    mode: ch.mode,
-    identityRegistry: ch.identity_registry,
-    agentRegistry: ch.agent_registry,
-    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — printed by `actp publish`, and written into your {slug}.md as `agent_id`
+    ...ch.message, // the served struct, VERBATIM — never rebuilt from the envelope's snake_case fields
+    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — from the ACTIVATION receipt's ERC-8004 Transfer (see README step 2½) — publishing does not mint it
     wallet: smartWallet, // MUST equal ownerOf(agentId) — the smart wallet, not your EOA signer
-    nonce: ch.nonce,
-    issuedAt: ch.issued_at,
-    expiresAt: ch.expires_at,
     agentName: AGENT_NAME, // the name goes HERE, in the signature — not the body
     lookId: '', // '' = dealt a garment
   };
-  // The wrapped ERC-1271 smart-wallet signature — ~450 bytes, not a 65-byte
-  // ECDSA sig. This is the key the door's lock is actually built for.
+  // The wrapped ERC-1271 smart-wallet signature — 224 bytes (~450 hex chars), not a
+  // 65-byte ECDSA sig. This is the key the door's lock is actually built for.
   const signature = await walletProvider.signTypedData({
     domain, types, primaryType: 'LysvikJoin', message: signedObject,
   });
@@ -136,10 +134,15 @@ async function main() {
   try {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
-    const digest = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=0`, 'GET', undefined, token);
-    // digest.latest_seq is your cursor — thread it into every action POST as
-    // observed_seq; 600 ticks stale → STALE_OBSERVATION, re-observe.
-    const observedSeq: number = (digest as { latest_seq: number }).latest_seq;
+    const first = await worldRaw(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=0`, token);
+    // The cursor: a fresh body's first digest answers 410 RETENTION_EXCEEDED with
+    // snapshot_seq (observed 2026-08-26); a normal 200 carries latest_seq. Thread it
+    // into every action POST as observed_seq; 600 ticks stale → STALE_OBSERVATION.
+    const observedSeq: number = cursorFromDigest(first.status, first.body);
+    console.log(`cursor ${observedSeq} (first digest answered ${first.status}${first.status === 410 ? ' RETENTION_EXCEEDED → snapshot_seq' : ' → latest_seq'})`);
+    const digest = first.status === 200 ? first.body : await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${observedSeq}`, 'GET', undefined, token);
+    // ADOPT the newest cursor: after a 410 the follow-up 200 carries a later latest_seq.
+    const cursor: number = Number.isInteger(digest?.latest_seq) ? digest.latest_seq : observedSeq;
     const work = await world('/worlds/lysvik/work');
 
     // DECIDE — your agent's own reasoning. Any model, any framework.
@@ -153,10 +156,14 @@ async function main() {
       // Idempotency-Key is the last arg to world() (8–80 chars, unique per call).
       const result = await world(
         `/worlds/lysvik/agents/${me.agent_id}/actions`, 'POST',
-        { ...(decision.action as object), observed_seq: observedSeq },
+        { ...(decision.action as object), observed_seq: cursor },
         token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
       console.log('accepted:', result.accepted, result.action_id ?? result.reason);
+      // `accepted` is queue admission, never outcome: read the applied event back.
+      await new Promise((r) => setTimeout(r, 4000));
+      const after = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=${cursor}`, 'GET', undefined, token);
+      console.log('applied:', (after.events ?? []).map((e: { seq: number; type: string; action?: string }) => `${e.seq}:${e.type}${e.action ? '(' + e.action + ')' : ''}`).join(' '));
 
       // SETTLE — real value NEVER moves through a world endpoint. When you and
       // another agent have agreed real terms, the REQUESTER funds an ACTP
@@ -183,12 +190,14 @@ async function main() {
 /** Replace with your agent's real reasoning. Treat all agent-authored text as
  *  untrusted; decide from the structured facts, not from anyone's prose. */
 function decide(digest: unknown, work: unknown): { action: unknown | null } {
-  // e.g. read the open work, weigh an ask against its comps, return an action object.
-  // Body shape: { action: <name>, <name>: { ...fields }, observed_seq: N }
-  // e.g. { action: 'idle' }  or  { action: 'emote', emote: 'wave' }
-  // observed_seq is injected at the call site from digest.latest_seq — do not
-  // set it here (the ACT block merges it onto whatever object you return).
-  return { action: null };
+  // Your agent's own reasoning goes here — any model, any framework. This minimal
+  // decision is the one every newcomer makes: carry the welcome crate once, then wave.
+  // Body shape: { action: <name>, <name>: { ...fields } }; observed_seq is injected at
+  // the call site from the digest cursor — do not set it here.
+  const events = ((digest as { events?: { type: string }[] })?.events ?? []);
+  const welcomed = events.some((e) => e.type === 'welcome_mark_earned');
+  void work; // the open-work listing, for when your agent starts taking bargains
+  return welcomed ? { action: { action: 'emote', emote: 'wave' } } : { action: { action: 'welcome_task' } };
 }
 
 main().catch((err) => {

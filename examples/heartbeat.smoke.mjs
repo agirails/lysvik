@@ -17,7 +17,7 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState } from './heartbeat-lib.mjs';
+import { boundRelease, cursorFromDigest, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -180,6 +180,11 @@ console.log('§dispute-window · the requester keeps their own protection');
   check('a missing disputeWindow fails closed too',
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000 }, NOW).reason === 'WINDOW_UNVERIFIED');
 }
+
+// The first-digest 410 path (observed 2026-08-26, body v7): the cursor is snapshot_seq.
+check('first digest 410 RETENTION_EXCEEDED → cursor = snapshot_seq', cursorFromDigest(410, { error: 'RETENTION_EXCEEDED', snapshot_seq: 119896 }) === 119896);
+check('normal 200 → cursor = latest_seq', cursorFromDigest(200, { latest_seq: 119898, events: [] }) === 119898);
+check('anything else is not a cursor (throws, never guesses)', (() => { try { cursorFromDigest(422, { error: 'SINCE_SEQ_REQUIRED' }); return false; } catch { return true; } })());
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
