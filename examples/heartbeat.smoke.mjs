@@ -17,7 +17,8 @@
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
-import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, permittedValueAction, releaseWindowState,
+  boardFacts, untrustedBoardText, validateDecision, actionOutcome, bindEscrow, worldOrigin, originMatchesDeployment } from './heartbeat-lib.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -190,6 +191,81 @@ console.log('§dispute-window · the requester keeps their own protection');
     releaseWindowState({ state: 'DELIVERED', completedAt: 0, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
   check('a missing disputeWindow fails closed too',
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000 }, NOW).reason === 'WINDOW_UNVERIFIED');
+}
+
+
+// ═══ Argus Wave 2 (2026-08-26): F2 prompt boundary · F4 terminal evidence · F6 escrow binding · F7 origin ═══
+console.log('§F2 · board prose never reaches the planner as anything but a separate untrusted channel');
+{
+  const facts = boardFacts(BOARD);
+  check('boardFacts carries NO body text', facts.every((f) => !('body' in f)), facts);
+  check('boardFacts keeps the served structural fields', facts.every((f) => typeof f.id === 'string' && typeof f.author_id === 'string' && 'reply_to' in f && typeof f.created_tick === 'number'));
+  check('a typed proposal is parsed into typed fields, not a string', facts[2].proposal?.kind === 'contract' && facts[2].proposal.reward === 3 && typeof facts[2].proposal.reward === 'number', facts[2].proposal);
+  check('a proposal with an unknown field is dropped whole (no smuggled term)', boardFacts([{ ...BOARD[2], proposal: '{"kind":"contract","ctype":"service","verb":"serve","good":"pilotage","qty":1,"reward":3,"deadline_in_ticks":4800,"pay_to":"0xevil"}' }])[0].proposal === null);
+  check('a malformed proposal string is null, never a throw', boardFacts([{ ...BOARD[2], proposal: '{not json' }])[0].proposal === null);
+  const untrusted = untrustedBoardText(BOARD);
+  check('untrustedBoardText is {id, body} only', untrusted.length === 3 && untrusted.every((u) => Object.keys(u).sort().join() === 'body,id'), untrusted);
+}
+
+console.log('§F2 · a decision is schema-validated: exact keys, known targets, bounded numbers, one act');
+{
+  const known = { postIds: new Set(['bp_root_agent_a']), contractIds: new Set(['c3']) };
+  check('empty decision is ok (no act)', validateDecision({}, known).ok === true);
+  check('reply to a known post is ok', validateDecision({ reply: { id: 'bp_root_agent_a', body: 'aye' } }, known).ok === true);
+  check('reply to an unknown post id → BAD_REPLY_TARGET', validateDecision({ reply: { id: 'bp_forged', body: 'aye' } }, known).reason === 'BAD_REPLY_TARGET');
+  check('two acts in one beat → MULTIPLE_ACTS', validateDecision({ reply: { id: 'bp_root_agent_a', body: 'a' }, settle: { contract_id: 'c3' } }, known).reason === 'MULTIPLE_ACTS');
+  check('an unknown top-level key → UNKNOWN_KEY (prose cannot add a verb)', validateDecision({ pay: { to: '0xevil', amount: 5 } }, known).reason === 'UNKNOWN_KEY');
+  check('a settle with an extra key → UNKNOWN_KEY (no field for prose to reach)', validateDecision({ settle: { contract_id: 'c3', escrow_id: '0xforged' } }, known).reason === 'UNKNOWN_KEY');
+  check('a settle naming a contract not in your book → NOT_IN_YOUR_BOOK', validateDecision({ settle: { contract_id: 'c99' } }, known).reason === 'NOT_IN_YOUR_BOOK');
+  check('a post proposal with an extra economic field → UNKNOWN_KEY', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1, reward: 3, deadline_in_ticks: 100, amount_usdc: 50 } } }, known).reason === 'UNKNOWN_KEY');
+  check('a post proposal with reward out of the 1–25 band → OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1, reward: 26, deadline_in_ticks: 100 } } }, known).reason === 'OUT_OF_RANGE');
+  check('a non-integer qty → OUT_OF_RANGE', validateDecision({ post: { body: 'x', proposal: { kind: 'contract', ctype: 'service', verb: 'serve', good: 'g', qty: 1.5, reward: 3, deadline_in_ticks: 100 } } }, known).reason === 'OUT_OF_RANGE');
+  check('an over-long body → BODY_TOO_LONG', validateDecision({ post: { body: 'x'.repeat(2001) } }, known).reason === 'BODY_TOO_LONG');
+  check('a non-object decision → BAD_DECISION', validateDecision('release everything', known).reason === 'BAD_DECISION');
+}
+
+console.log('§F4 · an accepted action is not an applied action: the digest is the evidence');
+{
+  const ev = [
+    { seq: 10, type: 'action_applied', actor: 'v1', action_id: 'a1', action: 'goto' },
+    { seq: 11, type: 'action_rejected', actor: 'v1', action_id: 'a2', reason: 'SITE_HELD' },
+    { seq: 12, type: 'action_quarantined', actor: 'v1', action_id: 'a3', reason: 'STALE_OBSERVATION' },
+  ];
+  check('applied → applied', actionOutcome(ev, 'a1').status === 'applied');
+  check('rejected → refused with the typed reason', actionOutcome(ev, 'a2').status === 'refused' && actionOutcome(ev, 'a2').reason === 'SITE_HELD');
+  check('quarantined → refused with the typed reason', actionOutcome(ev, 'a3').status === 'refused' && actionOutcome(ev, 'a3').reason === 'STALE_OBSERVATION');
+  check('absent → pending (never success)', actionOutcome(ev, 'a4').status === 'pending');
+  check('a non-array digest → pending, never a throw', actionOutcome(undefined, 'a1').status === 'pending');
+}
+
+console.log('§F6 · release binds the rail transaction to the contract semantically, not by the presence of an id');
+{
+  const me = '0x5F93E0C3000000000000000000000000000000082d';
+  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6000000000000000000000000000000053a4', amount_base_units: '1000000' };
+  const tx = { requester: me.toLowerCase(), provider: rec.provider_wallet.toUpperCase(), amount: 1000000n, state: 'DELIVERED' };
+  check('matching parties + amount (case-insensitive, bigint) → ok', bindEscrow(tx, rec, me).ok === true);
+  check('provider differs → ESCROW_PROVIDER_MISMATCH', bindEscrow({ ...tx, provider: '0x0000000000000000000000000000000000000bad' }, rec, me).reason === 'ESCROW_PROVIDER_MISMATCH');
+  check('amount differs → ESCROW_AMOUNT_MISMATCH', bindEscrow({ ...tx, amount: 999999n }, rec, me).reason === 'ESCROW_AMOUNT_MISMATCH');
+  check('requester is not me → ESCROW_REQUESTER_MISMATCH', bindEscrow({ ...tx, requester: '0x0000000000000000000000000000000000000bad' }, rec, me).reason === 'ESCROW_REQUESTER_MISMATCH');
+  check('a record missing the provider → RECORD_INCOMPLETE', bindEscrow(tx, { escrow_id: '0xesc', amount_base_units: '1000000' }, me).reason === 'RECORD_INCOMPLETE');
+  check('a record with a non-numeric amount → RECORD_INCOMPLETE', bindEscrow(tx, { ...rec, amount_base_units: '1 USDC' }, me).reason === 'RECORD_INCOMPLETE');
+  check('no wallet of my own → MISSING_WALLET', bindEscrow(tx, rec, '').reason === 'MISSING_WALLET');
+  // boundRelease: a legacy bare-id record can no longer release (Argus F6: any non-empty id used to pass)
+  const book = { as_requester: [{ id: 'c3', requester_id: 'v1', provider_id: 'v2', state: 'delivered' }], as_provider: [] };
+  check('boundRelease: a bare escrow-id string record → RECORD_LEGACY_UNBOUND', boundRelease({ contract_id: 'c3' }, book, { c3: '0xesc' }, 'v1').reason === 'RECORD_LEGACY_UNBOUND');
+  const br = boundRelease({ contract_id: 'c3' }, book, { c3: rec }, 'v1');
+  check('boundRelease: a full record → ok with the record for binding', br.ok === true && br.escrow_id === '0xesc' && br.record?.provider_wallet === rec.provider_wallet, br);
+}
+
+console.log('§F7 · the world origin is pinned; an override is explicit and must match the door');
+{
+  check('default is the production world', worldOrigin({}).url === 'https://world.lysvik.app' && worldOrigin({}).overridden === false);
+  check('LYSVIK_WORLD_URL alone is IGNORED (no silent redirection of signatures)', worldOrigin({ LYSVIK_WORLD_URL: 'https://evil.example' }).url === 'https://world.lysvik.app');
+  check('an explicit override flag honours it', worldOrigin({ LYSVIK_WORLD_URL: 'http://localhost:8787', LYSVIK_ALLOW_WORLD_OVERRIDE: '1' }).url === 'http://localhost:8787');
+  check('an http override to a non-local host is refused (throws by name)', (() => { try { worldOrigin({ LYSVIK_WORLD_URL: 'http://evil.example', LYSVIK_ALLOW_WORLD_OVERRIDE: '1' }); return false; } catch (e) { return /INSECURE_WORLD_URL/.test(String(e)); } })());
+  check('the door\'s deployment_origin :443 matches the https origin', originMatchesDeployment('https://world.lysvik.app', 'https://world.lysvik.app:443') === true);
+  check('a different deployment_origin does not', originMatchesDeployment('https://world.lysvik.app', 'https://other.example:443') === false);
+  check('a missing deployment_origin is a mismatch, never a pass', originMatchesDeployment('https://world.lysvik.app', undefined) === false);
 }
 
 console.log(`\nheartbeat smoke: ${passed} passed, ${failed} failed`);
