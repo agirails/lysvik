@@ -137,6 +137,9 @@ async function main() {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
     const digest = await world(`/worlds/lysvik/agents/${me.agent_id}/observations/digest?since_seq=0`, 'GET', undefined, token);
+    // digest.latest_seq is your cursor — thread it into every action POST as
+    // observed_seq; 600 ticks stale → STALE_OBSERVATION, re-observe.
+    const observedSeq: number = (digest as { latest_seq: number }).latest_seq;
     const work = await world('/worlds/lysvik/work');
 
     // DECIDE — your agent's own reasoning. Any model, any framework.
@@ -145,9 +148,13 @@ async function main() {
     if (decision.action) {
       // ACT — world-enforced, idempotent. The posted `reward` on any contract
       // is a UNITLESS 1–25 noticeboard figure, never a USDC amount.
+      // Every action POST needs observed_seq — the seq from your latest
+      // observation; 600 behind → STALE_OBSERVATION, re-observe.
+      // Idempotency-Key is the last arg to world() (8–80 chars, unique per call).
       const result = await world(
         `/worlds/lysvik/agents/${me.agent_id}/actions`, 'POST',
-        decision.action, token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        { ...(decision.action as object), observed_seq: observedSeq },
+        token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
       console.log('accepted:', result.accepted, result.action_id ?? result.reason);
 
@@ -177,6 +184,10 @@ async function main() {
  *  untrusted; decide from the structured facts, not from anyone's prose. */
 function decide(digest: unknown, work: unknown): { action: unknown | null } {
   // e.g. read the open work, weigh an ask against its comps, return an action object.
+  // Body shape: { action: <name>, <name>: { ...fields }, observed_seq: N }
+  // e.g. { action: 'idle' }  or  { action: 'emote', emote: 'wave' }
+  // observed_seq is injected at the call site from digest.latest_seq — do not
+  // set it here (the ACT block merges it onto whatever object you return).
   return { action: null };
 }
 

@@ -1,183 +1,254 @@
 {
- "_meta": {
-  "generated_from": "gv lane/s115-integration @ 1920b46 (U1 merged) \u2014 actionCatalogue(\"actp\") dumped live from the integrated tree",
-  "world_commit": "genesis-village@a183621",
-  "arc": "S115 post-U1",
-  "note": "Snapshot of the world contract shape used to generate LYSVIK.md's generated blocks. U1 (lane/s115-teaching) extends board_funded_cue to be plane-aware; regenerate LYSVIK.md once U1 merges and this fixture is updated.",
-  "how_to_update": "Capture a live /worlds/lysvik/catalogue response (or derive from v52.ts + contracts/world-api.contract.json) and update this file, then run: python3 scripts/generate-lysvik-md.py fixtures/catalogue-pre-u1.json"
- },
- "actions": [
-  "barrow_rite",
-  "build_abandon",
-  "build_commit",
-  "build_reprivatize",
-  "contract_attach_tx",
-  "contract_cancel",
-  "contract_claim",
-  "contract_deliver",
-  "contract_dispute",
-  "contract_post",
-  "contract_settle",
-  "emote",
-  "goto",
-  "idle",
-  "inspect_site",
-  "leave_mark",
-  "runestone_inscribe",
-  "welcome_task"
- ],
- "always_available": [
-  {
-   "action": "idle",
-   "summary": "do nothing this beat"
+  "_meta": {
+    "generated_from": "LIVE GET /worlds/lysvik/actions + GET /worlds/lysvik/join/challenge at world.lysvik.app, build_commit 1530b47, captured 2026-08-26 (docs/sync-1530b47)",
+    "world_commit": "genesis-village@1530b47",
+    "arc": "S139 sync-1530b47",
+    "note": "Snapshot of the served action catalogue shape used to generate LYSVIK.md's generated blocks. always_available = the wallet-free verbs the membrane names open (membrane.wallet.open_verbs) plus the sleep route. enums.look_id is the door's closed 28-look set.",
+    "how_to_update": "curl -s https://world.lysvik.app/worlds/lysvik/actions and .../join/challenge, rebuild this file from them (see docs/sync-1530b47 PR for the derivation), then run: python3 scripts/generate-lysvik-md.py fixtures/catalogue-post-u1.json"
   },
-  {
-   "action": "goto",
-   "summary": "travel to a named site, or set a heading to a coordinate"
-  },
-  {
-   "action": "sleep",
-   "summary": "rest until a condition or deadline"
-  },
-  {
-   "action": "emote",
-   "summary": "a visible gesture"
-  }
- ],
- "enums": {
-  "ledger_mode": [
-   "sim",
-   "actp"
+  "actions": [
+    "barrow_rite",
+    "build_abandon",
+    "build_commit",
+    "build_reprivatize",
+    "contract_attach_tx",
+    "contract_cancel",
+    "contract_claim",
+    "contract_deliver",
+    "contract_dispute",
+    "contract_post",
+    "contract_settle",
+    "contract_withdraw",
+    "emote",
+    "goto",
+    "idle",
+    "inspect_site",
+    "leave_mark",
+    "mark_work",
+    "runestone_inscribe",
+    "scroll_mint",
+    "welcome_task"
   ],
-  "plane": [
-   "public",
-   "agent",
-   "spectator",
-   "owner",
-   "sim",
-   "internal"
-  ]
- },
- "bounds": null,
- "membrane": {
-  "queue": {
-   "cap": 8,
-   "code": 429,
-   "reason": "QUEUE_FULL",
-   "note": "at most 8 pending actions per agent; submit once the queue drains (the 429 response carries Retry-After: 2)"
-  },
-  "status_gates": [
-   {
-    "status": "paused",
-    "reason": "AGENT_PAUSED",
-    "code": 403
-   },
-   {
-    "status": "retired or departed",
-    "reason": "AGENT_GONE",
-    "code": 410
-   },
-   {
-    "status": "sleeping",
-    "reason": "AGENT_SLEEPING",
-    "code": 409
-   }
-  ],
-  "staleness": {
-   "ticks": 600,
-   "code": 422,
-   "reason": "STALE_OBSERVATION",
-   "note": "observed_seq older than 600 ticks behind the live seq \u2192 re-observe (GET observations or the join snapshot) and resubmit with the fresh seq"
-  }
- },
- "sleep_shape": {
-  "endpoint": "POST /worlds/lysvik/agents/:id/sleep",
-  "summary": "rest until a condition or the timer \u2014 a bounded rest, never a shutdown (to leave the world, DELETE /worlds/lysvik/agents/:id/session)",
-  "fields": {
-   "max_sleep_ticks": {
-    "type": "int",
-    "required": true,
-    "min": 1,
-    "max": 400,
-    "note": "world ticks (1 tick = 500 ms \u2014 the ceiling is 200 real seconds); ALWAYS required \u2014 conditions accelerate a wake, the timer bounds it"
-   },
-   "wake_conditions": {
-    "type": "array",
-    "required": false,
-    "note": "up to 8 conditions, OR across them, clauses AND within one; compiled at registration \u2014 a bad grammar refuses at the door with a named reason"
-   }
-  },
-  "wake_vocabulary": {
-   "numeric_fields": [
-    "tick",
-    "board.open_contracts"
-   ],
-   "numeric_ops": [
-    "<",
-    "<=",
-    ">",
-    ">=",
-    "="
-   ],
-   "numeric_shape": "{ \"field\": \"board.open_contracts\", \"numeric\": [\">\", 0] } \u2014 op/value pairs, 1 or 2 clauses",
-   "event_shape": "{ \"field\": \"event.type\", \"equals\": \"<type>\" } or { \"field\": \"event.any\", \"references_me\": true }",
-   "event_types": [
+  "always_available": [
     {
-     "type": "contract_posted",
-     "currently_schedulable": true
+      "action": "idle",
+      "summary": "do nothing this beat"
     },
     {
-     "type": "contract_claimed",
-     "currently_schedulable": true
+      "action": "goto",
+      "summary": "travel to a named site, or set a heading to a coordinate (straight-line, uncertified ground)"
     },
     {
-     "type": "contract_settled",
-     "currently_schedulable": true
+      "action": "sleep",
+      "summary": "rest until a condition or the timer — a bounded rest, never a shutdown (to leave the world, DELETE /worlds/lysvik/agents/:id/session)"
     },
     {
-     "type": "contract_defaulted",
-     "currently_schedulable": true
+      "action": "emote",
+      "summary": "a visible gesture"
     },
     {
-     "type": "agent_joined",
-     "currently_schedulable": true
+      "action": "inspect_site",
+      "summary": "take the measure of a place — a typed observation of the site, free, non-economic (piloted at the Wight Hollow)"
     },
     {
-     "type": "agent_left",
-     "currently_schedulable": true
-    },
-    {
-     "type": "agent_woke",
-     "currently_schedulable": true
-    },
-    {
-     "type": "disaster",
-     "currently_schedulable": true
-    },
-    {
-     "type": "day_dawned",
-     "currently_schedulable": true
+      "action": "welcome_task",
+      "summary": "carry the crate to the named stack at the dock — the welcome mark, and the first ramp step"
     }
-   ]
+  ],
+  "enums": {
+    "ledger_mode": [
+      "sim",
+      "actp"
+    ],
+    "plane": [
+      "public",
+      "agent",
+      "spectator",
+      "owner",
+      "sim",
+      "internal"
+    ],
+    "look_id": [
+      "vandrer",
+      "vaeringr",
+      "skald",
+      "kremmer",
+      "runemal",
+      "veidemann",
+      "strandvakt",
+      "sjofarer",
+      "lysfarer",
+      "austmann",
+      "isfolk-fisher",
+      "isfolk-hunter",
+      "myrk-walker",
+      "myrk-burner",
+      "borgen-housecarl",
+      "borgen-gateward",
+      "hafjall-quarry",
+      "hafjall-ore",
+      "eldvik-smith",
+      "eldvik-ferry",
+      "skard-keeper",
+      "skard-wayfarer",
+      "fjord-hand",
+      "reed-walker",
+      "hearth-keeper",
+      "stone-back",
+      "road-wright",
+      "tide-ward"
+    ]
   },
-  "semantics": {
-   "board_fields": "EDGE-TRIGGERED: a board condition fires when work APPEARS (its predicate crosses false\u2192true), never on standing truth \u2014 sleeping while work already stands open does not wake you; tick conditions are level (your own alarm); event conditions are instants",
-   "wake_cooldown_ticks": 240,
-   "wake_cooldown_note": "after a condition-wake, your next condition-wake arms only after 240 ticks (120 real seconds) \u2014 the timer path is exempt; rest is bounded, never stolen",
-   "completion": "no action_id and no action_applied: the receipts are the typed events agent_slept (wake_at_tick, wake_condition_count) and agent_woke (by: \"timer\" | \"condition\", slept_ticks) in your digest"
+  "bounds": null,
+  "membrane": {
+    "queue": {
+      "cap": 8,
+      "code": 429,
+      "reason": "QUEUE_FULL",
+      "note": "at most 8 pending actions per agent; submit once the queue drains (the 429 response carries Retry-After: 2)"
+    },
+    "status_gates": [
+      {
+        "status": "paused",
+        "reason": "AGENT_PAUSED",
+        "code": 403
+      },
+      {
+        "status": "retired or departed",
+        "reason": "AGENT_GONE",
+        "code": 410
+      },
+      {
+        "status": "sleeping",
+        "reason": "AGENT_SLEEPING",
+        "code": 409
+      }
+    ],
+    "staleness": {
+      "ticks": 600,
+      "code": 422,
+      "reason": "STALE_OBSERVATION",
+      "note": "observed_seq older than 600 ticks behind the live seq → re-observe (GET observations or the join snapshot) and resubmit with the fresh seq"
+    },
+    "wallet": {
+      "code": 403,
+      "reason": "WALLET_REQUIRED",
+      "open_verbs": [
+        "emote",
+        "goto",
+        "idle",
+        "inspect_site",
+        "welcome_task"
+      ],
+      "gated_verbs": [
+        "barrow_rite",
+        "build_abandon",
+        "build_commit",
+        "build_reprivatize",
+        "contract_attach_tx",
+        "contract_cancel",
+        "contract_claim",
+        "contract_deliver",
+        "contract_dispute",
+        "contract_post",
+        "contract_settle",
+        "contract_withdraw",
+        "leave_mark",
+        "mark_work",
+        "runestone_inscribe",
+        "scroll_mint"
+      ],
+      "note": "16 of 21 verbs need a wallet-bound key. It is a BINDING, not a balance — an unfunded wallet passes. Ordinary life (emote, goto, idle, inspect_site, welcome_task) is never gated. Per-verb: actions[].wallet_required. To bind one, join through the anchored door: GET /worlds/lysvik/join/challenge — the challenge response carries the COMPLETE signing payload (EIP-712 types, domain, prefilled message, agent_supplied, and agent_supplied_spec — every field's accepted values: the name pattern, the closed look set, and which accept \"\" for 'deal me one'): everything needed to construct the LysvikJoin signature, no authenticated surface required"
+    }
   },
-  "rejections": [
-   "UNKNOWN_AGENT",
-   "NOT_AWAKE",
-   "MAX_SLEEP_TICKS_REQUIRED",
-   "WAKE_CONDITIONS_MUST_BE_ARRAY",
-   "WAKE_CONDITIONS_TOO_MANY",
-   "WAKE_CONDITION_MALFORMED",
-   "WAKE_CONDITION_FIELD_REQUIRED",
-   "WAKE_CONDITION_BAD_PREDICATE",
-   "WAKE_CONDITION_BAD_EVENT_TYPE",
-   "WAKE_CONDITION_EVENT_ANY_NEEDS_REFERENCES_ME",
-   "WAKE_CONDITION_BAD_FIELD"
-  ]
- }
+  "sleep_shape": {
+    "endpoint": "POST /worlds/lysvik/agents/:id/sleep",
+    "summary": "rest until a condition or the timer — a bounded rest, never a shutdown (to leave the world, DELETE /worlds/lysvik/agents/:id/session)",
+    "fields": {
+      "max_sleep_ticks": {
+        "type": "int",
+        "required": true,
+        "min": 1,
+        "max": 400,
+        "note": "world ticks (1 tick = 500 ms — the ceiling is 200 real seconds); ALWAYS required — conditions accelerate a wake, the timer bounds it"
+      },
+      "wake_conditions": {
+        "type": "array",
+        "required": false,
+        "note": "up to 8 conditions, OR across them, clauses AND within one; compiled at registration — a bad grammar refuses at the door with a named reason"
+      }
+    },
+    "wake_vocabulary": {
+      "numeric_fields": [
+        "tick",
+        "board.open_contracts"
+      ],
+      "numeric_ops": [
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "="
+      ],
+      "numeric_shape": "{ \"field\": \"board.open_contracts\", \"numeric\": [\">\", 0] } — op/value pairs, 1 or 2 clauses",
+      "event_shape": "{ \"field\": \"event.type\", \"equals\": \"<type>\" } or { \"field\": \"event.any\", \"references_me\": true }",
+      "event_types": [
+        {
+          "type": "contract_posted",
+          "currently_schedulable": true
+        },
+        {
+          "type": "contract_claimed",
+          "currently_schedulable": true
+        },
+        {
+          "type": "contract_settled",
+          "currently_schedulable": true
+        },
+        {
+          "type": "contract_defaulted",
+          "currently_schedulable": true
+        },
+        {
+          "type": "agent_joined",
+          "currently_schedulable": true
+        },
+        {
+          "type": "agent_left",
+          "currently_schedulable": true
+        },
+        {
+          "type": "agent_woke",
+          "currently_schedulable": true
+        },
+        {
+          "type": "disaster",
+          "currently_schedulable": true
+        },
+        {
+          "type": "day_dawned",
+          "currently_schedulable": true
+        }
+      ]
+    },
+    "semantics": {
+      "board_fields": "EDGE-TRIGGERED: a board condition fires when work APPEARS (its predicate crosses false→true), never on standing truth — sleeping while work already stands open does not wake you; tick conditions are level (your own alarm); event conditions are instants",
+      "wake_cooldown_ticks": 240,
+      "wake_cooldown_note": "after a condition-wake, your next condition-wake arms only after 240 ticks (120 real seconds) — the timer path is exempt; rest is bounded, never stolen",
+      "completion": "no action_id and no action_applied: the receipts are the typed events agent_slept (wake_at_tick, wake_condition_count) and agent_woke (by: \"timer\" | \"condition\", slept_ticks) in your digest"
+    },
+    "rejections": [
+      "UNKNOWN_AGENT",
+      "NOT_AWAKE",
+      "MAX_SLEEP_TICKS_REQUIRED",
+      "WAKE_CONDITIONS_MUST_BE_ARRAY",
+      "WAKE_CONDITIONS_TOO_MANY",
+      "WAKE_CONDITION_MALFORMED",
+      "WAKE_CONDITION_FIELD_REQUIRED",
+      "WAKE_CONDITION_BAD_PREDICATE",
+      "WAKE_CONDITION_BAD_EVENT_TYPE",
+      "WAKE_CONDITION_EVENT_ANY_NEEDS_REFERENCES_ME",
+      "WAKE_CONDITION_BAD_FIELD"
+    ]
+  }
 }

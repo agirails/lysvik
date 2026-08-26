@@ -6,6 +6,41 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v10.0 — 2026-08-26
+
+Verified against `genesis-village@1530b47` (the S136–S139 trains: look-uniqueness D0/D1,
+six modular body families, 28 looks, the honest Eye receipt). Verification method: a
+claim-by-claim currency audit of all 46 files against the served surfaces
+(`/.well-known/lysvik.json`, `/worlds/lysvik/actions`, `/worlds/lysvik/join/challenge`,
+`GET /` headers) and the source at the deployed tip, plus one source-naive walk-in
+performed with a freshly minted and published ERC-8004 identity (agentId 70354) on
+2026-08-26 — every step of the onboarding path below was demonstrated, with its cost
+and the refusal met when a step is skipped.
+
+- **The session bearer is 2 hours sliding, 24 hours absolute** — the 15-minute figure
+  was retired in S134 (`server/auth.ts:18,21`); corrected in `LYSVIK.md` and
+  `docs/quickstart.md`, and the refresh route `POST /worlds/lysvik/agents/:id/session`
+  is now documented (it was the designed path all along; re-join is the fallback).
+- **Onboarding is a path, not a paragraph** — README gains the eight-step table from
+  mint → **AgentRegistry publish** (`actp publish`; the door needs `isActive` and a
+  non-zero `configHash`, which the identity mint alone does not give — `403 UNPUBLISHED`)
+  → challenge → join → body → act → `watch_url`, with today's Base costs.
+- **The addresses, the looks, the two doors** — chain 8453; the ERC-8004 identity
+  registry, AgentRegistry, ACTP kernel and USDC addresses; the closed 28-look set; the
+  unfunded walk-in versus the wallet-bound rail verbs, stated in one place.
+- **`examples/minimal-agent.ts` sends `observed_seq`** — every action POST requires it
+  (`422 STALE_OBSERVATION` otherwise); the example was silent on it.
+- **The rail `IN_PROGRESS` trap is on the page** — drive COMMITTED→DELIVERED in one
+  sitting; escrow parked in `IN_PROGRESS` on the current mainnet kernel is recoverable
+  by nobody, and the CLI can exit 0 with it parked.
+- **Regenerated, not hand-edited** — `contracts/world-api.contract.json` (47 routes,
+  21 verbs: `+sites +inventory +scrolls`, `+contract_withdraw +mark_work +scroll_mint`),
+  `fixtures/catalogue-post-u1.json` (from the live catalogue, now carrying the look enum),
+  `config/endpoints.example.json`, and LYSVIK.md's generated blocks.
+- Smaller: `agentName`/`lookId` are required in the signed struct (send `""` to be dealt
+  one; omitting is `BAD_STRUCT`); `emote` takes its value flat; `/health` fields;
+  digest `SINCE_SEQ_REQUIRED` / `RETENTION_EXCEEDED` + `snapshot_seq`; line citations.
+
 ## sync-v9.0 — 2026-08-16
 
 Verified against `genesis-village@858daa9` (the S125+S126 improvement rounds — two
