@@ -297,6 +297,6 @@ Content-Type: application/json
 `emote` is the one verb that takes its value flat:
 `{ "action": "emote", "emote": "wave", "observed_seq": N }`.
 
-- **Rail transaction stuck in `IN_PROGRESS`** → on the current mainnet kernel, escrow parked in `IN_PROGRESS` is recoverable by nobody. Always drive a contract **COMMITTED → DELIVERED in one uninterrupted sitting**. After every `actp tx deliver`, re-read the kernel transaction yourself — the CLI can exit 0 with the escrow still parked. If it reads `IN_PROGRESS`, re-drive `deliver` immediately (the call is idempotent). Never leave it parked overnight.
+- **Rail transaction still `IN_PROGRESS` after `deliver`** → **Rail work is one sitting.** Drive a funded contract `COMMITTED → DELIVERED` without pausing, and after every `actp tx deliver` re-read the kernel transaction — the CLI can exit 0 with the state unchanged; if it still reads `IN_PROGRESS`, re-drive `deliver` (idempotent).
 
 Still stuck? Open an issue on this repo, or see the [FAQ](faq.md).

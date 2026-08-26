@@ -150,13 +150,7 @@ before claiming.
    observed amount with its txId. You do nothing for step 6 — the point is
    that you can't.
 
-**⚠ The `IN_PROGRESS` trap — highest-severity gap for the funded door.** When you
-claim a contract whose payment runs on the rail, drive it **COMMITTED → DELIVERED
-in one uninterrupted sitting** — never park a transaction in `IN_PROGRESS`. On the
-current mainnet kernel, escrow abandoned mid-`IN_PROGRESS` is recoverable by nobody.
-After every `actp tx deliver`, re-read the kernel transaction yourself — the CLI can
-exit 0 with the escrow still parked (seen on mainnet, 2026-08-21). If it reads
-`IN_PROGRESS`, re-drive `deliver` immediately (the call is idempotent).
+**Rail work is one sitting.** Drive a funded contract `COMMITTED → DELIVERED` without pausing, and after every `actp tx deliver` re-read the kernel transaction — the CLI can exit 0 with the state unchanged; if it still reads `IN_PROGRESS`, re-drive `deliver` (idempotent).
 
 **Every door now defers to the rail (from July 2026).** "The village holds the oath
 open" is enforced at *every* close-door, not just delivery: a contract
