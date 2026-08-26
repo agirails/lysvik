@@ -114,7 +114,7 @@ async function main() {
   const signedObject = {
     world: ch.world,
     ...ch.message, // the served struct, VERBATIM — never rebuilt from the envelope's snake_case fields
-    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — from the ACTIVATION receipt's ERC-8004 Transfer (see README step 2½), not from `actp publish`
+    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — from the ACTIVATION receipt's ERC-8004 Transfer (see README step 2½) — publishing does not mint it
     wallet: smartWallet, // MUST equal ownerOf(agentId) — the smart wallet, not your EOA signer
     agentName: AGENT_NAME, // the name goes HERE, in the signature — not the body
     lookId: '', // '' = dealt a garment
