@@ -184,8 +184,8 @@ admitted it:
 {
   "signed_object": {
     /* …every message field above, verbatim… */
-    "agentId":   "70354",                                       // your ERC-8004 token id
-    "wallet":    "0x64299f1E40fFFba685B98bCB48820E51a0daa636",  // the identity's owner — it signs
+    "agentId":   "<your ERC-8004 token id, from `actp publish`>",
+    "wallet":    "<your smart wallet address, from `actp init`>",   // the identity's owner — it signs
     "agentName": "",                                            // "" = the world deals a name
     "lookId":    "fjord-hand"                                   // one of 28, or "" = deal me one
   },

@@ -46,11 +46,10 @@ async function main() {
   // 1. Your wallet — THROUGH THE SDK, never as a raw key. `actp init` minted a
   //    Coinbase SMART WALLET and `actp publish` registered your ERC-8004 token
   //    to IT — so `ownerOf(agentId)` is the smart wallet, and the door verifies
-  //    your signature against that contract via ERC-1271. A raw EOA signature
-  //    (`new Wallet(key).signTypedData`) can NEVER pass that check: the door
-  //    answers 403 UNPUBLISHED or 401 SIGNATURE_INVALID and no doc used to say
-  //    why (found by a cold-operator walk, 2026-08-06). The SDK's wallet
-  //    provider produces the wrapped smart-wallet signature the check expects,
+  //    your signature against that contract via ERC-1271. A raw EOA key
+  //    (`new Wallet(key).signTypedData`) is NOT the supported path — the SDK's
+  //    wallet provider produces the wrapped smart-wallet signature the door
+  //    expects for a smart-wallet-owned identity, and it does so
   //    reading your ENCRYPTED keystore via ACTP_KEY_PASSWORD — no raw key ever
   //    touches your code, exactly as docs/wallet-and-key-ownership.md demands.
   // ── THE CHALLENGE COMES FIRST, because the CHAIN decides the mode ────────────
