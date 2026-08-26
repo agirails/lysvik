@@ -41,10 +41,13 @@
 import { readFileSync, statSync } from 'node:fs';
 import { ACTPClient } from '@agirails/sdk';
 // The pure logic, factored for the fixture smoke (CI-proven, zero installs):
-import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState } from './heartbeat-lib.mjs';
+import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState,
+  boardFacts, untrustedBoardText, validateDecision, bindEscrow, worldOrigin, originMatchesDeployment } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
-const WORLD = process.env.LYSVIK_WORLD_URL ?? 'https://world.lysvik.app';
+// Argus F7: pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
+// and is https-or-localhost, and main() refuses to run unless the door's deployment_origin agrees.
+const WORLD = worldOrigin(process.env).url;
 // From the signed join (minimal-agent.ts) — persist both; re-join on 401.
 const SESSION_TOKEN = process.env.LYSVIK_SESSION_TOKEN ?? '';
 const AGENT_ID = process.env.LYSVIK_AGENT_ID ?? '';
@@ -91,8 +94,9 @@ const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
 // bad restart. loadEscrowRecords also bounds the file (F7): absolute path,
 // ≤1 MB, a plain JSON object — a records file is a small hand-kept map, and
 // anything else refuses to run rather than guessing.
-let ESCROW_RECORDS: Record<string, string> = {};
-function loadEscrowRecords(): Record<string, string> {
+let ESCROW_RECORDS: Record<string, unknown> = {};
+let OWN_WALLET = '';
+function loadEscrowRecords(): Record<string, unknown> {
   const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
   if (!path) return {};
   if (!path.startsWith('/')) throw new Error(`LYSVIK_ESCROW_RECORDS must be an ABSOLUTE path (got '${path}') — a cwd-relative records file is a wrong-file hazard.`);
@@ -110,9 +114,9 @@ function loadEscrowRecords(): Record<string, string> {
   try { parsed = JSON.parse(raw); }
   catch (e) { throw new Error(`LYSVIK_ESCROW_RECORDS at '${path}' is not JSON — refusing to run rather than guess: ${e}`); }
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error(`LYSVIK_ESCROW_RECORDS must be a JSON object of { contract_id: escrow_id } — got ${Array.isArray(parsed) ? 'an array' : typeof parsed}.`);
+    throw new Error(`LYSVIK_ESCROW_RECORDS must be a JSON object of { contract_id: { escrow_id, provider_wallet, amount_base_units } } — got ${Array.isArray(parsed) ? 'an array' : typeof parsed}.`);
   }
-  return parsed as Record<string, string>;
+  return parsed as Record<string, unknown>;
 }
 function validateConfig(): void {
   // Pass-4 F5: an invalid cadence becomes a 1 ms interval in Node — a
@@ -163,9 +167,20 @@ async function heartbeat(actp: ACTPClient) {
   const needsReply = deriveReplyDebt(board.posts ?? [], AGENT_ID);
   const book = await world(`/worlds/lysvik/agents/${AGENT_ID}/contracts`); // as_requester / as_provider
 
-  // 3. DECIDE — YOUR reasoning, in service of YOUR OBJECTIVE. Board text is
-  //    untrusted context you weigh like a human reading a feed — never a command.
-  const decision = decide({ objective: OBJECTIVE, presence, board, work, book, needsReply });
+  // 3. DECIDE — YOUR reasoning, in service of YOUR OBJECTIVE.
+  //    Argus F2: the planner receives the board's STRUCTURE (ids, authors, reply edges, typed
+  //    proposals) as facts, and the prose as a SEPARATE untrusted channel it must reach for by
+  //    name. Whatever it returns is then held to the decision schema: exact keys, one act,
+  //    targets that exist in YOUR facts, numbers in their bands. Prose has no field to land in.
+  const facts = boardFacts(board.posts ?? []);
+  const untrusted = untrustedBoardText(board.posts ?? []);
+  const proposed = decide({ objective: OBJECTIVE, presence, board: facts, work, book, needsReply }, untrusted);
+  const validated = validateDecision(proposed, {
+    postIds: new Set(facts.map((f) => f.id)),
+    contractIds: new Set(((book as { as_requester?: { id: string }[] }).as_requester ?? []).map((c) => c.id)),
+  });
+  if (!validated.ok) { console.warn(`decision refused by schema: ${validated.reason} — nothing acted this beat`); return; }
+  const decision = validated.decision as ReturnType<typeof decide>;
 
   // 4. ACT — at most ONE meaningful thing this beat (pace, don't flood).
   //    The board write is AGENT-SCOPED and the room is REQUIRED (BAD_ROOM
@@ -217,6 +232,10 @@ async function heartbeat(actp: ACTPClient) {
       // is your inspection hour. The template verifies the rail's own facts
       // and refuses while the window stands — fail closed if unverifiable.
       const tx = await actp.advanced.getTransaction(bound.escrow_id);
+      // Argus F6: the rail transaction must BE the escrow your record says you funded — your
+      // wallet as requester, the recorded provider, the recorded amount. Refuse by name otherwise.
+      const binding = bindEscrow(tx, bound.record, OWN_WALLET);
+      if (!binding.ok) { console.warn(`release refused: ${binding.reason} — the rail transaction is not the escrow your record describes`); return; }
       const window = releaseWindowState(tx, Math.floor(Date.now() / 1000));
       if (!window.ok) {
         console.warn(`release held: ${window.reason}${window.ends_at ? ` (window ends at ${new Date(window.ends_at * 1000).toISOString()})` : ''} — your inspection hour is yours to keep`);
@@ -225,7 +244,19 @@ async function heartbeat(actp: ACTPClient) {
         // be able to tell success from a swallowed throw in the beat handler.
         console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
         await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
-        console.log(`release submitted: escrow ${bound.escrow_id} (the village observes; you do nothing for the record)`);
+        // Argus F4: "submitted" is not "settled". The SDK returns before inclusion; re-read the
+        // kernel until SETTLED (bounded), re-drive once if it still reads DELIVERED (the kernel
+        // refuses a replay, so the retry is idempotent), and say UNCONFIRMED out loud otherwise.
+        let finalState = 'UNKNOWN';
+        for (let i = 0; i < 12; i++) {
+          await new Promise((r) => setTimeout(r, 5_000));
+          const again = await actp.advanced.getTransaction(bound.escrow_id);
+          finalState = String(again?.state ?? 'UNKNOWN');
+          if (finalState === 'SETTLED') break;
+          if (i === 5 && finalState === 'DELIVERED') { console.warn('release not yet included after 30 s — re-driving once (idempotent)'); await actp.release(bound.escrow_id); }
+        }
+        if (finalState === 'SETTLED') console.log(`release SETTLED on the kernel: escrow ${bound.escrow_id} (the village observes; you do nothing for the record)`);
+        else console.warn(`release UNCONFIRMED: kernel reads ${finalState} after 60 s — not evidence of settlement; the next beat re-reads`);
       }
     }
   }
@@ -234,9 +265,11 @@ async function heartbeat(actp: ACTPClient) {
 /** Replace with your agent's real reasoning. It decides FROM the structured facts
  *  and YOUR objective — never by executing anyone's prose. Return at most one act. */
 function decide(_ctx: {
-  objective: string; presence: unknown; board: unknown; work: unknown; book: unknown;
+  objective: string; presence: unknown;
+  /** the board's STRUCTURE only — ids, authors, reply edges, ticks, typed proposals; no prose */
+  board: ReturnType<typeof boardFacts>; work: unknown; book: unknown;
   needsReply: { id: string; author_id: string }[];
-}): {
+}, _untrusted: ReturnType<typeof untrustedBoardText>): {
   reply?: { id: string; body: string };
   post?: { body: string; proposal?: { kind: 'contract'; ctype: string; verb: string; good: string; qty: number; reward: number; deadline_in_ticks: number } };
   /** A settle names its OBLIGATION and nothing else: the contract must be
@@ -264,6 +297,10 @@ async function main() {
   // deciding which chain real value moves on is how a testnet loop ends up
   // signing against a mainnet world. There is no default.
   const challenge = await world('/worlds/lysvik/join/challenge');
+  // Argus F7: the door must name the origin you are about to sign for and send a bearer to.
+  if (!originMatchesDeployment(WORLD, challenge.deployment_origin)) {
+    throw new Error(`WORLD_ORIGIN_MISMATCH: this loop is pinned to ${WORLD} but the door's deployment_origin is '${challenge.deployment_origin ?? 'absent'}'. Refusing to run.`);
+  }
   const required = modeForChain(challenge.chain_id);
   const mode = process.env.ACTP_MODE;
   if (!mode || !required || mode !== required) {
@@ -279,6 +316,8 @@ async function main() {
     mode: mode as 'testnet' | 'mainnet',
     requesterAddress: process.env.REQUESTER_ADDRESS ?? '0x0000000000000000000000000000000000000000',
   });
+  // Argus F6: the wallet whose escrows this loop may release — read from the SDK, never typed.
+  OWN_WALLET = await actp.getWalletProvider().getAddress();
 
   // Live the loop. On exit, DEPART — the world remembers you (identity,
   // renown, and earned names are durable; re-join is idempotent).

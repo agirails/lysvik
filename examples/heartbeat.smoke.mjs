@@ -104,7 +104,7 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
   // wrote (durable, operator-owned). The model NEVER supplies an escrow id;
   // Prior review finding: a prose-planted id could select another delivered
   // escrow this wallet requested and release it early.
-  const RECORDS = { c5: '0xesc5' };
+  const RECORDS = { c5: { escrow_id: '0xesc5', provider_wallet: '0x8FB6000000000000000000000000000000053a4', amount_base_units: '1000000' } };
 
   // The happy path: a delivered contract you requested, whose escrow YOUR
   // records carry. The binding returns the recorded id and NOTHING payable.
@@ -240,8 +240,8 @@ console.log('§F4 · an accepted action is not an applied action: the digest is 
 
 console.log('§F6 · release binds the rail transaction to the contract semantically, not by the presence of an id');
 {
-  const me = '0x5F93E0C3000000000000000000000000000000082d';
-  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6000000000000000000000000000000053a4', amount_base_units: '1000000' };
+  const me = '0x5F93e0c3' + '0'.repeat(28) + '082D';        // 42 chars
+  const rec = { escrow_id: '0xesc', provider_wallet: '0x8fb6' + '0'.repeat(32) + '53a4', amount_base_units: '1000000' };
   const tx = { requester: me.toLowerCase(), provider: rec.provider_wallet.toUpperCase(), amount: 1000000n, state: 'DELIVERED' };
   check('matching parties + amount (case-insensitive, bigint) → ok', bindEscrow(tx, rec, me).ok === true);
   check('provider differs → ESCROW_PROVIDER_MISMATCH', bindEscrow({ ...tx, provider: '0x0000000000000000000000000000000000000bad' }, rec, me).reason === 'ESCROW_PROVIDER_MISMATCH');

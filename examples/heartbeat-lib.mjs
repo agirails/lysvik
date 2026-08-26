@@ -134,10 +134,147 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   const recorded = escrowRecords !== null && typeof escrowRecords === 'object'
     && Object.prototype.hasOwnProperty.call(escrowRecords, settle.contract_id)
     ? escrowRecords[settle.contract_id] : undefined;
-  if (typeof recorded !== 'string' || recorded.length === 0) {
+  // Argus F6 (2026-08-26): a bare escrow id "bound" nothing — any non-empty string released.
+  // A record is now { escrow_id, provider_wallet, amount_base_units }: what YOUR wallet funded,
+  // for whom, how much — and bindEscrow() holds the rail transaction to it before release.
+  if (typeof recorded === 'string') return { ok: false, reason: 'RECORD_LEGACY_UNBOUND' };
+  if (recorded === null || typeof recorded !== 'object' || Array.isArray(recorded)
+    || typeof recorded.escrow_id !== 'string' || recorded.escrow_id.length === 0) {
     return { ok: false, reason: 'NO_RECORDED_ESCROW' };
   }
-  return { ok: true, escrow_id: recorded };
+  return { ok: true, escrow_id: recorded.escrow_id, record: recorded };
+}
+
+// ═══ Argus Wave 2 (2026-08-26) ═══════════════════════════════════════════════
+
+/** F2 — the board's STRUCTURAL facts, with the prose removed. The planner sees ids, authors,
+ *  reply edges, ticks and a TYPED proposal (exact keys, bounded numbers) — never a body.
+ *  A proposal that fails the schema is null: a smuggled term dies here, not in decide(). */
+const PROPOSAL_KEYS = ['kind', 'ctype', 'verb', 'good', 'qty', 'reward', 'deadline_in_ticks'];
+const PROPOSAL_OPTIONAL = ['proposal_id', 'supersedes'];
+function typedProposal(raw) {
+  let p = raw;
+  if (typeof p === 'string') { try { p = JSON.parse(p); } catch { return null; } }
+  if (p === null || typeof p !== 'object' || Array.isArray(p)) return null;
+  const keys = Object.keys(p);
+  if (keys.some((k) => !PROPOSAL_KEYS.includes(k) && !PROPOSAL_OPTIONAL.includes(k))) return null;
+  if (PROPOSAL_KEYS.some((k) => !(k in p))) return null;
+  if (p.kind !== 'contract') return null;
+  for (const k of ['ctype', 'verb', 'good']) if (typeof p[k] !== 'string' || p[k].length === 0 || p[k].length > 64) return null;
+  if (!Number.isInteger(p.qty) || p.qty < 1 || p.qty > 100) return null;
+  if (!Number.isInteger(p.reward) || p.reward < 1 || p.reward > 25) return null;
+  if (!Number.isInteger(p.deadline_in_ticks) || p.deadline_in_ticks < 1 || p.deadline_in_ticks > 43_200) return null;
+  const out = { kind: 'contract', ctype: p.ctype, verb: p.verb, good: p.good, qty: p.qty, reward: p.reward, deadline_in_ticks: p.deadline_in_ticks };
+  for (const k of PROPOSAL_OPTIONAL) if (typeof p[k] === 'string') out[k] = p[k];
+  return out;
+}
+export function boardFacts(posts) {
+  if (!Array.isArray(posts)) return [];
+  return posts
+    .filter((p) => p && typeof p === 'object' && typeof p.id === 'string' && typeof p.author_id === 'string')
+    .map((p) => ({
+      id: p.id,
+      author_id: p.author_id,
+      reply_to: typeof p.reply_to === 'string' ? p.reply_to : null,
+      created_tick: Number.isFinite(p.created_tick) ? p.created_tick : 0,
+      proposal: typedProposal(p.proposal),
+      has_body: typeof p.body === 'string' && p.body.length > 0,
+    }));
+}
+/** F2 — the OTHER channel: agent-authored prose, carried separately so a planner that wants
+ *  to read it must reach for it by name, and never receives it as a fact. */
+export function untrustedBoardText(posts) {
+  if (!Array.isArray(posts)) return [];
+  return posts.filter((p) => p && typeof p.id === 'string').map((p) => ({ id: p.id, body: typeof p.body === 'string' ? p.body : '' }));
+}
+/** F2 — the decision schema. Exact keys, one act, known targets, bounded numbers. Anything a
+ *  model (or the prose it read) tries to add has no field to land in and refuses BY NAME. */
+const BODY_MAX = 2000;
+export function validateDecision(d, known) {
+  if (d === null || typeof d !== 'object' || Array.isArray(d)) return { ok: false, reason: 'BAD_DECISION' };
+  const acts = Object.keys(d).filter((k) => d[k] !== undefined);
+  if (acts.some((k) => !['reply', 'post', 'settle'].includes(k))) return { ok: false, reason: 'UNKNOWN_KEY' };
+  if (acts.length > 1) return { ok: false, reason: 'MULTIPLE_ACTS' };
+  if (acts.length === 0) return { ok: true, decision: {} };
+  const exact = (o, allowed) => o !== null && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).every((k) => allowed.includes(k));
+  if ('reply' in d) {
+    const r = d.reply;
+    if (!exact(r, ['id', 'body'])) return { ok: false, reason: 'UNKNOWN_KEY' };
+    if (typeof r.id !== 'string' || !known?.postIds?.has(r.id)) return { ok: false, reason: 'BAD_REPLY_TARGET' };
+    if (typeof r.body !== 'string' || r.body.length === 0) return { ok: false, reason: 'BAD_BODY' };
+    if (r.body.length > BODY_MAX) return { ok: false, reason: 'BODY_TOO_LONG' };
+    return { ok: true, decision: { reply: { id: r.id, body: r.body } } };
+  }
+  if ('post' in d) {
+    const p = d.post;
+    if (!exact(p, ['body', 'proposal'])) return { ok: false, reason: 'UNKNOWN_KEY' };
+    if (typeof p.body !== 'string' || p.body.length === 0) return { ok: false, reason: 'BAD_BODY' };
+    if (p.body.length > BODY_MAX) return { ok: false, reason: 'BODY_TOO_LONG' };
+    const out = { post: { body: p.body } };
+    if (p.proposal !== undefined) {
+      if (!exact(p.proposal, [...PROPOSAL_KEYS, ...PROPOSAL_OPTIONAL])) return { ok: false, reason: 'UNKNOWN_KEY' };
+      const tp = typedProposal(p.proposal);
+      if (tp === null) return { ok: false, reason: 'OUT_OF_RANGE' };
+      out.post.proposal = tp;
+    }
+    return { ok: true, decision: out };
+  }
+  const s = d.settle;
+  if (!exact(s, ['contract_id'])) return { ok: false, reason: 'UNKNOWN_KEY' };
+  if (typeof s.contract_id !== 'string' || !known?.contractIds?.has(s.contract_id)) return { ok: false, reason: 'NOT_IN_YOUR_BOOK' };
+  return { ok: true, decision: { settle: { contract_id: s.contract_id } } };
+}
+/** F4 — an accepted action is queued, not applied. The observation digest carries the outcome:
+ *  action_applied | action_rejected | action_quarantined, joined on action_id. Absent ⇒ pending. */
+export function actionOutcome(events, actionId) {
+  if (!Array.isArray(events) || typeof actionId !== 'string') return { status: 'pending' };
+  for (const e of events) {
+    if (!e || e.action_id !== actionId) continue;
+    if (e.type === 'action_applied') return { status: 'applied', seq: e.seq };
+    if (e.type === 'action_rejected' || e.type === 'action_quarantined') return { status: 'refused', reason: typeof e.reason === 'string' ? e.reason : e.type, seq: e.seq };
+  }
+  return { status: 'pending' };
+}
+/** F6 — the rail transaction must BE the escrow your record says you funded: your wallet as
+ *  requester, the recorded provider, the recorded amount. Kernel facts vs your own receipt;
+ *  nothing here comes from the world's rows or from prose. */
+const ADDR = /^0x[0-9a-f]{40}$/i; // checksum-mixed case and an upper-cased prefix are the same address
+const addrEq = (a, b) => typeof a === 'string' && typeof b === 'string' && ADDR.test(a) && ADDR.test(b) && a.toLowerCase() === b.toLowerCase();
+export function bindEscrow(tx, record, ownWallet) {
+  if (typeof ownWallet !== 'string' || !ADDR.test(ownWallet)) return { ok: false, reason: 'MISSING_WALLET' };
+  if (record === null || typeof record !== 'object' || typeof record.provider_wallet !== 'string'
+    || !ADDR.test(record.provider_wallet) || typeof record.amount_base_units !== 'string'
+    || !/^[0-9]+$/.test(record.amount_base_units)) return { ok: false, reason: 'RECORD_INCOMPLETE' };
+  if (!tx || typeof tx !== 'object') return { ok: false, reason: 'NO_RAIL_TX' };
+  if (!addrEq(tx.requester, ownWallet)) return { ok: false, reason: 'ESCROW_REQUESTER_MISMATCH' };
+  if (!addrEq(tx.provider, record.provider_wallet)) return { ok: false, reason: 'ESCROW_PROVIDER_MISMATCH' };
+  let amt;
+  try { amt = BigInt(tx.amount); } catch { return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' }; }
+  if (amt !== BigInt(record.amount_base_units)) return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' };
+  return { ok: true };
+}
+/** F7 — the world origin is PINNED. LYSVIK_WORLD_URL alone does nothing (a stray env var must
+ *  never redirect a signed join or a bearer session); an override needs the explicit flag and
+ *  must be https, or http to localhost. */
+export const WORLD_DEFAULT = 'https://world.lysvik.app';
+export function worldOrigin(env) {
+  const e = env ?? {};
+  if (e.LYSVIK_ALLOW_WORLD_OVERRIDE !== '1' || !e.LYSVIK_WORLD_URL) return { url: WORLD_DEFAULT, overridden: false };
+  let u;
+  try { u = new URL(e.LYSVIK_WORLD_URL); } catch { throw new Error(`INSECURE_WORLD_URL: LYSVIK_WORLD_URL is not a URL: '${e.LYSVIK_WORLD_URL}'`); }
+  const local = u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+  if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) throw new Error(`INSECURE_WORLD_URL: an override must be https (or http to localhost), got '${e.LYSVIK_WORLD_URL}'`);
+  return { url: u.origin, overridden: true };
+}
+/** F7 — and the door must agree: the challenge's deployment_origin (with its explicit :443)
+ *  must name the origin you are about to sign for. Missing ⇒ mismatch. */
+export function originMatchesDeployment(worldUrl, deploymentOrigin) {
+  if (typeof worldUrl !== 'string' || typeof deploymentOrigin !== 'string') return false;
+  try {
+    const a = new URL(worldUrl), b = new URL(deploymentOrigin);
+    const port = (u) => u.port || (u.protocol === 'https:' ? '443' : '80');
+    return a.protocol === b.protocol && a.hostname === b.hostname && port(a) === port(b);
+  } catch { return false; }
 }
 
 /**
