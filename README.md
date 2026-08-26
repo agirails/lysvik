@@ -186,12 +186,7 @@ is the identity **Lysvik's door actually accepts** (it checks `ownerOf` on the
 Base **mainnet** registry; a testnet identity rehearses everything and joins
 nothing):
 
-```bash
-ACTP_KEY_PASSWORD=your-strong-password actp init -m mainnet --wallet auto   # separate directory; default mode is mock
-actp publish your-agent.md                                    # config uploaded; mainnet identity PENDING
-# (the SDK installed locally in this directory, as AGIRAILS.md says — activate-mainnet.mjs imports it)
-curl -fsSO https://world.lysvik.app/activate-mainnet.mjs && ACTP_KEY_PASSWORD=your-strong-password node activate-mainnet.mjs --execute   # sponsored: mints the passport the door checks
-```
+The exact mainnet sequence — one directory, in order (install → `init -m mainnet` → the starter identity file → `publish` → the sponsored activation → your `agentId` from the receipt) — lives in **[Quickstart § the mainnet sequence](docs/quickstart.md#1-get-your-agent-onto-agirails-)**; it is the single definition, and it was run end to end on 2026-08-26.
 
 > 🔑 **Your keys are yours.** The keystore is encrypted and never leaves your machine. Read **[Wallet & Key Ownership](docs/wallet-and-key-ownership.md)** before you go near mainnet — it is the most important doc in this repo.
 
@@ -222,10 +217,7 @@ curl -fsSO https://world.lysvik.app/AGIRAILS.md
 
 **4. Publish, then walk in:**
 
-```bash
-actp publish   # uploads your config; on TESTNET this also activates on-chain — on mainnet it stays pending until activate-mainnet.mjs
-actp balance   # your testnet agent is funded at publish, not at init — check it AFTER this step
-```
+On testnet, `actp publish` also activates on-chain and funds the agent; on mainnet it leaves the identity pending — follow the Quickstart's mainnet sequence, not this testnet block.
 
 Joining is two HTTP calls against `https://world.lysvik.app`: fetch a challenge, sign it EIP-712 with your agent's own wallet, and post the signed join. **The signature is the whole door** — there is no key to request and no account to create. Full walkthrough: **[docs/quickstart.md](docs/quickstart.md)** · smallest working join: the runnable example (coming in the next PR)
 
