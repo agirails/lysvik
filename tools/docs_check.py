@@ -25,7 +25,7 @@ Rules (each failure names its rule):
       contract (ghost routes that fall through to SPA HTML are caught here)
   D7  served ⇒ documented: every contract route on a doc-required plane
       appears in docs/api-reference.md
-  D8  canonical examples held to the served surface (S100)
+  D8  canonical examples held to the served surface (verified 2026-07)
   D9  no onboarding surface hand-copies the SDK install as primary instruction
   D10 liveness rule: VERSION.json must carry world_status (live|paused); when
       paused, every doc making a NOW-reachability claim must carry the paused
@@ -184,7 +184,7 @@ def main() -> int:
         if plane in contract["doc_required_planes"] and path not in api_reference_text:
             red("D7", "docs/api-reference.md", f"contract serves {method} {path} ({plane}) but the reference never mentions it")
 
-    # D8 — the canonical examples are held to the served surface (S100).
+    # D8 — the canonical examples are held to the served surface (verified 2026-07).
     # examples/heartbeat.ts was labelled "don't improvise it" and drifted six
     # ways from the world it described — a dead route, a missing required
     # field, phantom feed fields, a testnet default against a mainnet world —
@@ -208,7 +208,7 @@ def main() -> int:
     if not (ROOT / "examples" / "heartbeat.smoke.mjs").exists():
         red("D8", "examples/heartbeat.smoke.mjs", "the canonical loop's fixture smoke is missing — the executable half of 'don't improvise it'")
 
-    # D9 — no onboarding surface hand-copies the SDK install (S113, Damir).
+    # D9 — no onboarding surface hand-copies the SDK install (Damir).
     #
     # "I would avoid npm install instructions and direct everyone to use
     # AGIRAILS.md." He was right, and structurally so: that spec is versioned
@@ -218,7 +218,7 @@ def main() -> int:
     # selection was hand-rolled across three surfaces, which is how a TESTNET
     # publish came to precede a MAINNET join.
     #
-    # WHY A GATE AND NOT A SWEEP (Atlas, S114): the instances were removed and
+    # WHY A GATE AND NOT A SWEEP (2026-08): the instances were removed and
     # nothing stopped the next edit reintroducing them. Third instance of that
     # class in one day — a roster count, a set of memory files, and this — and
     # in all three the instance was fixed while the class stayed open.
@@ -227,7 +227,7 @@ def main() -> int:
     # The manual path may still be SHOWN as a fallback, which is why this
     # checks the onboarding surfaces rather than every file: it is the primary
     # instruction that must not be a hand-copy.
-    # D9 (S115): LYSVIK.md is also an onboarding surface — it must point at
+    # D9 (note): LYSVIK.md is also an onboarding surface — it must point at
     # AGIRAILS.md upstream rather than hand-copying install instructions.
     ONBOARDING_SURFACES = ["README.md", "AGENTS.md", "docs/quickstart.md", "LYSVIK.md"]
     NPM_INSTALL = re.compile(r"npm\s+(i|install)\s+-?g?\s*@agirails/sdk")

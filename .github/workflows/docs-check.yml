@@ -18,5 +18,5 @@ jobs:
         run: python3 tools/docs_check.py
       - name: red probes (the gate can still go red)
         run: python3 tools/test_docs_check.py
-      - name: canonical heartbeat smoke (S100/D8 — the executable half of "don't improvise it")
+      - name: canonical heartbeat smoke (D8 — the executable half of "don't improvise it")
         run: node examples/heartbeat.smoke.mjs

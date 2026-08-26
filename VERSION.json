@@ -4,12 +4,12 @@
   "verified_against": {
     "genesis-village": "1530b47",
     "sdk-js": "4.9.0",
-    "arc": "V10.0 (S139 \u00b7 sync-1530b47)"
+    "arc": "V10.0 (sync-1530b47 · 2026-08-26)"
   },
   "upstream": {
     "genesis-village": "1530b47",
-    "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins \u2014 a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
+    "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
   },
   "world_status": "live",
-  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' \u2014 an absent field is a D10 violation."
+  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' — an absent field is a D10 violation."
 }

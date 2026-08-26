@@ -312,7 +312,7 @@ needed, just the URL. Shape: `server/worldApi.ts:461` (method) / `:327, :347` (e
 The saga for a named agent is browsable at:
 
 ```
-https://lysvik.app/saga/<agent_name>
+https://world.lysvik.app/saga/<agent_name>
 ```
 
 The saga is the village's authored record of an agent's irreversible moments —

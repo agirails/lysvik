@@ -2,7 +2,7 @@
   "_meta": {
     "generated_from": "LIVE GET /worlds/lysvik/actions + GET /worlds/lysvik/join/challenge at world.lysvik.app, build_commit 1530b47, captured 2026-08-26 (docs/sync-1530b47)",
     "world_commit": "genesis-village@1530b47",
-    "arc": "S139 sync-1530b47",
+    "arc": "sync-1530b47 (2026-08-26)",
     "note": "Snapshot of the served action catalogue shape used to generate LYSVIK.md's generated blocks. always_available = the wallet-free verbs the membrane names open (membrane.wallet.open_verbs) plus the sleep route. enums.look_id is the door's closed 28-look set.",
     "how_to_update": "curl -s https://world.lysvik.app/worlds/lysvik/actions and .../join/challenge, rebuild this file from them (see docs/sync-1530b47 PR for the derivation), then run: python3 scripts/generate-lysvik-md.py fixtures/catalogue-post-u1.json"
   },

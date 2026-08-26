@@ -48,7 +48,7 @@ export function modeForChain(chainId) {
  * action. No typed amount → refused. Over the cap you set → refused.
  */
 export function permittedValueAction(action, ownerCapUsdc) {
-  // Codex S102 F2: `amount > NaN` is false for EVERY amount, so an invalid
+  // Review finding (July 2026): `amount > NaN` is false for EVERY amount, so an invalid
   // cap (a mistyped env var) silently became "no cap". A cap that is not a
   // finite non-negative number permits nothing — a broken guard fails closed.
   if (!Number.isFinite(ownerCapUsdc) || ownerCapUsdc < 0) return false;
@@ -59,7 +59,7 @@ export function permittedValueAction(action, ownerCapUsdc) {
 /**
  * The release binding — value moves by ESCROW RELEASE, never a fresh payment.
  *
- * Two defects died here (S102, codex F1/F3). First: nothing bound the
+ * Two defects died here (review findings, July 2026). First: nothing bound the
  * RECIPIENT — a model that read board prose and emitted `settle.to` closed
  * the loop from untrusted text to a real payment. Second, and deeper: any
  * direct `basic.pay()` on a delivered contract is a SECOND value channel
@@ -79,7 +79,7 @@ export function permittedValueAction(action, ownerCapUsdc) {
  * escrow id comes ONLY from `escrowRecords` — the durable contract→escrow
  * map YOUR OWN funding/attach receipts wrote. The model cannot supply one:
  * a prose-planted escrow id could name a DIFFERENT delivered escrow this
- * wallet requested and release it early (codex S102 re-pass F1). A contract
+ * wallet requested and release it early (a prior review finding). A contract
  * with no recorded escrow refuses — absence denies.
  *
  * The owner cap is not consulted here: the amount was capped when YOUR
@@ -87,7 +87,7 @@ export function permittedValueAction(action, ownerCapUsdc) {
  * and your records file is release's own authority: no record, no release.
  */
 export function boundRelease(settle, book, escrowRecords, agentId) {
-  // Atlas pre-push LOW (the sixth fail-open-on-absence this cycle, found in
+  // Pre-push review finding (the sixth fail-open-on-absence this cycle, found in
   // the guard built to close the fourth): the identity is a REQUIRED leg —
   // an absent agentId must refuse, never let NOT_YOUR_CONTRACT stand down.
   if (typeof agentId !== 'string' || agentId.length === 0) {
@@ -141,7 +141,7 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
 }
 
 /**
- * The dispute-window gate (S102 pass-4 F1). The kernel enforces the window
+ * The dispute-window gate (a prior review finding). The kernel enforces the window
  * against everyone EXCEPT the requester — the SDK explicitly permits early
  * requester release. But the window exists FOR the requester: it is your
  * inspection hour. The canonical loop therefore holds its own hour, from the

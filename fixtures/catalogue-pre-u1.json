@@ -2,7 +2,7 @@
   "_meta": {
     "generated_from": "pre-U1",
     "world_commit": "genesis-village@a183621",
-    "arc": "V7.0 (S111)",
+    "arc": "V7.0 (August 2026)",
     "note": "Snapshot of the world contract shape used to generate LYSVIK.md's generated blocks. U1 (lane/s115-teaching) extends board_funded_cue to be plane-aware; regenerate LYSVIK.md once U1 merges and this fixture is updated.",
     "how_to_update": "Capture a live /worlds/lysvik/catalogue response (or derive from v52.ts + contracts/world-api.contract.json) and update this file, then run: python3 scripts/generate-lysvik-md.py fixtures/catalogue-pre-u1.json"
   },

@@ -13,7 +13,7 @@
  * must exist in the committed world-api contract).
  *
  * The fixtures below are REAL shapes: the board rows mirror the moot's served
- * keys (S100 walk-in thread, ids shortened); the challenge mirrors the live
+ * keys (real walk-in thread, ids shortened); the challenge mirrors the live
  * door's. If the server's shape moves, regenerate the contract and update
  * these together — the gate will insist.
  */
@@ -28,22 +28,22 @@ const check = (name, cond, detail) => {
 
 // ── fixture: the moot's served row shape (author_id + reply_to, post ids) ───
 const BOARD = [
-  { id: 'bp_root_atlas', author_id: 'v1', reply_to: null, created_tick: 81620, proposal: null,
-    body: 'Nex — reply on this exact edge with the contract ID and one place worth visiting.' },
-  { id: 'bp_reply_nex', author_id: 'v2', reply_to: 'bp_root_atlas', created_tick: 110677, proposal: null,
+  { id: 'bp_root_agent_a', author_id: 'v1', reply_to: null, created_tick: 81620, proposal: null,
+    body: 'agent_b — reply on this exact edge with the contract ID and one place worth visiting.' },
+  { id: 'bp_reply_agent_b', author_id: 'v2', reply_to: 'bp_root_agent_a', created_tick: 110677, proposal: null,
     body: 'c3, 1× scribe_commission — and try the harbour: the striped-sail knarr is worth the walk.' },
-  { id: 'bp_reply_atlas', author_id: 'v1', reply_to: 'bp_reply_nex', created_tick: 111401,
+  { id: 'bp_reply_agent_a', author_id: 'v1', reply_to: 'bp_reply_agent_b', created_tick: 111401,
     proposal: '{"kind":"contract","ctype":"service","verb":"serve","good":"pilotage","qty":1,"reward":3,"deadline_in_ticks":4800,"proposal_id":"pr_a92f"}',
     body: 'Turning your harbour instinct into work: one pilotage return-path brief.' },
 ];
 
 console.log('§reply-debt · derived from SERVED fields only');
 {
-  // From Atlas's seat: Nex's reply is ANSWERED (bp_reply_atlas) — no debt.
+  // From agent_a's perspective: agent_b's reply is ANSWERED (bp_reply_agent_a) — no debt.
   check('an answered reply is not owed', deriveReplyDebt(BOARD, 'v1').length === 0, deriveReplyDebt(BOARD, 'v1'));
-  // From Nex's seat: Atlas's bp_reply_atlas replies to Nex's post, unanswered — owed.
+  // From agent_b's perspective: agent_a's bp_reply_agent_a replies to agent_b's post, unanswered — owed.
   const owedToNex = deriveReplyDebt(BOARD, 'v2');
-  check('an unanswered reply to your post IS owed', owedToNex.length === 1 && owedToNex[0].id === 'bp_reply_atlas', owedToNex);
+  check('an unanswered reply to your post IS owed', owedToNex.length === 1 && owedToNex[0].id === 'bp_reply_agent_a', owedToNex);
   // A stranger with no posts is owed nothing.
   check('a stranger has no debt', deriveReplyDebt(BOARD, 'v9').length === 0);
   // The fields the OLD loop read must not be what this one needs: the fixture
@@ -68,7 +68,7 @@ console.log('§owner-guard · value moves only explicit, only capped');
   check('over the cap → refused', permittedValueAction({ to: '0xabc', amountUsdc: 5 }, 1) === false);
   check('within the cap → permitted', permittedValueAction({ to: '0xabc', amountUsdc: 1 }, 1) === true);
   check('a cap of 0 permits nothing (the shipped default)', permittedValueAction({ to: '0xabc', amountUsdc: 0.01 }, 0) === false);
-  // Codex S102 F2: `amount > NaN` is false for every amount — a mistyped env
+  // Review finding (July 2026): `amount > NaN` is false for every amount — a mistyped env
   // var must DISABLE payments, never the cap.
   check('a NaN cap permits NOTHING (a broken env var fails closed)',
     permittedValueAction({ to: '0xabc', amountUsdc: 1 }, Number('5 USDC')) === false);
@@ -101,7 +101,7 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
 
   // YOUR RECORDS — the contract→escrow map your own funding/attach receipts
   // wrote (durable, operator-owned). The model NEVER supplies an escrow id;
-  // codex S102 re-pass F1: a prose-planted id could select another delivered
+  // Prior review finding: a prose-planted id could select another delivered
   // escrow this wallet requested and release it early.
   const RECORDS = { c5: '0xesc5' };
 
@@ -150,7 +150,7 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
     boundRelease({ contract_id: 'c5' }, BOOK, Object.create({ c5: '0xevil' }), 'v1').reason === 'NO_RECORDED_ESCROW');
   check('the happy path still binds with the agent id asserted',
     boundRelease({ contract_id: 'c5' }, BOOK, RECORDS, 'v1').ok === true);
-  // Atlas pre-push LOW: agentId was OPTIONAL, so NOT_YOUR_CONTRACT silently
+  // Pre-push review finding: agentId was OPTIONAL, so NOT_YOUR_CONTRACT silently
   // stood down when the caller forgot it — fail-open-on-absence, in the very
   // guard built to close that class. The identity is now a required leg.
   check('an ABSENT agentId refuses (MISSING_AGENT_ID) — the check never silently stands down',

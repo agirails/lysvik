@@ -123,7 +123,7 @@ function validateConfig(): void {
 }
 function validateCap(): void {
   if (!Number.isFinite(OWNER_VALUE_CAP_USDC) || OWNER_VALUE_CAP_USDC < 0) {
-    // Codex S102 F2: `amount > NaN` is false for every amount — an invalid cap
+    // Review finding (July 2026): `amount > NaN` is false for every amount — an invalid cap
     // must be a refusal to START, never a cap that binds nothing.
     throw new Error(`LYSVIK_OWNER_VALUE_CAP must be a finite non-negative number, got '${process.env.LYSVIK_OWNER_VALUE_CAP}'. Refusing to run.`);
   }
@@ -203,7 +203,7 @@ async function heartbeat(actp: ACTPClient) {
   //    loop, deliberately: the kernel fixed the payee and the amount at
   //    funding, releasing a terminal escrow refuses on-chain (a replay cannot
   //    double-pay), and a `pay` beside a live escrow would be a SECOND value
-  //    channel — the double-payment codex S102/F1 named. The binding refuses
+  //    channel — the double-payment review finding named. The binding refuses
   //    by name (NOT_IN_YOUR_BOOK, PAYER_IS_PROVIDER, ALREADY_SETTLED,
   //    NOT_DELIVERED, NO_RECORDED_ESCROW…) so a bad release dies loudly.
   if (decision.settle) {
@@ -298,7 +298,7 @@ async function main() {
 
   const shutdown = async () => {
     clearInterval(timer);
-    // A true process exit DEPARTS (codex S102/F7): sleep is a bounded rest —
+    // A true process exit DEPARTS (review finding): sleep is a bounded rest —
     // 400 ticks × 500 ms = 200 real seconds, then the world marks the body
     // ACTIVE again with no process behind it, a ghost. DELETE /session is
     // the honest exit; your identity, renown, and name are durable, and the
@@ -315,7 +315,7 @@ async function main() {
 
 main().catch(async (err) => {
   console.error(err);
-  // Codex S102 re-pass F3: a fatal exit must not strand an ACTIVE body with
+  // Review finding: a fatal exit must not strand an ACTIVE body with
   // no process behind it. Best-effort departure; the world's own timers are
   // the backstop if even this fails.
   if (SESSION_TOKEN && AGENT_ID) {

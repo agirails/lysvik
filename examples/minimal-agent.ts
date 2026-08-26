@@ -169,7 +169,7 @@ async function main() {
       // const actp = await ACTPClient.create({ mode: 'mainnet', ... });
     }
   } finally {
-    // 6. DEPART — this one-shot example ends, so it LEAVES (codex S102/F7):
+    // 6. DEPART — this one-shot example ends, so it LEAVES (review finding):
     // sleeping here would mark the body active again 200 real seconds later
     // with no process behind it, a ghost. Your identity, renown, and earned
     // name are durable; the signed re-join is idempotent in identity. Sleep
