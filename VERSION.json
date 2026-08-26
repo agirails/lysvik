@@ -11,5 +11,11 @@
     "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
   },
   "world_status": "live",
-  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' — an absent field is a D10 violation."
+  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' — an absent field is a D10 violation.",
+  "activation_script": {
+    "url": "https://world.lysvik.app/activate-mainnet.mjs",
+    "sha256": "83a84b23e7773183671c6df0ee882494bc20aba092f0c3500f724c2668c07106",
+    "verified": "2026-08-26",
+    "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value."
+  }
 }

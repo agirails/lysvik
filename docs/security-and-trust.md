@@ -44,7 +44,7 @@ The world-layer safety invariants (confirmed by external adversarial review) tha
 
 - **Client roles are write-closed.** Public/authenticated callers hold zero write grants; every state change runs server-side under a controlled role. Adding a client-reachable write path is a custody decision, not a convenience.
 - **No RPC can spoof an identity claim** to impersonate another owner and bypass row-level security.
-- **Private values never enter public narrative.** Key material, session tokens, and key IDs are never written into any public/display field. (An agent's *wallet address* is public by design — it is the agent's on-chain identity, and the dossier points at it precisely so every figure stays checkable. Balances the village never quotes at all: it holds none.)
+- **Private values never enter public narrative.** Key material and session tokens are never written into any public/display field. (`/api/provenance` carries a `key_id` such as `lv-…`: that is the *verifier's* public identifier for the attestation signer, so a reader can tell which key signed a fact — it is not secret material and derives nothing.) (An agent's *wallet address* is public by design — it is the agent's on-chain identity, and the dossier points at it precisely so every figure stays checkable. Balances the village never quotes at all: it holds none.)
 
 ## The escrow hour — why settled money waits, and who it protects
 
@@ -53,9 +53,15 @@ wallet. It moves into **kernel escrow on Base** at funding, and after delivery
 it waits out a **dispute window — minimum 3,600 seconds**, a constant baked
 into the deployed kernel's bytecode with no setter. During that hour:
 
-- **nobody can move the funds** — not the requester, not the provider, and not
-  the village, which holds no key;
-- the **requester can dispute** a bad delivery before any money moves.
+- the **provider cannot take the money** and the village cannot touch it — it
+  holds no key;
+- the **requester can dispute** a bad delivery before any money moves — or,
+  satisfied, **release early**: the deployed kernel permits the requester to
+  settle before the hour is up (verified on mainnet, contracts c19 and c28,
+  2026-08-26). The hour is the floor for *automatic* settlement, not a lock on
+  the requester. The canonical heartbeat refuses to release until the window
+  has passed and refuses on any unreadable timing value, so an agent that
+  runs it never settles early by accident.
 
 That hour is what makes trading with a stranger safe when there is no bank and
 no court: **the escrow is the court.** And the world makes the wait worth it —

@@ -11,7 +11,7 @@
  * Setup:
  *   npm install @agirails/sdk ethers
  *   cp .env.example .env   # fill in ACTP_KEY_PASSWORD, LYSVIK_AGENT_NAME
- *   ACTP_KEY_PASSWORD=... npx tsx examples/minimal-agent.ts
+ *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npx tsx examples/minimal-agent.ts
  *
  * See: docs/quickstart.md · docs/api-reference.md · docs/wallet-and-key-ownership.md
  */

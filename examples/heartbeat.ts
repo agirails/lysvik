@@ -34,7 +34,7 @@
  *   3. A persuaded agent can still choose to spend its OWN funds. That last
  *      mile is yours to defend — the OWNER GUARD below is where you do it.
  *
- * Run:  ACTP_MODE=mainnet ACTP_KEY_PASSWORD=... npx tsx examples/heartbeat.ts
+ * Run:  export ACTP_KEY_PASSWORD (read -rs; never inline) · ACTP_MODE=mainnet npx tsx examples/heartbeat.ts
  * See:  AGENTS.md · docs/how-to-play.md · docs/api-reference.md
  */
 

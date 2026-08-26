@@ -236,5 +236,30 @@ def d11_fixture_missing(t: Path) -> None:
 probe("D11: fixtures directory missing", d11_fixture_missing, "D11")
 
 
+# ── Argus audit, 2026-08-26: F8 (method-aware D6), F1/F5 (D14), observed routes (D13) ──
+def _sub(path, old, new):
+    t = path.read_text(); assert old in t, (path, old[:40]); path.write_text(t.replace(old, new, 1))
+
+def d6_method_mutation(t: Path) -> None:
+    _sub(t / "docs" / "api-reference.md", '`GET  /worlds/lysvik/board', '`DELETE  /worlds/lysvik/board')
+
+def d14_digest_dropped(t: Path) -> None:
+    v = json.loads((t / "VERSION.json").read_text()); v["activation_script"]["sha256"] = "0" * 64
+    (t / "VERSION.json").write_text(json.dumps(v, indent=2))
+
+def d14_inline_secret(t: Path) -> None:
+    _sub(t / "docs" / "quickstart.md", "npx actp publish  ", "ACTP_KEY_PASSWORD=hunter2 npx actp publish  ")
+
+def d13_observed_now_generated(t: Path) -> None:
+    c = json.loads((t / "contracts" / "world-api.contract.json").read_text())
+    c["routes"].append({"method": "POST", "path": "/worlds/lysvik/agents/:id/session", "plane": "agent"})
+    (t / "contracts" / "world-api.contract.json").write_text(json.dumps(c, indent=2))
+
+probe("D6: documented METHOD not served (GET board → DELETE board)", d6_method_mutation, "D6")
+probe("D14: pinned activation digest changes and the docs still cite the old one", d14_digest_dropped, "D14")
+probe("D14: ACTP_KEY_PASSWORD inline before a command in a bash fence", d14_inline_secret, "D14")
+probe("D13: an observed route that the generated contract now carries", d13_observed_now_generated, "D13")
+
+
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

@@ -173,6 +173,17 @@ console.log('§dispute-window · the requester keeps their own protection');
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 100, disputeWindow: 3600 }, NOW).reason === 'WINDOW_OPEN');
   check('an elapsed window permits (relative shape)',
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: 3600 }, NOW).ok === true);
+  // Argus F3 probes: malformed numerics must REFUSE, never pass (NaN compared to anything is false)
+  check('release: NaN completedAt is WINDOW_UNVERIFIED, not ok',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NaN, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
+  check('release: NaN disputeWindow is WINDOW_UNVERIFIED, not ok',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: NaN }, NOW).reason === 'WINDOW_UNVERIFIED');
+  check('release: string-typed window is WINDOW_UNVERIFIED',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: '3600' }, NOW).reason === 'WINDOW_UNVERIFIED');
+  check('release: Infinity completedAt is WINDOW_UNVERIFIED',
+    releaseWindowState({ state: 'DELIVERED', completedAt: Infinity, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
+  check('release: NaN now is WINDOW_UNVERIFIED',
+    releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: 3600 }, NaN).reason === 'WINDOW_UNVERIFIED');
   check('a rail state that is not DELIVERED refuses',
     releaseWindowState({ state: 'SETTLED', completedAt: NOW - 4000, disputeWindow: 3600 }, NOW).reason === 'NOT_DELIVERED_ON_RAIL');
   check('an UNVERIFIABLE window fails closed (completedAt 0 = indexing absent — refuse, never guess)',

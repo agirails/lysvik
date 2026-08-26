@@ -1,0 +1,13 @@
+{
+  "_what": "Routes the live world SERVES (proven by instrument, evidence below) that the generated contract at the pinned commit does not carry. Each entry is a generator gap owed to genesis-village; the docs gate accepts these for D6/D7 and prints them as OBSERVED. Rule D13: an entry that appears in the generated contract must be retired from here (the gate goes red on the duplicate).",
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/worlds/lysvik/agents/:id/session",
+      "plane": "agent",
+      "evidence": "GET https://world.lysvik.app/.well-known/lysvik.json advertises rel=refresh as POST on this path (Argus audit F8, Atlas re-verified 2026-08-26); contract at genesis-village@1530b47 carries only DELETE",
+      "observed": "2026-08-26",
+      "owed": "genesis-village contract generator: emit POST session"
+    }
+  ]
+}
