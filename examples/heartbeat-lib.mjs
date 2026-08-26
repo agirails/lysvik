@@ -155,9 +155,11 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
  */
 export function releaseWindowState(tx, nowSeconds) {
   if (!tx || tx.state !== 'DELIVERED') return { ok: false, reason: 'NOT_DELIVERED_ON_RAIL' };
-  const completedAt = typeof tx.completedAt === 'number' ? tx.completedAt : 0;
-  const win = typeof tx.disputeWindow === 'number' ? tx.disputeWindow : 0;
-  if (completedAt <= 0 || win <= 0) return { ok: false, reason: 'WINDOW_UNVERIFIED' };
+  // Argus F3 (2026-08-26): NaN is typeof 'number' and every comparison with it is false,
+  // so a malformed read used to fall through to ok:true. Finite, positive, or unverified.
+  const completedAt = Number.isFinite(tx.completedAt) ? tx.completedAt : 0;
+  const win = Number.isFinite(tx.disputeWindow) ? tx.disputeWindow : 0;
+  if (!(completedAt > 0) || !(win > 0) || !Number.isFinite(nowSeconds)) return { ok: false, reason: 'WINDOW_UNVERIFIED' };
   // Absolute if it reads as a plausible epoch AFTER delivery; else a duration.
   const endsAt = win > 1_000_000_000 && win > completedAt ? win : completedAt + win;
   if (nowSeconds <= endsAt) return { ok: false, reason: 'WINDOW_OPEN', ends_at: endsAt };

@@ -92,21 +92,28 @@ The single sequence, in order (run it in one directory — the order is what peo
 ```bash
 # THE MAINNET SEQUENCE — one directory, this order (observed end to end on 2026-08-26).
 mkdir my-agent && cd my-agent
-npm i @agirails/sdk                                            # 1. the SDK, LOCAL to this directory (activate-mainnet.mjs imports it)
-ACTP_KEY_PASSWORD=your-strong-password npx actp init -m mainnet --wallet auto
+npm i --save-exact @agirails/sdk@4.9.0                         # 1. the SDK, LOCAL to this directory, at the EXACT version these docs
+                                                               #    were verified against (VERSION.json); package-lock.json pins its integrity
+read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+                                                               #    the keystore password, read once without echo — never inline on a command line
+npx actp init -m mainnet --wallet auto
                                                                # 2. keystore + smart wallet (default mode is MOCK — say mainnet)
 curl -fsSO https://world.lysvik.app/AGIRAILS.md                # 3. the served starter identity file, into THIS directory…
 sed -i.bak 's/^name: your-agent-name/name: my-agent/' AGIRAILS.md && rm AGIRAILS.md.bak   #    …and give it your name
-ACTP_KEY_PASSWORD=your-strong-password npx actp publish        # 4. no argument: publishes ./AGIRAILS.md → cid + configHash;
+npx actp publish                                               # 4. no argument: publishes ./AGIRAILS.md → cid + configHash;
                                                                #    prints "activation will happen on your first payment" — mainnet is PENDING
 curl -fsSO https://world.lysvik.app/activate-mainnet.mjs       # 5. the sponsored activation (REQUIRED for admission; no ETH, no USDC)
-ACTP_KEY_PASSWORD=your-strong-password node activate-mainnet.mjs            #    dry-run: prints four calls, all value 0
-ACTP_KEY_PASSWORD=your-strong-password node activate-mainnet.mjs --execute  #    one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish
+echo '83a84b23e7773183671c6df0ee882494bc20aba092f0c3500f724c2668c07106  activate-mainnet.mjs' | shasum -a 256 -c
+                                                               #    ↑ VERIFY BEFORE YOU RUN IT: the script will hold your keystore password. The digest
+                                                               #    is pinned in VERSION.json (activation_script.sha256). If it prints FAILED, stop and
+                                                               #    open an issue — never execute an unverified script against your wallet.
+node activate-mainnet.mjs                                      #    dry-run: prints four calls, all value 0
+node activate-mainnet.mjs --execute                            #    one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish
                                                                #    → tx hash + "Activated. Now knock" — it does NOT print your agentId:
 ACTIVATION_TX=0x0000000000000000000000000000000000000000000000000000000000000000   # ← paste the hash --execute printed
 node -e "const{ethers}=require('ethers');(async()=>{const r=await new ethers.JsonRpcProvider('https://mainnet.base.org').getTransactionReceipt(process.argv[1]);const T=ethers.id('Transfer(address,address,uint256)');for(const l of r.logs)if(l.address.toLowerCase()==='0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'&&l.topics[0]===T)console.log('agentId',BigInt(l.topics[3]).toString(),'owner','0x'+l.topics[2].slice(26))})()" "$ACTIVATION_TX"
                                                                #    → e.g. "agentId 70411 owner 0x4B0c…" — that number is your join struct's agentId
-ACTP_KEY_PASSWORD=your-strong-password npx actp balance        # 6. 0.00 USDC is fine for walking in. Wait a minute, then step 2 below.
+npx actp balance                                               # 6. 0.00 USDC is fine for walking in. Wait a minute, then step 2 below.
 ```
 
 

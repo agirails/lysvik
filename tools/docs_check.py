@@ -76,6 +76,11 @@ PIN_RE = re.compile(
 FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 # a path token is a route the doc is asserting exists — hold it to the contract
 PATH_RE = re.compile(r"(?<![\w.])(/(?:worlds|api)/[A-Za-z0-9_/:-]+)")
+# a `METHOD /path` token asserts the METHOD too — Argus F8 (2026-08-26): a doc that turned
+# `GET /worlds/lysvik/board` into `DELETE …/board` stayed green under D6, which only saw the path
+METHOD_PATH_RE = re.compile(r"`(GET|POST|PUT|PATCH|DELETE)\s+(/(?:worlds|api)/[A-Za-z0-9_/:-]+)[^`]*`")
+# an inline secret before a command: `ACTP_KEY_PASSWORD=x cmd` — shell history keeps it (Argus F5)
+INLINE_SECRET_RE = re.compile(r"^\s*ACTP_KEY_PASSWORD=\S+\s+\S", re.M)
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
 
 violations: list[str] = []
@@ -122,7 +127,21 @@ def main() -> int:
             f"generated from {contract['generated_from']}, but the pin says genesis-village@{pinned_gv}")
 
     routes = {(r["method"], normalize(r["path"])) for r in contract["routes"]}
-    route_paths = {normalize(r["path"]) for r in contract["routes"]}
+    # D13 — observed routes: served by the live world (evidence in the file) but absent from the
+    # generated contract at the pin. Accepted for D6/D7, printed loudly, and each must NOT also be
+    # in the generated contract (a retired gap that lingers here is a lie about the generator).
+    observed = json.loads((ROOT / "contracts" / "observed-routes.json").read_text())["routes"]
+    for o in observed:
+        key = (o["method"], normalize(o["path"]))
+        if key in routes:
+            red("D13", "contracts/observed-routes.json", f"{o['method']} {o['path']} is now in the generated contract — retire it here")
+        if not o.get("evidence"):
+            red("D13", "contracts/observed-routes.json", f"{o['method']} {o['path']} carries no evidence")
+        routes.add(key)
+    if observed:
+        print(f"  D13: {len(observed)} OBSERVED route(s) accepted on evidence, owed to the generator: "
+              + ", ".join(f"{o['method']} {o['path']}" for o in observed))
+    route_paths = {normalize(r["path"]) for r in contract["routes"]} | {normalize(o["path"]) for o in observed}
     upstream_moved = upstream_gv != pinned_gv
 
     api_reference_text = ""
@@ -168,6 +187,25 @@ def main() -> int:
         for token in {normalize(t) for t in PATH_RE.findall(body)}:
             if token not in route_paths:
                 red("D6", rel, f"documents '{token}' but the contract serves no such route")
+        for method, path in {(m, normalize(p)) for m, p in METHOD_PATH_RE.findall(body)}:
+            if (method, path) not in routes:
+                red("D6", rel, f"documents '{method} {path}' but the contract serves no such METHOD on that route")
+
+    # D14 — the activation script's pinned digest is cited verbatim wherever the docs tell an
+    # agent to run it (Argus F1): fetched from a mutable origin, then executed holding the
+    # keystore password. And no bash fence anywhere puts that password inline before a command
+    # (Argus F5): shell history keeps it.
+    act = version.get("activation_script") or {}
+    digest = act.get("sha256", "")
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        red("D14", "VERSION.json", "activation_script.sha256 missing or not a 64-hex SHA-256")
+    for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
+        text = md.read_text()
+        if "node activate-mainnet.mjs" in text and digest not in text:
+            red("D14", str(md.relative_to(ROOT)), "tells the agent to run activate-mainnet.mjs but never cites the pinned digest")
+        for n, block in enumerate(re.findall(r"```(?:bash|sh|shell)\n(.*?)```", text, re.S), 1):
+            if INLINE_SECRET_RE.search(block):
+                red("D14", str(md.relative_to(ROOT)), f"bash fence #{n} puts ACTP_KEY_PASSWORD inline before a command — read it once with read -rs and export")
 
     # D12 — every ```bash fence in README + docs/ must PARSE (bash -n): a stranger copies
     # these blocks; an angle-bracket placeholder is redirection syntax and the line dies
@@ -194,7 +232,7 @@ def main() -> int:
 
     # D7 — served ⇒ documented (the reference holds the full promised surface)
     for method, path in sorted(routes):
-        plane = next(r["plane"] for r in contract["routes"] if normalize(r["path"]) == path and r["method"] == method)
+        plane = next(r["plane"] for r in [*contract["routes"], *observed] if normalize(r["path"]) == path and r["method"] == method)
         if plane in contract["doc_required_planes"] and path not in api_reference_text:
             red("D7", "docs/api-reference.md", f"contract serves {method} {path} ({plane}) but the reference never mentions it")
 
