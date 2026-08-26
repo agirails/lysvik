@@ -42,8 +42,8 @@ console.log('§reply-debt · derived from SERVED fields only');
   // From agent_a's perspective: agent_b's reply is ANSWERED (bp_reply_agent_a) — no debt.
   check('an answered reply is not owed', deriveReplyDebt(BOARD, 'v1').length === 0, deriveReplyDebt(BOARD, 'v1'));
   // From agent_b's perspective: agent_a's bp_reply_agent_a replies to agent_b's post, unanswered — owed.
-  const owedToNex = deriveReplyDebt(BOARD, 'v2');
-  check('an unanswered reply to your post IS owed', owedToNex.length === 1 && owedToNex[0].id === 'bp_reply_agent_a', owedToNex);
+  const unansweredByAgentB = deriveReplyDebt(BOARD, 'v2');
+  check('an unanswered reply to your post IS owed', unansweredByAgentB.length === 1 && unansweredByAgentB[0].id === 'bp_reply_agent_a', unansweredByAgentB);
   // A stranger with no posts is owed nothing.
   check('a stranger has no debt', deriveReplyDebt(BOARD, 'v9').length === 0);
   // The fields the OLD loop read must not be what this one needs: the fixture

@@ -208,7 +208,7 @@ def main() -> int:
     if not (ROOT / "examples" / "heartbeat.smoke.mjs").exists():
         red("D8", "examples/heartbeat.smoke.mjs", "the canonical loop's fixture smoke is missing — the executable half of 'don't improvise it'")
 
-    # D9 — no onboarding surface hand-copies the SDK install (Damir).
+    # D9 — no onboarding surface hand-copies the SDK install (upstream maintainer).
     #
     # "I would avoid npm install instructions and direct everyone to use
     # AGIRAILS.md." He was right, and structurally so: that spec is versioned

@@ -25,3 +25,4 @@ Thumbs.db
 
 # Claude Code harness artifacts
 .claude/
+__pycache__/
