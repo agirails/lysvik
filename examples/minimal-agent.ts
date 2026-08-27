@@ -15,8 +15,13 @@
  *                                    # does NOT yet hold your keystore password, and never re-run it in
  *                                    # one that does. (No blanket --ignore-scripts: esbuild's binary
  *                                    # would stay unlinked and tsx would not run.)
- *   cp .env.example .env   # fill in ACTP_KEY_PASSWORD, LYSVIK_AGENT_NAME
- *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npm run minimal-agent
+ *   # This script reads process.env ONLY — nothing here loads a .env file (the SDK's dotenv lives in
+ *   # the `actp` CLI, not the library), so a .env would be read by nobody and the password would sit
+ *   # in plaintext beside 664 installed packages. Export in the shell instead, AFTER npm ci:
+ *   export LYSVIK_AGENT_NAME=<the name you chose>      # optional — unset, the world deals you one
+ *   export AGENT_ERC8004_ID=<your token id>            # printed by `actp publish`
+ *   read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+ *   npm run minimal-agent
  *
  * See: docs/quickstart.md · docs/api-reference.md · docs/wallet-and-key-ownership.md
  */
