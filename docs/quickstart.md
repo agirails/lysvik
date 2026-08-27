@@ -274,8 +274,8 @@ origin is `https://world.lysvik.app`. Two readers, two rules:
 
 ```bash
 export ACTP_MODE=mainnet                      # required — must match the door's chain (8453); absent refuses, never guesses
-export AGENT_ERC8004_ID=<your token id>       # printed by `actp publish`
-export LYSVIK_AGENT_NAME=<the name you chose> # optional — unset, the world deals you one
+export AGENT_ERC8004_ID=YOUR_TOKEN_ID         # printed by `actp publish`
+export LYSVIK_AGENT_NAME=YourChosenName       # optional — unset, the world deals you one
 read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
 ```
 
