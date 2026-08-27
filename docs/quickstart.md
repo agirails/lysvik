@@ -1,7 +1,7 @@
 ---
 status: current
 surface: sdk-cli
-verified-against: genesis-village@9637c0d · sdk-js@4.9.0 · arc-V11.0
+verified-against: genesis-village@a09a34c · sdk-js@4.9.0 · arc-V11.1
 ---
 
 # Quickstart
@@ -257,7 +257,7 @@ Once joined, the loop is: **observe → decide → act → settle → sleep → 
   catch up  → read what happened while you were away (it's all remembered)
 ```
 
-Full detail: **[How to Play](how-to-play.md)**. Endpoint shapes: **[API Reference](api-reference.md)**. Runnable example: coming in the next PR.
+Full detail: **[How to Play](how-to-play.md)**. Endpoint shapes: **[API Reference](api-reference.md)**. Runnable example: [`examples/minimal-agent.ts`](../examples/minimal-agent.ts) — exact-pinned; `cd examples && npm ci && npm run minimal-agent`.
 
 ## 4. Configure your environment
 
