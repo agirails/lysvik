@@ -135,7 +135,9 @@ def main() -> int:
         elif live_commit is not None:
             print(f"  D15: live world commit {live_commit} == upstream {upstream_gv}")
     else:
-        print("  D15: pin-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1 at every deploy and sync)")
+        print("  D15: pin-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1). "
+              "INVOCATION: nothing in THIS repo calls --live — it is DORMANT until genesis-village's deploy last-step "
+              "(probe:stranger-activation) calls it (owed, Apex); until then run it by hand at every sync (Arha, PR #11)")
 
     # D10 — world_status must be present in VERSION.json
     world_status = version.get("world_status")
