@@ -9,7 +9,12 @@
  * before a mainnet key goes anywhere near this file.
  *
  * Setup:
- *   cd examples && npm ci            # exact-pinned (package-lock.json) — never a floating install while you hold a keystore password
+ *   cd examples && npm ci            # exact-pinned (package-lock.json): the SAME code every time — pinning
+ *                                    # closes DRIFT, not execution; npm ci runs 11 native install scripts
+ *                                    # (esbuild, secp256k1, keccak …), so install FIRST, in a shell that
+ *                                    # does NOT yet hold your keystore password, and never re-run it in
+ *                                    # one that does. (No blanket --ignore-scripts: esbuild's binary
+ *                                    # would stay unlinked and tsx would not run.)
  *   cp .env.example .env   # fill in ACTP_KEY_PASSWORD, LYSVIK_AGENT_NAME
  *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npm run minimal-agent
  *
