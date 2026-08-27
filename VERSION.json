@@ -1,13 +1,13 @@
 {
   "_what": "The docs' provenance record. Every doc in docs/ was verified against exactly this code state; tools/docs_check.py holds the repo to it. Doc syncs are tagged sync-<arc>[.n]; real semver begins at public launch.",
-  "docs_sync": "sync-v10.0",
+  "docs_sync": "sync-v11.0",
   "verified_against": {
-    "genesis-village": "1530b47",
+    "genesis-village": "9637c0d",
     "sdk-js": "4.9.0",
-    "arc": "V10.0 (sync-1530b47 · 2026-08-26)"
+    "arc": "V11.0 (sync-9637c0d · 2026-08-27)"
   },
   "upstream": {
-    "genesis-village": "1530b47",
+    "genesis-village": "9637c0d",
     "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent."
   },
   "world_status": "live",
@@ -17,6 +17,6 @@
     "sha256": "26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a",
     "verified": "2026-08-27",
     "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value.",
-    "world_commit": "141921a"
+    "world_commit": "9637c0d"
   }
 }
