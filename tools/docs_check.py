@@ -42,6 +42,7 @@ Run: python3 tools/docs_check.py     (from anywhere; repo-rooted; exit 1 on red)
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -112,6 +113,31 @@ def main() -> int:
     pinned_gv = version["verified_against"]["genesis-village"]
     pinned_sdk = version["verified_against"]["sdk-js"]
     upstream_gv = version["upstream"]["genesis-village"]
+
+    # D15 — PIN-VS-WORLD (Arha, O1 walk, S142): D3/D4 compare two COMMITTED values and by
+    # construction cannot see the world move past the pin; four deploys landed in one day and
+    # every live number in the README went stale together. This check is NETWORKED and therefore
+    # opt-in (`--live` or DOCS_LIVE=1): GET /health .commit must equal upstream.genesis-village.
+    # Atlas ruling S142: it runs as the LAST STEP of every world deploy (beside the stranger probe)
+    # and at every sync pass; unreachable is RED, not skip.
+    if "--live" in sys.argv or os.environ.get("DOCS_LIVE") == "1":
+        try:
+            import urllib.request
+            with urllib.request.urlopen("https://world.lysvik.app/health", timeout=15) as r:
+                live_commit = json.load(r).get("commit")
+        except Exception as e:  # noqa: BLE001
+            live_commit = None
+            red("D15", "VERSION.json", f"the live world could not be read ({e}) — a gate that cannot see must not pass")
+        if live_commit is not None and live_commit != upstream_gv:
+            red("D15", "VERSION.json",
+                f"the live world serves commit {live_commit} but upstream pins {upstream_gv} — the docs describe a "
+                f"shipped-past world; bump upstream (and re-sync verified_against) from the deploy that moved it")
+        elif live_commit is not None:
+            print(f"  D15: live world commit {live_commit} == upstream {upstream_gv}")
+    else:
+        print("  D15: pin-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1). "
+              "INVOCATION: nothing in THIS repo calls --live — it is DORMANT until genesis-village's deploy last-step "
+              "(probe:stranger-activation) calls it (owed, Apex); until then run it by hand at every sync (Arha, PR #11)")
 
     # D10 — world_status must be present in VERSION.json
     world_status = version.get("world_status")
