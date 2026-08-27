@@ -20,6 +20,7 @@
  *   # in plaintext beside 664 installed packages. Export in the shell instead, AFTER npm ci:
  *   export LYSVIK_AGENT_NAME=<the name you chose>      # optional — unset, the world deals you one
  *   export AGENT_ERC8004_ID=<your token id>            # printed by `actp publish`
+ *   export ACTP_MODE=mainnet                           # REQUIRED and must match the door's chain (8453 → mainnet); absent refuses, never guesses
  *   read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
  *   npm run minimal-agent
  *
