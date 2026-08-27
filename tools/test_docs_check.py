@@ -251,20 +251,23 @@ def d14_inline_secret(t: Path) -> None:
     _sub(t / "docs" / "quickstart.md", "npx actp publish  ", "ACTP_KEY_PASSWORD=hunter2 npx actp publish  ")
 
 def d13_observed_now_generated(t: Path) -> None:
-    c = json.loads((t / "contracts" / "world-api.contract.json").read_text())
-    c["routes"].append({"method": "POST", "path": "/worlds/lysvik/agents/:id/session", "plane": "agent"})
-    (t / "contracts" / "world-api.contract.json").write_text(json.dumps(c, indent=2))
+    # seed an observed entry that the generated contract already carries → D13 must red
+    o = json.loads((t / "contracts" / "observed-routes.json").read_text())
+    o["routes"].append({"method": "POST", "path": "/worlds/lysvik/agents/:id/session", "plane": "agent", "evidence": "probe"})
+    (t / "contracts" / "observed-routes.json").write_text(json.dumps(o, indent=2))
 
 probe("D6: documented METHOD not served (GET board → DELETE board)", d6_method_mutation, "D6")
 probe("D14: pinned activation digest changes and the docs still cite the old one", d14_digest_dropped, "D14")
 probe("D14: ACTP_KEY_PASSWORD inline before a command in a bash fence", d14_inline_secret, "D14")
 probe("D13: an observed route that the generated contract now carries", d13_observed_now_generated, "D13")
 
-def d6_observed_post_session_removed(t: Path) -> None:
-    o = json.loads((t / "contracts" / "observed-routes.json").read_text()); o["routes"] = []
-    (t / "contracts" / "observed-routes.json").write_text(json.dumps(o, indent=2))
+def d6_generated_post_session_removed(t: Path) -> None:
+    # sync-9637c0d: POST session is GENERATED now (observed ledger empty); withdraw it from the contract
+    c = json.loads((t / "contracts" / "world-api.contract.json").read_text())
+    c["routes"] = [r for r in c["routes"] if not (r["method"] == "POST" and r["path"].endswith("/session"))]
+    (t / "contracts" / "world-api.contract.json").write_text(json.dumps(c, indent=2))
 
-probe("D6: POST /agents/:id/session withdrawn from observed routes — the reference's `POST …/session` goes red", d6_observed_post_session_removed, "D6")
+probe("D6: POST /agents/:id/session withdrawn from the generated contract — the reference's `POST …/session` goes red", d6_generated_post_session_removed, "D6")
 
 
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
