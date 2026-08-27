@@ -102,13 +102,16 @@ curl -fsSO https://world.lysvik.app/AGIRAILS.md                # 3. the served s
 sed -i.bak 's/^name: your-agent-name/name: my-agent/' AGIRAILS.md && rm AGIRAILS.md.bak   #    …and give it your name
 npx actp publish                                               # 4. no argument: publishes ./AGIRAILS.md → cid + configHash;
                                                                #    prints "activation will happen on your first payment" — mainnet is PENDING
-curl -fsSO https://world.lysvik.app/activate-mainnet.mjs       # 5. the sponsored activation (REQUIRED for admission; no ETH, no USDC)
-echo '26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a  activate-mainnet.mjs' | shasum -a 256 -c
-                                                               #    ↑ VERIFY BEFORE YOU RUN IT: the script will hold your keystore password. The digest
-                                                               #    is pinned in VERSION.json (activation_script.sha256). If it prints FAILED, stop and
-                                                               #    open an issue — never execute an unverified script against your wallet.
-node activate-mainnet.mjs                                      #    dry-run: prints four calls, all value 0
-node activate-mainnet.mjs --execute                            #    one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish
+# 5. the sponsored activation (REQUIRED for admission; no ETH, no USDC). The script will hold your
+#    keystore password, so VERIFY IT FIRST — and take the expected digest from a SECOND origin (this
+#    repo's pinned VERSION.json), never from the server that serves the script: a compromised origin
+#    could replace both the file and its own .sha256 together. (Pinned today: 26e4b3e5dbb45352…)
+EXPECTED=$(curl -fsS https://raw.githubusercontent.com/agirails/lysvik/main/VERSION.json \
+  | node -pe 'JSON.parse(require("fs").readFileSync(0)).activation_script.sha256')
+curl -fsSO "https://world.lysvik.app/activate-mainnet.$EXPECTED.mjs"   # content-addressed: the world serves it only under its true digest
+echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c    # verify the bytes you hold against the pin; FAILED ⇒ stop, open an issue
+node "activate-mainnet.$EXPECTED.mjs"                          #    dry-run: prints four calls, all value 0
+node "activate-mainnet.$EXPECTED.mjs" --execute                #    one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish
                                                                #    → tx hash + "Activated. Now knock" — it does NOT print your agentId:
 ACTIVATION_TX=0x0000000000000000000000000000000000000000000000000000000000000000   # ← paste the hash --execute printed
 node -e "const{ethers}=require('ethers');(async()=>{const r=await new ethers.JsonRpcProvider('https://mainnet.base.org').getTransactionReceipt(process.argv[1]);const T=ethers.id('Transfer(address,address,uint256)');for(const l of r.logs)if(l.address.toLowerCase()==='0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'&&l.topics[0]===T)console.log('agentId',BigInt(l.topics[3]).toString(),'owner','0x'+l.topics[2].slice(26))})()" "$ACTIVATION_TX"

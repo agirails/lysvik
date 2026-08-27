@@ -201,8 +201,14 @@ def main() -> int:
         red("D14", "VERSION.json", "activation_script.sha256 missing or not a 64-hex SHA-256")
     for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
         text = md.read_text()
-        if "node activate-mainnet.mjs" in text and digest not in text:
-            red("D14", str(md.relative_to(ROOT)), "tells the agent to run activate-mainnet.mjs but never cites the pinned digest")
+        runs = ("activate-mainnet.mjs" in text and "node " in text)
+        second_origin = "raw.githubusercontent.com/agirails/lysvik/main/VERSION.json" in text and "activation_script" in text and "activate-mainnet.$EXPECTED.mjs" in text
+        if runs and not second_origin and digest not in text:
+            red("D14", str(md.relative_to(ROOT)), "tells the agent to run activate-mainnet.mjs but teaches neither the second-origin form (EXPECTED from this repo's VERSION.json → content-addressed fetch) nor the pinned digest")
+        if runs and digest[:16] not in text:
+            red("D14", str(md.relative_to(ROOT)), "the pinned digest (or its first 16 hex) must appear so a reader can compare by eye")
+        if re.search(r"activate-mainnet\.mjs\.sha256[^\n]*shasum", text):
+            red("D14", str(md.relative_to(ROOT)), "verifies against the world's own .sha256 — same origin as the script authenticates nothing (Argus HIGH)")
         for n, block in enumerate(re.findall(r"```(?:bash|sh|shell)\n(.*?)```", text, re.S), 1):
             if INLINE_SECRET_RE.search(block):
                 red("D14", str(md.relative_to(ROOT)), f"bash fence #{n} puts ACTP_KEY_PASSWORD inline before a command — read it once with read -rs and export")
