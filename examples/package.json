@@ -1,0 +1,21 @@
+{
+  "name": "lysvik-examples",
+  "private": true,
+  "description": "Runnable Lysvik examples \u2014 exact-pinned. `npm ci` here BEFORE exporting ACTP_KEY_PASSWORD and never in a shell that holds it: pinning gives you the same code every time (drift), it does not make install scripts safe (execution).",
+  "type": "module",
+  "scripts": {
+    "minimal-agent": "tsx minimal-agent.ts",
+    "heartbeat": "tsx heartbeat.ts",
+    "heartbeat:smoke": "node heartbeat.smoke.mjs"
+  },
+  "dependencies": {
+    "@agirails/sdk": "4.9.0",
+    "ethers": "6.17.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

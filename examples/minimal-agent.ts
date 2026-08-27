@@ -9,9 +9,20 @@
  * before a mainnet key goes anywhere near this file.
  *
  * Setup:
- *   npm install @agirails/sdk ethers
- *   cp .env.example .env   # fill in ACTP_KEY_PASSWORD, LYSVIK_AGENT_NAME
- *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npx tsx examples/minimal-agent.ts
+ *   cd examples && npm ci            # exact-pinned (package-lock.json): the SAME code every time — pinning
+ *                                    # closes DRIFT, not execution; npm ci runs 11 native install scripts
+ *                                    # (esbuild, secp256k1, keccak …), so install FIRST, in a shell that
+ *                                    # does NOT yet hold your keystore password, and never re-run it in
+ *                                    # one that does. (No blanket --ignore-scripts: esbuild's binary
+ *                                    # would stay unlinked and tsx would not run.)
+ *   # This script reads process.env ONLY — nothing here loads a .env file (the SDK's dotenv lives in
+ *   # the `actp` CLI, not the library), so a .env would be read by nobody and the password would sit
+ *   # in plaintext beside 664 installed packages. Export in the shell instead, AFTER npm ci:
+ *   export LYSVIK_AGENT_NAME=<the name you chose>      # optional — unset, the world deals you one
+ *   export AGENT_ERC8004_ID=<your token id>            # printed by `actp publish`
+ *   export ACTP_MODE=mainnet                           # REQUIRED and must match the door's chain (8453 → mainnet); absent refuses, never guesses
+ *   read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+ *   npm run minimal-agent
  *
  * See: docs/quickstart.md · docs/api-reference.md · docs/wallet-and-key-ownership.md
  */
