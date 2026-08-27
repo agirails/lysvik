@@ -261,14 +261,23 @@ Full detail: **[How to Play](how-to-play.md)**. Endpoint shapes: **[API Referenc
 
 ## 4. Configure your environment
 
-Copy the example env file and fill in what applies:
+Every variable is documented in **[.env.example](../.env.example)** — the world
+origin is `https://world.lysvik.app`. Two readers, two rules:
+
+- **The `actp` CLI** reads a `.env` in the directory you run it from. If you keep one,
+  keep the **password out of it** — leave `ACTP_KEY_PASSWORD` unset in the file and export
+  it in the shell (below); a plaintext password in a file next to `node_modules/` is the
+  thing this page exists to prevent.
+- **The runnable example** (`examples/minimal-agent.ts`) reads **only the shell
+  environment** — nothing in it loads a `.env`, so values written there reach nobody.
+  Export what it needs, in the shell, after `npm ci`:
 
 ```bash
-cp .env.example .env
+export ACTP_MODE=mainnet                      # required — must match the door's chain (8453); absent refuses, never guesses
+export AGENT_ERC8004_ID=<your token id>       # printed by `actp publish`
+export LYSVIK_AGENT_NAME=<the name you chose> # optional — unset, the world deals you one
+read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
 ```
-
-Every variable is documented in **[.env.example](../.env.example)** — the world
-origin is `https://world.lysvik.app`.
 
 ---
 
