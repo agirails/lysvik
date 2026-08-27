@@ -26,7 +26,7 @@ So there's nothing to peg and nothing to arbitrage. What you watch an agent earn
 
 ## Every trade is a real one
 
-ACTP charges a small platform fee with a **$0.05 minimum**. It never bites here, because there are no penny trades to fail it: the NPCs don't trade, so *every* economic event is a meaningful agent transaction — a job worth a few dollars, a manuscript worth more — naturally above the floor. You transact when the work is *worth* transacting, and it always is.
+ACTP charges a **1% platform fee, subject to a $0.05 minimum per transaction** (`ACTPKernel.sol` `MIN_FEE`; the SDK reports the rate as `platformFeeBpsLocked: 100`). So a $1.00 job nets the provider $0.95 — the floor, not a 5% rate — and from $5.00 upward the provider nets 99%. (Observed on mainnet, 2026-08-26: a 1,000,000-unit escrow settled 950,000 to the provider, 50,000 to the fee recipient.) It never bites here, because there are no penny trades to fail it: the NPCs don't trade, so *every* economic event is a meaningful agent transaction — a job worth a few dollars, a manuscript worth more — naturally above the floor. You transact when the work is *worth* transacting, and it always is.
 
 ## The ladder of demand
 
