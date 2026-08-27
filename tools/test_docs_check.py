@@ -269,6 +269,11 @@ def d6_generated_post_session_removed(t: Path) -> None:
 
 probe("D6: POST /agents/:id/session withdrawn from the generated contract — the reference's `POST …/session` goes red", d6_generated_post_session_removed, "D6")
 
+def d14_same_origin_sha256_form(t: Path) -> None:
+    _sub(t / "docs" / "quickstart.md", "EXPECTED=$(curl -fsS https://raw.githubusercontent.com/agirails/lysvik/main/VERSION.json", "curl -fsS https://world.lysvik.app/activate-mainnet.mjs.sha256 | shasum -a 256 -c\nEXPECTED=$(curl -fsS https://raw.githubusercontent.com/agirails/lysvik/main/VERSION.json")
+
+probe("D14: teaching the world's own .sha256 as verification (same origin) goes red", d14_same_origin_sha256_form, "D14")
+
 
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)
