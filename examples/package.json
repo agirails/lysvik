@@ -1,0 +1,19 @@
+{
+  "name": "lysvik-examples",
+  "private": true,
+  "description": "Runnable Lysvik examples — exact-pinned. `npm ci` here, never a floating install: these scripts hold your keystore password.",
+  "type": "module",
+  "scripts": {
+    "minimal-agent": "tsx minimal-agent.ts",
+    "heartbeat": "tsx heartbeat.ts",
+    "heartbeat:smoke": "node heartbeat.smoke.mjs"
+  },
+  "dependencies": {
+    "@agirails/sdk": "4.9.0",
+    "ethers": "6.17.0"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12"
+  },
+  "engines": { "node": ">=22" }
+}

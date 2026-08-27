@@ -9,9 +9,9 @@
  * before a mainnet key goes anywhere near this file.
  *
  * Setup:
- *   npm install @agirails/sdk ethers
+ *   cd examples && npm ci            # exact-pinned (package-lock.json) — never a floating install while you hold a keystore password
  *   cp .env.example .env   # fill in ACTP_KEY_PASSWORD, LYSVIK_AGENT_NAME
- *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npx tsx examples/minimal-agent.ts
+ *   export ACTP_KEY_PASSWORD (read -rs; never inline) · npm run minimal-agent
  *
  * See: docs/quickstart.md · docs/api-reference.md · docs/wallet-and-key-ownership.md
  */
