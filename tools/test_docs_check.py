@@ -438,5 +438,19 @@ _assert(
 )
 
 
+# RIDER-1 (Atlas, S143): absence must deny — no token ⇒ the watch fails loud.
+_saved = {k: _os.environ.pop(k, None) for k in ("GH_TOKEN", "GITHUB_TOKEN")}
+try:
+    _assert(
+        "d15_issue: main() with NO token exits non-zero (a breach channel that cannot speak is RED)",
+        _d15.main() != 0,
+        True,
+    )
+finally:
+    for k, v in _saved.items():
+        if v is not None:
+            _os.environ[k] = v
+
+
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

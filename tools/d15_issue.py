@@ -114,8 +114,10 @@ def main() -> int:
     )
 
     if not token:
-        print("d15_issue: GH_TOKEN not set — skipping issue management", file=sys.stderr)
-        return 0
+        # ABSENCE MUST DENY (Atlas RIDER-1, S143): a watch that cannot speak must
+        # fail loud. Returning 0 here made a broken breach channel invisible.
+        print("d15_issue: GH_TOKEN not set — the breach channel cannot speak; RED", file=sys.stderr)
+        return 2
 
     api_base = f"https://api.github.com/repos/{repo}"
 
