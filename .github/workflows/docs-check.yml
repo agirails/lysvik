@@ -27,6 +27,9 @@ jobs:
   # merely read. No secrets exist on this runner; nothing here touches a key.
   examples-install:
     runs-on: ubuntu-latest
+    # Install scripts run here on purpose; only OUR branches earn that (Arha, S143):
+    # a fork PR editing the manifest must not get a postinstall executed on demand.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     defaults:
       run:
         working-directory: examples
