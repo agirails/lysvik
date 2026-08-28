@@ -275,5 +275,182 @@ def d14_same_origin_sha256_form(t: Path) -> None:
 probe("D14: teaching the world's own .sha256 as verification (same origin) goes red", d14_same_origin_sha256_form, "D14")
 
 
+
+# ── D15 live-mode probes ─────────────────────────────────────────────────────
+# These exercise the networked D15 path via env overrides added in S143.
+# The probe must be able to go red — if the gate swallows network errors and
+# returns 0 on unreachable, the probe below fails.
+
+import http.server as _http_server
+import os as _os
+import threading as _threading
+
+
+def _run_gate_live(tree: Path, extra_env: dict) -> tuple[int, str]:
+    """Run the gate with --live and extra env vars merged on top of the current env."""
+    env = {**_os.environ, **extra_env}
+    r = subprocess.run(
+        [sys.executable, str(tree / "tools" / "docs_check.py"), "--live"],
+        capture_output=True, text=True, env=env,
+    )
+    return r.returncode, r.stdout + r.stderr
+
+
+def _copy_tree(td: str) -> Path:
+    tree = Path(td)
+    for part in ("docs", "tools", "contracts", "examples", "config", "scripts", "fixtures"):
+        src = ROOT / part
+        if src.exists():
+            shutil.copytree(src, tree / part)
+    for f in ("VERSION.json", "README.md", "CHANGELOG.md", "LYSVIK.md", "AGENTS.md", ".env.example", "LICENSE"):
+        src = ROOT / f
+        if src.exists():
+            shutil.copy(src, tree / f)
+    return tree
+
+
+def _mock_health_server(commit: str) -> tuple[str, "_http_server.HTTPServer"]:
+    """Start a local HTTP server returning {"commit": commit} at any path."""
+    import json as _json
+
+    class _Handler(_http_server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = _json.dumps({"commit": commit}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        def log_message(self, *a): pass
+
+    srv = _http_server.HTTPServer(("127.0.0.1", 0), _Handler)
+    port = srv.server_address[1]
+    _threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return f"http://127.0.0.1:{port}/health", srv
+
+
+def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1) -> None:
+    """Run the gate with --live; assert exit code and rule presence."""
+    global passed, failed
+    with tempfile.TemporaryDirectory() as td:
+        tree = _copy_tree(td)
+        code, out = _run_gate_live(tree, extra_env)
+        if want_rule is None:
+            ok = code == want_exit
+        else:
+            ok = code == want_exit and f"{want_rule} ·" in out
+        if ok:
+            passed += 1
+            print(f"  ✓ {name}")
+        else:
+            failed += 1
+            print(f"  ✗ {name} — exit {code}\n{out}")
+
+
+# Condition 1 — unreachable /health is a loud red.
+# This test FAILS if the gate swallows network errors and exits 0.
+probe_live(
+    "D15: unreachable /health exits non-zero (loud red, not skip)",
+    {"DOCS_LIVE_HEALTH_URL": "http://127.0.0.1:9/health"},
+    want_rule="D15",
+)
+
+# Condition 2 — DOCS_UPSTREAM_OVERRIDE forces D15 to compare against the
+# override value; a mock server returning a real-looking commit plus a
+# mismatched override must go red.
+_MOCK_COMMIT = "aabbccdd1234567890aabbccdd1234567890abcd"
+_mock_url, _mock_srv = _mock_health_server(_MOCK_COMMIT)
+
+probe_live(
+    "D15: DOCS_UPSTREAM_OVERRIDE mismatch exits non-zero",
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": "deadbeef"},
+    want_rule="D15",
+)
+
+probe_live(
+    "D15: DOCS_UPSTREAM_OVERRIDE match is green (exit 0)",
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT},
+    want_rule=None, want_exit=0,
+)
+
+_mock_srv.shutdown()
+
+# ── d15_issue.py unit tests — pure functions only (no network) ────────────────
+import importlib.util as _ilu
+
+_spec = _ilu.spec_from_file_location("d15_issue", ROOT / "tools" / "d15_issue.py")
+_d15 = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_d15)
+
+
+def _assert(name: str, got, want) -> None:
+    global passed, failed
+    if got == want:
+        passed += 1
+        print(f"  ✓ {name}")
+    else:
+        failed += 1
+        print(f"  ✗ {name} — got {got!r}, want {want!r}")
+
+
+_assert(
+    "d15_issue: find_marker_issue returns the issue whose body contains the marker",
+    _d15.find_marker_issue([
+        {"number": 1, "body": "some text"},
+        {"number": 2, "body": f"{_d15.MARKER}\nbody"},
+        {"number": 3, "body": "another"},
+    ])["number"],
+    2,
+)
+
+_assert(
+    "d15_issue: find_marker_issue returns None when no issue carries the marker",
+    _d15.find_marker_issue([{"number": 1, "body": "no marker here"}]),
+    None,
+)
+
+_assert(
+    "d15_issue: find_marker_issue returns None for empty list",
+    _d15.find_marker_issue([]),
+    None,
+)
+
+_assert(
+    "d15_issue: extract_values parses the D15 green log line",
+    _d15.extract_values("  D15: live world commit abc1234 == upstream abc1234"),
+    ("abc1234", "abc1234"),
+)
+
+_assert(
+    "d15_issue: extract_values parses the D15 red (mismatch) log line",
+    _d15.extract_values(
+        "D15 · VERSION.json: the live world serves commit abc1234 but upstream pins deadbeef — ..."
+    ),
+    ("abc1234", "deadbeef"),
+)
+
+_assert(
+    "d15_issue: extract_values returns (None, None) for an unreachable error line",
+    _d15.extract_values(
+        "D15 · VERSION.json: the live world could not be read (ConnectionRefusedError)"
+    ),
+    (None, None),
+)
+
+
+# RIDER-1 (Atlas, S143): absence must deny — no token ⇒ the watch fails loud.
+_saved = {k: _os.environ.pop(k, None) for k in ("GH_TOKEN", "GITHUB_TOKEN")}
+try:
+    _assert(
+        "d15_issue: main() with NO token exits non-zero (a breach channel that cannot speak is RED)",
+        _d15.main() != 0,
+        True,
+    )
+finally:
+    for k, v in _saved.items():
+        if v is not None:
+            _os.environ[k] = v
+
+
 print(f"\n{'PASS' if failed == 0 else 'FAIL'} — {passed} passed, {failed} failed")
 sys.exit(1 if failed else 0)

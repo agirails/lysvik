@@ -120,20 +120,30 @@ def main() -> int:
     # opt-in (`--live` or DOCS_LIVE=1): GET /health .commit must equal upstream.genesis-village.
     # Atlas ruling S142: it runs as the LAST STEP of every world deploy (beside the stranger probe)
     # and at every sync pass; unreachable is RED, not skip.
+    #
+    # DOCS_LIVE_HEALTH_URL — override the health endpoint (default: https://world.lysvik.app/health).
+    #   Used by the scheduled workflow and by unit tests to prove the unreachable-is-red path.
+    #   Example: DOCS_LIVE_HEALTH_URL=http://127.0.0.1:9/health python3 tools/docs_check.py --live
+    #
+    # DOCS_UPSTREAM_OVERRIDE — compare the live commit against this value instead of
+    #   VERSION.json upstream.genesis-village. Used ONLY for falsification dispatches
+    #   (workflow_dispatch input upstream_override=deadbeef) to prove the gate can go red.
+    _health_url = os.environ.get("DOCS_LIVE_HEALTH_URL", "https://world.lysvik.app/health")
+    _upstream_pin = os.environ.get("DOCS_UPSTREAM_OVERRIDE") or upstream_gv
     if "--live" in sys.argv or os.environ.get("DOCS_LIVE") == "1":
         try:
             import urllib.request
-            with urllib.request.urlopen("https://world.lysvik.app/health", timeout=15) as r:
+            with urllib.request.urlopen(_health_url, timeout=15) as r:
                 live_commit = json.load(r).get("commit")
         except Exception as e:  # noqa: BLE001
             live_commit = None
             red("D15", "VERSION.json", f"the live world could not be read ({e}) — a gate that cannot see must not pass")
-        if live_commit is not None and live_commit != upstream_gv:
+        if live_commit is not None and live_commit != _upstream_pin:
             red("D15", "VERSION.json",
-                f"the live world serves commit {live_commit} but upstream pins {upstream_gv} — the docs describe a "
+                f"the live world serves commit {live_commit} but upstream pins {_upstream_pin} — the docs describe a "
                 f"shipped-past world; bump upstream (and re-sync verified_against) from the deploy that moved it")
         elif live_commit is not None:
-            print(f"  D15: live world commit {live_commit} == upstream {upstream_gv}")
+            print(f"  D15: live world commit {live_commit} == upstream {_upstream_pin}")
     else:
         print("  D15: pin-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1). "
               "INVOCATION: nothing in THIS repo calls --live — it is DORMANT until genesis-village's deploy last-step "
