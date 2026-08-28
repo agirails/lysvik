@@ -1,0 +1,68 @@
+name: D15 off-box convergence check
+
+# Measures: live world /health.commit == VERSION.json upstream.genesis-village.
+# Design: relay/S143-D15-OFFBOX-DESIGN.md (Atlas ruling, Apex S143).
+# Cadence: every 30 minutes (48/day); divergence visible within 30 min of a world push.
+# Falsification: dispatch with upstream_override=deadbeef to prove the gate can go red.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      upstream_override:
+        description: >
+          Falsification pin — compare the live commit against this value instead of
+          VERSION.json upstream.genesis-village. Leave blank for a normal run.
+        required: false
+        default: ''
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  d15-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Confirm checkout SHA
+        run: git rev-parse HEAD
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run D15 convergence gate
+        id: gate
+        env:
+          # Empty string when not set (schedule trigger) — docs_check.py treats
+          # empty DOCS_UPSTREAM_OVERRIDE as "use VERSION.json upstream" (correct).
+          DOCS_UPSTREAM_OVERRIDE: ${{ inputs.upstream_override }}
+        run: |
+          set +e
+          python3 tools/docs_check.py --live > gate_output.txt 2>&1
+          GATE_EXIT=$?
+          set -e
+          cat gate_output.txt
+          echo "gate_exit=${GATE_EXIT}" >> "$GITHUB_OUTPUT"
+
+      - name: Manage D15 issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GATE_EXIT: ${{ steps.gate.outputs.gate_exit }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 tools/d15_issue.py gate_output.txt
+
+      - name: Exit with gate code (marks the run RED when D15 fires)
+        if: always()
+        env:
+          GATE_EXIT: ${{ steps.gate.outputs.gate_exit }}
+        run: |
+          case "${GATE_EXIT}" in
+            0) exit 0 ;;
+            *) exit 1 ;;
+          esac
