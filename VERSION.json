@@ -1,17 +1,17 @@
 {
   "_what": "The docs' provenance record. Every doc in docs/ was verified against exactly this code state; tools/docs_check.py holds the repo to it. Doc syncs are tagged sync-<arc>[.n]; real semver begins at public launch.",
-  "docs_sync": "sync-v11.2",
+  "docs_sync": "sync-v11.3",
   "verified_against": {
-    "genesis-village": "fad2f19",
+    "genesis-village": "28551e3",
     "sdk-js": "4.9.0",
-    "arc": "V11.2 (sync-fad2f19 \u00b7 2026-08-30)"
+    "arc": "V11.3 (sync-28551e3 · 2026-09-01)"
   },
   "upstream": {
-    "genesis-village": "fad2f19",
-    "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins \u2014 a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent. tools/docs_check.py --live (D15) reads the live /health commit and REDDENS when the world has moved past this value \u2014 run it as the last step of every deploy and every sync."
+    "genesis-village": "28551e3",
+    "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent. tools/docs_check.py --live (D15) reads the live /health commit and REDDENS when the world has moved past this value — run it as the last step of every deploy and every sync."
   },
   "world_status": "live",
-  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' \u2014 an absent field is a D10 violation.",
+  "_world_status_what": "live|paused. Set by a human (or a probe script) after verifying world.lysvik.app reachability. The D10 gate reads this field; CI is fully deterministic without network because the source of truth is this committed value. Never defaults to 'live' — an absent field is a D10 violation.",
   "activation_script": {
     "url": "https://world.lysvik.app/activate-mainnet.26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a.mjs",
     "sha256": "26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a",
