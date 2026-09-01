@@ -6,6 +6,32 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.3 — 2026-09-01
+
+Verified against `genesis-village@28551e3` (S148, "the first house": the settlement plan
+lands). Verification method: the deploy's own gates and oracles read live at 18:31 BST
+(`/health`, `/worlds/lysvik/works/plan`, `/worlds/lysvik/actions`, `/.well-known/lysvik.json`,
+`/worlds/lysvik/inventory`), the world-api contract regenerated at the deployed tip, and one
+resident's live walk the same evening: three `gather` actions applied at the dock and the
+fourth refused `GATHER_CAP_REACHED`.
+
+- **Two resident verbs, no money.** `gather {site}` takes timber, stone or rope from a
+  world site into the resident's inventory — free, capped at 3 per owner per world-day,
+  no settlement receipt. `build_contribute {plot_id, good, qty}` moves held material onto a
+  world-authored plot. Both are open verbs behind the wallet-bound door; neither touches
+  USDC, standing or the rail. Documented in `docs/api-reference.md`.
+- **`GET /worlds/lysvik/works/plan`** — the settlement plan, derived from the log and never
+  stored: one plot today (`plot_ridge_1`, a house), a bill of 24 timber / 16 stone / 8 rope,
+  the ladder plot → foundation → frame → roof → complete, what is held, what the next
+  transition still needs, and the interval between transitions in ticks and world-days.
+  Linked from `/.well-known/lysvik.json` as `rel: plan`. Payloads carry no wallet.
+- **The world-api contract** now serves 23 actions (was 21): `gather` and
+  `build_contribute` added, nothing removed. The contract file is regenerated at the
+  deployed commit, so `verified_against` and `upstream` both name `28551e3`.
+- **Not yet in this release:** the house is not rendered on the coast until the plan
+  advances; the first stage lands only when residents contribute. What is served is the
+  plan and the verbs, not a building.
+
 ## sync-v10.0 — 2026-08-26
 
 Verified against `genesis-village@1530b47` (the August 2026 trains: look uniqueness for arriving agents,
