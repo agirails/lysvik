@@ -309,6 +309,33 @@ def _copy_tree(td: str) -> Path:
     return tree
 
 
+# S149 (D16): every live-mode probe below also pins the ACTIONS endpoint to a mock serving the
+# committed contract's own actions, so the D15 probes stay deterministic (no network) and D16
+# is green unless a probe says otherwise.
+def _mock_json_server(payload: dict) -> str:
+    import json as _json
+
+    class _Handler(_http_server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            body = _json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        def log_message(self, *a): pass
+
+    srv = _http_server.HTTPServer(("127.0.0.1", 0), _Handler)
+    _threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return f"http://127.0.0.1:{srv.server_address[1]}/worlds/lysvik/actions"
+
+
+_COMMITTED_ACTIONS = json.loads((ROOT / "contracts" / "world-api.contract.json").read_text())["actions"]
+_ACTIONS_OK_URL = _mock_json_server({"actions": [{"action": a} for a in _COMMITTED_ACTIONS]})
+_ACTIONS_MISSING_URL = _mock_json_server({"actions": [{"action": a} for a in _COMMITTED_ACTIONS if a != "gather"]})
+_ACTIONS_EXTRA_URL = _mock_json_server({"actions": [{"action": a} for a in _COMMITTED_ACTIONS] + [{"action": "zz_unknown"}]})
+
+
 def _mock_health_server(commit: str) -> tuple[str, "_http_server.HTTPServer"]:
     """Start a local HTTP server returning {"commit": commit} at any path."""
     import json as _json
@@ -329,8 +356,10 @@ def _mock_health_server(commit: str) -> tuple[str, "_http_server.HTTPServer"]:
     return f"http://127.0.0.1:{port}/health", srv
 
 
-def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1) -> None:
-    """Run the gate with --live; assert exit code and rule presence."""
+def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1, want_absent: str | None = None) -> None:
+    """Run the gate with --live; assert exit code and rule presence — and, when asked, a rule's ABSENCE.
+    S149 (Veyra): the D16 earning case is "the twin reds while D3 stays green in the same run"; a probe
+    that only asserts D16 present would also pass on a run where D3 red too, which is D3 with extra steps."""
     global passed, failed
     with tempfile.TemporaryDirectory() as td:
         tree = _copy_tree(td)
@@ -339,6 +368,8 @@ def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int
             ok = code == want_exit
         else:
             ok = code == want_exit and f"{want_rule} ·" in out
+        if want_absent is not None and f"{want_absent} ·" in out:
+            ok = False
         if ok:
             passed += 1
             print(f"  ✓ {name}")
@@ -351,7 +382,7 @@ def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int
 # This test FAILS if the gate swallows network errors and exits 0.
 probe_live(
     "D15: unreachable /health exits non-zero (loud red, not skip)",
-    {"DOCS_LIVE_HEALTH_URL": "http://127.0.0.1:9/health"},
+    {"DOCS_LIVE_HEALTH_URL": "http://127.0.0.1:9/health", "DOCS_LIVE_ACTIONS_URL": _ACTIONS_OK_URL},
     want_rule="D15",
 )
 
@@ -363,14 +394,32 @@ _mock_url, _mock_srv = _mock_health_server(_MOCK_COMMIT)
 
 probe_live(
     "D15: DOCS_UPSTREAM_OVERRIDE mismatch exits non-zero",
-    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": "deadbeef"},
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": "deadbeef", "DOCS_LIVE_ACTIONS_URL": _ACTIONS_OK_URL},
     want_rule="D15",
 )
 
 probe_live(
     "D15: DOCS_UPSTREAM_OVERRIDE match is green (exit 0)",
-    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT},
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": _ACTIONS_OK_URL},
     want_rule=None, want_exit=0,
+)
+
+# ── D16 surface-twin probes (S149, rider 15 — Arha's earning case) ──────────
+# A hand-edited contract with its stamp intact: D3 stays green, D16 must go red.
+probe_live(
+    "D16: live world lacks an action the committed contract carries (hand-edit shape) → red",
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": _ACTIONS_MISSING_URL},
+    want_rule="D16", want_absent="D3",
+)
+probe_live(
+    "D16: live world serves an action the committed contract lacks → red",
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": _ACTIONS_EXTRA_URL},
+    want_rule="D16", want_absent="D3",
+)
+probe_live(
+    "D16: unreachable /actions exits non-zero (loud red, not skip)",
+    {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": "http://127.0.0.1:9/worlds/lysvik/actions"},
+    want_rule="D16",
 )
 
 _mock_srv.shutdown()
