@@ -356,8 +356,10 @@ def _mock_health_server(commit: str) -> tuple[str, "_http_server.HTTPServer"]:
     return f"http://127.0.0.1:{port}/health", srv
 
 
-def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1) -> None:
-    """Run the gate with --live; assert exit code and rule presence."""
+def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1, want_absent: str | None = None) -> None:
+    """Run the gate with --live; assert exit code and rule presence — and, when asked, a rule's ABSENCE.
+    S149 (Veyra): the D16 earning case is "the twin reds while D3 stays green in the same run"; a probe
+    that only asserts D16 present would also pass on a run where D3 red too, which is D3 with extra steps."""
     global passed, failed
     with tempfile.TemporaryDirectory() as td:
         tree = _copy_tree(td)
@@ -366,6 +368,8 @@ def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int
             ok = code == want_exit
         else:
             ok = code == want_exit and f"{want_rule} ·" in out
+        if want_absent is not None and f"{want_absent} ·" in out:
+            ok = False
         if ok:
             passed += 1
             print(f"  ✓ {name}")
@@ -405,12 +409,12 @@ probe_live(
 probe_live(
     "D16: live world lacks an action the committed contract carries (hand-edit shape) → red",
     {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": _ACTIONS_MISSING_URL},
-    want_rule="D16",
+    want_rule="D16", want_absent="D3",
 )
 probe_live(
     "D16: live world serves an action the committed contract lacks → red",
     {"DOCS_LIVE_HEALTH_URL": _mock_url, "DOCS_UPSTREAM_OVERRIDE": _MOCK_COMMIT, "DOCS_LIVE_ACTIONS_URL": _ACTIONS_EXTRA_URL},
-    want_rule="D16",
+    want_rule="D16", want_absent="D3",
 )
 probe_live(
     "D16: unreachable /actions exits non-zero (loud red, not skip)",
