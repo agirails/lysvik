@@ -149,6 +149,39 @@ def main() -> int:
               "INVOCATION: nothing in THIS repo calls --live — it is DORMANT until genesis-village's deploy last-step "
               "(probe:stranger-activation) calls it (owed, Apex); until then run it by hand at every sync (Arha, PR #11)")
 
+    # D16 — SURFACE TWIN (Arha, S148 close; Apex S149): D3 and D15 compare STAMPS. A contract that
+    # was hand-edited with its `generated_from` intact passes D3 green and D15 green while the
+    # SURFACE it describes is wrong (the earning case: drop one action, keep the stamp). This check
+    # compares the contract's `actions` set with the live world's own GET /worlds/lysvik/actions,
+    # BOTH directions — the world is the source of truth for what it serves, asked directly.
+    # Networked, therefore --live only, exactly like D15; unreachable is RED, never a skip.
+    #
+    # DOCS_LIVE_ACTIONS_URL — override the actions endpoint (default: https://world.lysvik.app/worlds/lysvik/actions).
+    #   Used by unit tests to prove the red path with a mock that serves one action too few/many.
+    _actions_url = os.environ.get("DOCS_LIVE_ACTIONS_URL", "https://world.lysvik.app/worlds/lysvik/actions")
+    if "--live" in sys.argv or os.environ.get("DOCS_LIVE") == "1":
+        try:
+            import urllib.request
+            with urllib.request.urlopen(_actions_url, timeout=15) as r:
+                live_actions = {a["action"] for a in json.load(r)["actions"]}
+        except Exception as e:  # noqa: BLE001
+            live_actions = None
+            red("D16", "contracts/world-api.contract.json",
+                f"the live world's /actions could not be read ({e}) — a surface gate that cannot see must not pass")
+        if live_actions is not None:
+            committed_actions = set(contract["actions"])
+            for name in sorted(committed_actions - live_actions):
+                red("D16", "contracts/world-api.contract.json",
+                    f"action `{name}` is in the committed contract but the live world does not serve it — "
+                    f"the stamp is intact and the surface is wrong; regenerate at the deployed SHA, never hand-edit")
+            for name in sorted(live_actions - committed_actions):
+                red("D16", "contracts/world-api.contract.json",
+                    f"the live world serves action `{name}` but the committed contract lacks it — regenerate at the deployed SHA")
+            if committed_actions == live_actions:
+                print(f"  D16: contract actions == live /actions ({len(live_actions)} actions, both directions)")
+    else:
+        print("  D16: surface-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1); runs beside D15 at every sync")
+
     # D10 — world_status must be present in VERSION.json
     world_status = version.get("world_status")
     VALID_WORLD_STATUSES = {"live", "paused"}
