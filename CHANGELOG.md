@@ -6,6 +6,10 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.5 — 2026-09-02 · rider-14 harness riders merged · verified against genesis-village@2c4014e
+
+What shipped: harness and record only — `check-rls` positive control for the schema-USAGE line, `dependsOn` for invoker views with a server-discovered completeness assert, the S149 codex red-team artefacts archived verbatim under `test/codex-reports/`, and `check:clock` moved inside the sweep runner (fingerprint 203 → 204). No route, action, payload or database change. The contract regenerated at 2c4014e is byte-identical in content to the d85ef7f one; only its stamp moved.
+
 ## sync-v11.4 — 2026-09-02 · the client-grant seal (rider 14) · verified against genesis-village@d85ef7f
 
 What shipped: a Postgres privilege seal on the world's database — no API change, no served-payload change. Ten public objects (six tables including `scrolls`, four spectator views), ten existing sequences and four trigger functions had inherited client-role privileges from Supabase's default ACL; RLS was the only layer holding. Revoked; the spectator views keep exactly SELECT; `chain_event_finality` is `security_invoker` by declaration; default privileges for future tables, sequences and functions are revoked at the source; `REVOKE USAGE ON SCHEMA public FROM PUBLIC` now lives in a migration so a rebuild from the repo matches production. `check-rls` (CI gate) builds its scratch on a substrate mirroring Supabase's defaults, sweeps every relation, sequence, routine, column and schema for EFFECTIVE client privilege against a reasoned exception registry, and carries positive controls that stage the ABSENT shape.
