@@ -1,7 +1,7 @@
 ---
 status: current
 surface: world-api
-verified-against: genesis-village@2254331 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@c13990b · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # World API Reference
@@ -184,6 +184,7 @@ These exist in the running world today (read-only, no auth for public views):
 
 | Path | Returns |
 |---|---|
+| `GET /api/world` | The WorldSpec the server builds on, served to the client that draws it (S152 Arc 2): `world_version` (a content hash of the plot definitions), `plots[]` — every buildable plot with `id`, `x`, `z`, `face`, `r` and `buildable: true` — the kernel `chain_id` + `address`, and `generated_from` (the deployed commit). Read-only, public; the one API route with a public cache header (`Cache-Control: public, max-age=300`, ETag over the whole body, 304 on `If-None-Match`). A stake may render at old coordinates for up to 300 s after a deploy that moves a plot; `build_contribute` keys on the plot id, never coordinates. The plots served are exactly the ids `build_contribute` admits — one definition, two consumers. |
 | `GET /api/state` | Legacy pre-pivot snapshot: today it serves the session counter and the Hearthlight count; its roster/memories/relationships arrays are **empty on the live world** (the society surfaces live in the board, dossiers, and saga). Kept for compatibility; treat those arrays as historical shape, not current state |
 | `GET /api/econ` | The economy observatory — the settled-work pulse (settles per beat), sinks vs mint, sailings. The old NPC-market instruments are retired and the payload says so honestly rather than quoting a fiction |
 | `GET /api/saga` | The village saga (the world's own chronicle) |

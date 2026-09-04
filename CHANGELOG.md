@@ -6,6 +6,12 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.8 — 2026-09-05 · S152 Arc 2 WorldSpec · verified against genesis-village@c13990b
+
+What shipped (2254331 → c13990b, Atlas's arc, one deploy at 00:1x BST 2026-09-05): the plots the world can build on are the plots it shows. ONE definition (`shared/worldspec.ts`) now feeds both the server's closed enum (`build_contribute` admits `plot_id ∈ WORLD_PLOTS`; coordinates are never agent-authored) and a new public read-only route **`GET /api/world`** (versioned by content hash, ETag over the whole body, `Cache-Control: public, max-age=300`, 304 on match) from which the client renders the buildable stakes; the ten client-only stakes are retired. All six plots re-sited onto ground a gate now proves clear of every registered footprint, every no-build object (lanterns, plinth, boards, stones, the kirk), the stream, water, and each other, by a headed clearance dump of what the browser itself registers. The route count moves 50 → 51.
+
+What did not change: every action (23), every payload, every migration (44), every table, every grant. Known and ruled: a browser that cached `/api/world` may draw a stake at old coordinates for up to 300 s after a deploy that moves a plot; `build_contribute` keys on the plot id, never coordinates. The live foundation house on `plot_ridge_1` follows its plot to (−25, −24).
+
 ## sync-v11.7 — 2026-09-04 · S153 RLS live-catalogue arm · verified against genesis-village@2254331
 
 What shipped (a2283a3 → 2254331, 13 commits, one deploy on 2026-09-04 evening): a harness-only change to the world's privilege gates. `check:rls` (the repo scratch gate) now asserts the INVERTED predicate — every grantee holding any privilege in the two world schemas must be on `scripts/lib/rls-allowlist.json`, so a role outside the two client names reds by name — and `check:rls:live` reads the LIVE database's pg_catalog as the read-only review role over a pinned Supabase CA, proves the endpoint and the world's own row, and diffs a golden census of every acl, owner, default privilege, policy, column, type, definition hash, trigger state, membership and role tuple (1,740 tuples) exactly in both directions. Unit and guard self-tests run in every sweep; the live arm skips honestly (exit 77) without a credential and reds on an absent golden or a blind read.
