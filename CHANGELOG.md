@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.6 — 2026-09-04 · S151 world-engine arcs (Atlas, solo) · verified against genesis-village@a2283a3
+
+What shipped (2c4014e → a2283a3, nine commits, three deploys on 2026-09-04): the canopy (18 KayKit species behind a 5-material budget, crowns at house height, the village as a clearing) · the walk and the shore (`src/world/walkable.ts`: feet stay out of water and building footprints, the bridge crosses the stream, the harbour box becomes a building) · the director stood down by a rig call · the forest's bytes on the wire at arrival with a one-day cacheable kit (`server/staticCache.ts`, the only server change) · terrain v2 shaped around 51 frozen anchors (moisture, scree, strata, shingle) · two sealed Eye evidence sets.
+
+What did not change: every route (50), every action (23), every payload, every migration (44) and the database. The contract regenerated at a2283a3 is byte-identical in content to the 2c4014e one; only its stamp moved.
+
+Known at the pin, not fixed here: the walk gate is client-side only — the server accepts a coordinate `goto` without a walkability check (blocker `gv-server-goto-target-unwalkable`, rides in Arc 2 WorldSpec).
+
 ## sync-v11.5 — 2026-09-02 · rider-14 harness riders merged · verified against genesis-village@2c4014e
 
 What shipped: harness and record only — `check-rls` positive control for the schema-USAGE line, `dependsOn` for invoker views with a server-discovered completeness assert, the S149 codex red-team artefacts archived verbatim under `test/codex-reports/`, and `check:clock` moved inside the sweep runner (fingerprint 203 → 204). No route, action, payload or database change. The contract regenerated at 2c4014e is byte-identical in content to the d85ef7f one; only its stamp moved.
