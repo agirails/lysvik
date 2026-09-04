@@ -6,6 +6,12 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.7 — 2026-09-04 · S153 RLS live-catalogue arm · verified against genesis-village@2254331
+
+What shipped (a2283a3 → 2254331, 13 commits, one deploy on 2026-09-04 evening): a harness-only change to the world's privilege gates. `check:rls` (the repo scratch gate) now asserts the INVERTED predicate — every grantee holding any privilege in the two world schemas must be on `scripts/lib/rls-allowlist.json`, so a role outside the two client names reds by name — and `check:rls:live` reads the LIVE database's pg_catalog as the read-only review role over a pinned Supabase CA, proves the endpoint and the world's own row, and diffs a golden census of every acl, owner, default privilege, policy, column, type, definition hash, trigger state, membership and role tuple (1,740 tuples) exactly in both directions. Unit and guard self-tests run in every sweep; the live arm skips honestly (exit 77) without a credential and reds on an absent golden or a blind read.
+
+What did not change: every route (50), every action (23), every payload, every migration (44), every table, every grant. The contract regenerated at 2254331 is byte-identical in content to the a2283a3 one; only its stamp moved. No live data was touched; the live arm is read-only and the catalogue it read came back clean five times that evening.
+
 ## sync-v11.6 — 2026-09-04 · S151 world-engine arcs (Atlas, solo) · verified against genesis-village@a2283a3
 
 What shipped (2c4014e → a2283a3, nine commits, three deploys on 2026-09-04): the canopy (18 KayKit species behind a 5-material budget, crowns at house height, the village as a clearing) · the walk and the shore (`src/world/walkable.ts`: feet stay out of water and building footprints, the bridge crosses the stream, the harbour box becomes a building) · the director stood down by a rig call · the forest's bytes on the wire at arrival with a one-day cacheable kit (`server/staticCache.ts`, the only server change) · terrain v2 shaped around 51 frozen anchors (moisture, scree, strata, shingle) · two sealed Eye evidence sets.
