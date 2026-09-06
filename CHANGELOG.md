@@ -6,6 +6,19 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.14 — 2026-09-06 · S155 INHABITABLE arc (lanes A+B union) · verified against genesis-village@c152202
+
+**Shipped (world c152202, union of arc/s155-apex-protect 9b3e130 + arc/s155-atlas-grow e05e73a):**
+- **The Open Table** — `lay_down` / `take_up` (shape frozen in `shared/open-table.ts`): a resident lays a good on the table at the hot spring, the tavern or the plaza; it is theirs to lift any day and anyone's from `open_from_day`. One conditional write per lift; an anti-litter bound per identity across every table. New public route `GET /worlds/lysvik/sites/<site>/table`. New public events `good_laid` / `good_taken_up`.
+- **Gathering widened** — the press yields oil and the saltworks yields salt (`gather_ledger` now admits five goods; no row reinterpreted).
+- **Money law at the doors** — a village contract on the rail settles ONLY from an observed kernel settlement (`CONTRACT_UNPAID` names the rest); a funded delivery needs the observer's certification of the escrow (`UNFUNDED_DELIVERY`); the rail's own word exits the village contract (cancel → no fault; dead rail → structural exits after a stated margin); a certified escrow that reads null once waits.
+- **Standing counts counterparties** — tiers read DISTINCT settlement-time requester wallets from the kernel, never settlement counts; unstamped pre-arc rows count zero (a backfill from the chain is queued). `LOCKED_TIER` carries the fix.
+- **Claim cap** — two concurrent unfulfilled claims per provider (scroll/property exempt). The ramp ends at seven days.
+- **Door teaching** — every refusal above carries its fix; the affordance doc gains a `bounds` block (observed_seq, emotes, board limits, claim cap).
+- Surfaces (lane B): the goods card reads its three honest states from the inventory sheet; the B1 gather sheet shows oil and salt.
+
+**Not shipped (queued riders, in `relay/S155-APEX-PROTECT-STATE.md`):** the chain backfill of `kernel_requester` for pre-arc settled rows (Justin's word, morning) · the deed-goods twin arm · the sqlite CHECK on old dev DBs · the observer-seam deed race · the service-identity binding · leaked test servers on :8796/:8809 · E4 as its own arc · the join-snapshot mirror.
+
 ## sync-v11.13 — 2026-09-06 · S152 V1a · one foreground owner · verified against genesis-village@4f176b2
 
 What shipped (abf21fb → 4f176b2, Veyra's arc, one deploy at 11:53 BST 2026-09-06): the world's ordinary foreground surfaces — chronicle, wardrobe, hearthlight/gueststone proof, saga, dossier, moot, work board and the wayfinder chart — now have ONE owner (`src/ui/foregroundSheet.ts`): opening one closes the others, the background is inert and hidden from the accessibility tree from that one state (world input, camera and the director pause while a leaf is open), Tab and Shift+Tab stay inside the leaf, Escape closes only the active leaf and returns focus to the exact element that opened it or, when that element has been removed by a refresh, to the canvas — never to the page body. A late-completing async open cannot retake ownership. Shared leaf geometry honours the dynamic viewport and safe areas on phones, every actionable target is 44 px, and reduced motion removes foreground translation and camera flight. Villager rows on the panel are native buttons (keyboard Enter opens a dossier). The welcome and loading dialogs keep their native top-layer modality.
