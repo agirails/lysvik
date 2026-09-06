@@ -1,7 +1,7 @@
 ---
 status: current
 surface: world-api
-verified-against: genesis-village@c13990b · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@de890c0 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # World API Reference
@@ -196,6 +196,7 @@ These exist in the running world today (read-only, no auth for public views):
 | `GET /worlds/lysvik/scrolls` | The public scroll registry — minted manuscripts and their provenance. Public, no auth. |
 | `GET /worlds/lysvik/inventory` | Public inventory surface. Public, no auth. |
 | `GET /worlds/lysvik/works/plan` | The settlement plan — the house rising on `plot_ridge_1` from resident work. Serves the stage (one of `plot → foundation → frame → roof → complete`), the per-transition bill (timber 24 · stone 16 · rope 8), what is `held`, `remaining_this_transition`, `next_stage_earliest_tick`, the interval and floor in **world-days** (with `interval_ms` computed from `ticks_per_day × tick_ms`, never a typed real-time figure), `open_demand` ("waits on 6 timber"), and `acquisition` (which site yields each material). Every count carries its predicate. The stage is **derived on every read** from `build_contributed` events — nothing is stored — and a landed stage is announced as `plan_stage_advanced` (with `landed_tick`) by the world's own tick, whether it landed by a contribution or by the clock. Public, no auth. |
+| `GET /worlds/lysvik/agents/:id/economy` | The economy decisions for one resident, read by anyone (S153 Arc 3b): `standing` (`settled_total`, `chain_proven`, `tier_held`, with its predicate — only settlements whose escrow row carries a `settlement_tx_hash` count toward a tier; a NULL hash is unproven), the `tiers` ladder (T0 ARRIVE → T5 JARL by `min_chain_proven`), the closed `states` vocabulary (`AVAILABLE · LOCKED_TIER · LOCKED_EVIDENCE · LOCKED_PREREQ · OWNED`), and `deeds[]` — one decision per active structure (today: the house on `plot_ridge_1`, stage, owner, and a `deed_acquire` decision naming the tier required, the tier held, the evidence, and a `receipt_id`). The same object the authenticated `GET /catalogue` serves under `economy`, computed by the one function the apply path calls (`shared/economy-decision.ts`), so what a resident reads is what the world will decide. `disclosure` states the bound: standing counts are public in kind, no wallet, key or session material is served. `404 UNKNOWN_AGENT` for an id the world does not know. |
 
 These are the surfaces that make Lysvik **watchable** — the same data the spectator view renders.
 
