@@ -6,6 +6,12 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.11 — 2026-09-06 · S154 · the pocket record, coastal · verified against genesis-village@c094a57
+
+What shipped (97150a5 → c094a57, one file, one deploy at 08:46 BST 2026-09-06): `/record.html` — the phone-sized register of the village — restyled to the coast's own palette (aurora, lamplight, dusk): a static inline-SVG coastline in the masthead, a real `<h1>`, three labelled `<section>`s (ashore · the rail · the moot) with 44 px doors, safe-area padding, a focus-visible outline, and one local media query. Static decoration only: the page adds no script, fetch, font, image or external reference; the pulse and every record row remain server-fed through the same four containers the unchanged loader writes into.
+
+What did not change: every route (52), every action (23, asserted against live `GET /worlds/lysvik/actions` both directions), every payload, every migration (47), every table, every grant; `index.html`, the Vite config and `src/record.ts` are byte-identical to 97150a5. The contract regenerated at c094a57 is byte-identical in content to the 97150a5 one; only its stamp moved. Known at the pin, not fixed here: a phone entering at the ROOT preloads the 3D bundle before the record redirect (inherited; the direct `/record.html` path makes zero 3D requests).
+
 ## sync-v11.10 — 2026-09-06 · S154 rider · trigger-function search_path · verified against genesis-village@97150a5
 
 What shipped (de890c0 → 97150a5, five commits, one deploy at 08:03 BST 2026-09-06; one migration hand-applied to live at 07:58 BEFORE the push): the three scroll-door trigger functions (`scrolls_refuse_mutation`, `item_types_refuse_scroll_mutation`, `scrolls_require_scroll_kind`) now run with a fixed `search_path = public, pg_temp` instead of the caller's — a shadowing `item_types` earlier on a caller's path can no longer be read in place of the world's (the Supabase security advisor's three `function_search_path_mutable` warnings → 0). Harness: the live RLS census (`check:rls:live`) now pins every world function's `proconfig` as a native JSON array and names any trigger function without a fixed path; the golden census was regenerated from live after the apply (1,740 tuples; only function_state and triggers rows moved, identity-paired). Bodies, owners, acls and SECURITY INVOKER are untouched; migration tracker 46 → 47.

@@ -1,13 +1,13 @@
 {
   "_what": "The docs' provenance record. Every doc in docs/ was verified against exactly this code state; tools/docs_check.py holds the repo to it. Doc syncs are tagged sync-<arc>[.n]; real semver begins at public launch.",
-  "docs_sync": "sync-v11.10",
+  "docs_sync": "sync-v11.11",
   "verified_against": {
-    "genesis-village": "97150a5",
+    "genesis-village": "c094a57",
     "sdk-js": "4.9.0",
-    "arc": "V11.10 (sync-97150a5 · 2026-09-06)"
+    "arc": "V11.11 (sync-c094a57 · 2026-09-06)"
   },
   "upstream": {
-    "genesis-village": "97150a5",
+    "genesis-village": "c094a57",
     "_what": "The newest genesis-village main these docs SHOULD describe. Bumped as part of the world's converge ritual. When it moves past verified_against, every non-concept doc must flip status: stale until a sync pass re-verifies and re-pins — a doc that reads current but describes shipped-past behaviour is the failure this file exists to prevent. tools/docs_check.py --live (D15) reads the live /health commit and REDDENS when the world has moved past this value — run it as the last step of every deploy and every sync."
   },
   "world_status": "live",
