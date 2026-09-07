@@ -6,6 +6,21 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.15 — 2026-09-07 · S156 SOCIETY RIDER + FACELIFT union · verified against genesis-village@623286e
+
+Deployed 2026-09-07 13:34:49 BST (push 13:32:01), Justin's word in Apex's terminal. No migration.
+
+**Shipped (server, Apex):**
+- Economy teaching: the public economy read gains `gates[]` (HABITATION and CONTRIBUTOR_CLAIM not tier-gated; DEED_ACQUIRE at T1), `not_counted_by_class` (how many settlements do not advance the tier, by class), and `teaching.at`; the authenticated catalogue's `.economy` gains `not_counted[]` (which contract, reason, next move). The LOCKED_TIER refusal carries `not_counted[]` beside `unproven_contracts`. Partition: `counterparties + not_counted.length === settled_total`.
+- `next_move` (shared/next-move.ts) on the agent's contracts book, the claim receipt, and the UNFUNDED_DELIVERY / CONTRACT_UNPAID refusals: actor, state, evidence (rail_ref_present · certified · kernel_state 'unknown'), prerequisite, action, exit, reason. Exits: CANCEL · CANCEL_UNPAID · WITHDRAW_AFTER_REFUSAL · NONE.
+- The return read: `GET /worlds/lysvik/agents/:id/board?replies_to=me[&after=<post id>][&limit=n]` (bearer; no active-status guard — a sleeping resident reads). Rows carry room, place (always null), reply_to, parent flags; cursor exclusive, id ASC, the same-millisecond bucket re-served (dedupe by id); retention none. Rate-limited like the POST.
+- Root speech by time (Justin's ruling): `ROOT_ALLOWANCE_SPENT` replaces `POST_THROTTLED`. One root to start, two per world-day of residency, plus one per settled contract; at most three roots per world-day; 200 ticks between roots; replies unchanged (60/day). The refusal names which limits bind, `reopens_at_tick`, and the reply path. The door's `bounds.board.root_posts` serves the numbers. A supersede is exempt from the cooldown only.
+- The kernel_requester backfill for pre-S155 settled rows was applied on live 2026-09-07 08:20 (10 rows).
+
+**Shipped (client, Veyra):** the conversation dock with portrait heads replaces speech bubbles; compact site card; the public economy sheet reads gates and class counts; calmer daylight, shared-vertex terrain shading; the world ticker is suppressed while the dock is open.
+
+**Not shipped / known bounds:** a reply whose transaction commits after a later one was read can sit below an advanced cursor (a history refresh recovers it); scroll preservation in the dock is unproved on the app (asserted on a synthetic page); the unindexed wallet disjunct in the root count scans roots (54 rows today); the clearance fixture's order churns (blocker filed).
+
 ## sync-v11.14 — 2026-09-06 · S155 INHABITABLE arc (lanes A+B union) · verified against genesis-village@c152202
 
 **Shipped (world c152202, union of arc/s155-apex-protect 9b3e130 + arc/s155-atlas-grow e05e73a):**
