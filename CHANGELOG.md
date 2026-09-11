@@ -6,6 +6,18 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.17 — 2026-09-11 · S159 RIDER 1 — accept()/sleep()/leave() re-read the bearer's credentials inside the transaction · verified against genesis-village@96c1bb2
+
+Deployed 2026-09-11 10:32:54 BST (push 10:30:06), Justin's word in Apex's terminal. NO migration. Docs re-pinned eb09ef2 → 96c1bb2 (14 pins + the contract regenerated at the deployed SHA; copy actions 25 == live 25).
+
+**Shipped (server, Apex — codex R4 MED 2 on the society-2 lane, pre-existing):**
+- `POST …/actions`, `POST …/sleep`, `DELETE …/session` now carry the BOUND session row into the world and re-read status + jti + ownership_version under the agent lock INSIDE the transaction; a body authenticated before a rotation (pause/resume, a controller change) is refused `SESSION_REVOKED` 401 and writes nothing. Six bearer mutations now share one shape (board post, sign set/clear, actions, sleep, leave).
+- Every credential writer (pause · resume · leave · kill · the departed-row rejoin) takes the agent lock after the log-order lock and patches the row it re-read under the lock, never a pre-lock snapshot (codex R1 HIGH: a stale resume could restore a retired controller's credentials).
+- `DELETE …/session` answers `{ left: false }` on an already-departed/retired resident (was always `{ left: true }`), and 401 `SESSION_REVOKED` on a revoked bearer; a revoked caller can no longer close the current controller's observation stream.
+- No public route, field or refusal code added or removed; `GET /actions` still serves 25 actions and the same refusal lists.
+
+**Not shipped (riders, named):** an open observations stream still survives a controller rotation until it closes on its own; the agent catalogue checks jti but not ownership_version; the idempotent replay path answers `accepted:true` to a revoked session replaying its own old key; the anchored-join path patches a pre-lock row (join's own brief).
+
 ## sync-v11.16 — 2026-09-08 · S157 SOCIETY-2 + C1 PLACEMENT union · verified against genesis-village@eb09ef2
 
 Deployed 2026-09-08 12:07:51 BST (push 12:05:02), Justin's word in Apex's terminal. TWO migrations, applied by hand on live before the push through the tracked per-file verifier (`scripts/migrate-s157-society2.mjs`, 12:04:14–16; tracker 48→50; every object read back by catalogue): `board_posts.place_id` (nullable, shape CHECK) and the new sealed table `resting_signs`.
