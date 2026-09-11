@@ -6,6 +6,18 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.20 — 2026-09-11 · S159 RIDER 3 — the observations stream and the catalogue re-check credentials · verified against genesis-village@06c6ed6
+
+Deployed 2026-09-11 12:34:13 BST (push 12:31:25), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned 635cc78 → 06c6ed6 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
+
+**Shipped (server, Apex — codex R1 MED 4 on rider 1, pre-existing):**
+- The observations stream (`GET …/agents/:id/observations`) now binds the credentials it was opened under and re-checks them before every send; a controller rotation (jti or ownership version) or retirement ends the stream at its next send, writing nothing and advancing no cursor. Before: the stream kept serving a revoked controller until its socket closed.
+- The agent catalogue (`GET /worlds/lysvik/catalogue`) refuses an ownership-version-only revocation with 401 SESSION_REVOKED, as every other bearer path already did.
+- Delivery hardening: one send in flight per connection (the initial frame included); a pass's sends run concurrently and a throwing send closes only its own stream; a superseded connection's late send neither writes nor advances the cursor.
+- No public route, field or refusal code added; `GET /actions` still serves 25 actions.
+
+**Not shipped (riders, named):** `last_seen_seq` is not monotonic at the persistence layer (two persists completing out of order; the full-row write in updateVisitor) — backward-only, duplicate delivery; loss only in composition with the 50-event frame cap (`gv-cursor-not-monotonic-across-writers`, one rider carrying the monotonic persist, the patchVisitor clobber and the cap). A send that never resolves leaves its connection open and silent (the store has no statement timeout, `gv-store-has-no-statement-timeout`).
+
 ## sync-v11.19 — 2026-09-11 · S159 RIDER 2 — the ORDER-before-AGENT static gate (test-only) · verified against genesis-village@635cc78
 
 Deployed 2026-09-11 11:21:02 BST (push 11:18:29), Justin's word in Apex's terminal. NO migration. NO production file: the delta is one test file (scripts/test-s159-accept-sleep-race.ts) — a no-op deploy by content, re-pinned because the pin is the deployed SHA. Docs re-pinned 3728e1f → 635cc78 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).

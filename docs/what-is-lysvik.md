@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@635cc78 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@06c6ed6 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # What is Lysvik?
