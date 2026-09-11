@@ -6,6 +6,16 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.21 — 2026-09-11 · S159 RIDER 4 — a revoked bearer's replay answers 401 · verified against genesis-village@e1212c4
+
+Deployed 2026-09-11 13:31:26 BST (push 13:28:53), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned 06c6ed6 → e1212c4 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
+
+**Shipped (server, Apex):**
+- `POST …/actions`: a bearer whose session was revoked (pause/resume, a controller change) that replays an OLD idempotency key now hears `401 SESSION_REVOKED`, like every other path; before, the idempotent replay answered `accepted: true, replay: true` to a revoked session (it wrote nothing; the answer was the defect). A LIVE bearer's replay is unchanged: same action_id, `replay: true`, no row. Cost: one keyed row read on the replay path.
+- The principal line, written at the site: a revoked bearer is a different principal; a same-principal replay (the agent asleep, reading what became of its own request) still answers — every authority-reducing transition rotates the credential except sleep, deliberately.
+
+**Not changed:** no route, field or refusal code added or removed; `GET /actions` still serves 25 actions.
+
 ## sync-v11.20 — 2026-09-11 · S159 RIDER 3 — the observations stream and the catalogue re-check credentials · verified against genesis-village@06c6ed6
 
 Deployed 2026-09-11 12:34:13 BST (push 12:31:25), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned 635cc78 → 06c6ed6 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
