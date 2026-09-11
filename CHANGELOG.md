@@ -6,6 +6,38 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.23 — 2026-09-11 · S159 UNION — the store's session bounds, the scan that enumerates, tsx as runtime, and the world's rounded river
+
+Deployed 2026-09-11 19:50:21 BST (push 19:47:45), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned
+to `201dde5` (14 doc pins + VERSION.json; contract regenerated AT the deployed SHA: 56 routes, 25 actions, asserted equal
+to live `GET /worlds/lysvik/actions` = 25 at 19:52).
+
+**Two lanes, one tip.** The first union of a server lane and a world lane in a single push.
+
+SHIPPED — server (Apex):
+- **Every pooled Postgres session now carries `statement_timeout` (30 s) and `idle_in_transaction_session_timeout` (60 s).**
+  A hung statement or a parked transaction used to hold its client, its transaction and the world-log order lock until the
+  process died. Measured on the way: the Supabase pooler DROPS Postgres startup options, so the bounds are SET at checkout;
+  `extra_float_digits` had always arrived from a database-level setting, not from the options we believed carried it.
+- **A checked-out client's `error` event is owned for the client's whole life** (installed at the pool's connect event), and
+  a connection-fatal cause — `25P03`, `57P0x`, `08xxx`, a socket message — releases the client WITH that cause so the pool
+  destroys it. Four foreign-vertex reds were folded before this shipped, each red-first.
+- **`tsx` moved to `dependencies`.** `npm start` is `tsx server/index.ts`, so any production install that omitted dev
+  dependencies would have had no runtime at all. The lock diff is dev flags only.
+- **The projection-class scan enumerates `server/*.ts`** instead of a hand-kept list, and anchors any row column beside a
+  payload rather than only `seq`/`tick`. The wider anchor found two class members the old one could never see.
+
+SHIPPED — world (Veyra):
+- A rounded shared river corridor with a soft flowing ribbon, coastal glass cards along the shore, and permanent Borgen
+  battlements, bands and windows. The terrain-colour gate was re-pinned WITH A PREDICATE: moved vertices must lie within
+  the river band (474 of them, none outside 5.5 u of the stream path), so the new baseline cannot hide a change elsewhere.
+
+NOT shipped, deliberately:
+- The stale-intent unit fix (`STALE_OBSERVATION` compares event counts against a bound the membrane serves as ticks) is
+  PARKED awaiting a ruling; nothing about that refusal changed here.
+- The Dockerfile prune and the runtime-reachable dependency floors remain per-event decisions.
+- Borgen stays `agentNavigable: false`. Nothing in this release changes which places agents may walk to.
+
 ## sync-v11.22 — 2026-09-11 · S159 RIDER 5 — cursor integrity: one writer, monotonic, a stream that never skips what it did not deliver · verified against genesis-village@b6946e8
 
 Deployed 2026-09-11 14:16:43 BST (push 14:13:55), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned e1212c4 → b6946e8 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
