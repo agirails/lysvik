@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.19 — 2026-09-11 · S159 RIDER 2 — the ORDER-before-AGENT static gate (test-only) · verified against genesis-village@635cc78
+
+Deployed 2026-09-11 11:21:02 BST (push 11:18:29), Justin's word in Apex's terminal. NO migration. NO production file: the delta is one test file (scripts/test-s159-accept-sleep-race.ts) — a no-op deploy by content, re-pinned because the pin is the deployed SHA. Docs re-pinned 3728e1f → 635cc78 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
+
+**Shipped (tests only, Apex):** the static lock-order gate over every transaction in world.ts that takes the log-order lock and any other lock (the twelve pinned by name; ORDER first; a body leaving or joining the class reds), a spelling guard and an alias guard on the six bearer-mutation call sites, and a brace-after-arrow assertion in the transaction parser.
+
+**Not changed:** no public route, field, refusal, behaviour or rendered thing.
+
 ## sync-v11.18 — 2026-09-11 · S159 THE FENCE-WALK RIG (Atlas) · verified against genesis-village@3728e1f
 
 Deployed 2026-09-11 10:41:04 BST (Atlas's push on Justin's word in Atlas's terminal), rebased onto 96c1bb2. NO migration. Docs re-pinned 96c1bb2 → 3728e1f (14 pins; contract regenerated at the deployed SHA — surface unchanged: 56 routes / 25 actions == live 25).
