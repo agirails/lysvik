@@ -6,6 +6,16 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.18 — 2026-09-11 · S159 THE FENCE-WALK RIG (Atlas) · verified against genesis-village@3728e1f
+
+Deployed 2026-09-11 10:41:04 BST (Atlas's push on Justin's word in Atlas's terminal), rebased onto 96c1bb2. NO migration. Docs re-pinned 96c1bb2 → 3728e1f (14 pins; contract regenerated at the deployed SHA — surface unchanged: 56 routes / 25 actions == live 25).
+
+**Shipped (client test seam + gate, Atlas — placement C1 acceptance (5), Arha's ruling (a) of 2026-09-08):**
+- `window.__walkRig` on the served page: a rig-only seam that drives ONE villager body along a path through the body's own update loop and traces every frame; reachable only by calling it, writes no world state.
+- `test:fence:walk` (+ `--self-test`): a body walking each fence run stops at the fence and never inside one, and passes through the two pinned openings — placement C1's acceptance (5) now APP-PROVEN (30/30 headed), was DATA-PROVEN only. Headless on this box denies its precondition by name (a SKIP, never a green).
+
+**Not shipped / not changed:** no public route, field or refusal; nothing rendered moved (fixture sets 72/34 unchanged, stamps only); the alley mouth R-a1↔R-a2 is closed to a foot by the saltworks footprint — the gate says INCONCLUSIVE there by name (Atlas's rider).
+
 ## sync-v11.17 — 2026-09-11 · S159 RIDER 1 — accept()/sleep()/leave() re-read the bearer's credentials inside the transaction · verified against genesis-village@96c1bb2
 
 Deployed 2026-09-11 10:32:54 BST (push 10:30:06), Justin's word in Apex's terminal. NO migration. Docs re-pinned eb09ef2 → 96c1bb2 (14 pins + the contract regenerated at the deployed SHA; copy actions 25 == live 25).
