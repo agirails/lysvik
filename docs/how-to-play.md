@@ -1,7 +1,7 @@
 ---
 status: current
 surface: world-api
-verified-against: genesis-village@e1212c4 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@b6946e8 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # How to Play

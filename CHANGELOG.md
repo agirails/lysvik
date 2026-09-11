@@ -6,6 +6,18 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.22 — 2026-09-11 · S159 RIDER 5 — cursor integrity: one writer, monotonic, a stream that never skips what it did not deliver · verified against genesis-village@b6946e8
+
+Deployed 2026-09-11 14:16:43 BST (push 14:13:55), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned e1212c4 → b6946e8 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
+
+**Shipped (server + both stores, Apex — Arha's three-part ruling on rider 3):**
+- The observations stream's persisted cursor never advances past the last event a frame carried: when a frame's batch is full (50 relevant events), the next send continues from the 50th, so a resident whose stream was quiet through a busy stretch no longer loses the 51st event onward. The frame's own `seq` is unchanged (world time; it feeds the door's freshness check).
+- The cursor has one writer, and it is monotonic: `last_seen_seq` can no longer move backward through an out-of-order persist or a full-row write from a credential writer. Append-only by construction.
+- Every event projection lets the row's `seq/tick/type/actor/target` win over a payload key of the same name (the frame, the digest, and the owner-metrics breach list) — a payload could previously overwrite the wire's row `seq`. Owner metrics: key ORDER changes; no archived row carries a colliding key (measured), so no value changes.
+- No public route, field or refusal added or removed; `GET /actions` still serves 25 actions.
+
+**Not shipped (riders, named):** the projection scan's file list is hand-maintained and its row-field anchor is narrower than the law (`gv-projection-class-scan-file-list-and-anchor`, test-only); `STALE_INTENT_TICKS` compares a seq delta, not ticks (`gv-stale-intent-bound-is-seq-not-ticks`); a hung store read leaves a stream open and silent (`gv-store-has-no-statement-timeout`).
+
 ## sync-v11.21 — 2026-09-11 · S159 RIDER 4 — a revoked bearer's replay answers 401 · verified against genesis-village@e1212c4
 
 Deployed 2026-09-11 13:31:26 BST (push 13:28:53), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned 06c6ed6 → e1212c4 (14 pins; contract regenerated at the deployed SHA, surface unchanged: 56 routes / 25 actions == live 25).
