@@ -6,6 +6,33 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.24 — 2026-09-12 · S160 — the shots write gate, its one-door helper, and a directory the clone no longer has to carry
+
+Deployed 2026-09-12 13:44:44 BST (push 13:43), Justin's standing word for main pushes of gated work. NO migration. Docs
+re-pinned to `701c4f1` (14 doc pins + VERSION.json; contract regenerated AT the deployed SHA: 25 actions, asserted equal
+to live `GET /worlds/lysvik/actions` = 25 at 13:50). Cutover 502 observed on both hosts and recovered within the sample
+window; its length is bounded, not timed.
+
+**WHAT SHIPPED — zero product bytes.** `src/`, `server/`, `shared/`, `public/`, `index.html`, `vite.config.ts`,
+`tsconfig.json` and `package-lock.json` are byte-identical to the previous pin; the whole delta is `scripts/` plus two
+`package.json` script entries. The world serves exactly what it served before.
+
+- **`scripts/lib/shot-out.mjs` — one door into `shots/`.** Seven wrappers (`shotWrite`, `shotAppend`, `shotRename`,
+  `shotCopy`, `shotStream`, `shotOpen`, `shotCp`), each creating the DESTINATION's parent chain. `shots/` is 688 MiB of
+  a 704 MiB depth-1 clone; once it stops being tracked, ~44 hand-run lane tools would otherwise ENOENT on a fresh
+  checkout with nothing to announce the breakage.
+- **`test:shots:writes` — the static gate, 69 checks.** Every raw-fs write whose destination resolves under `shots/`
+  must go through the helper; destinations it cannot determine are pinned in a blind class that cannot grow unnoticed.
+- **`test:shots:helper` — the behaviour gate, 12 checks.** Shape and behaviour are two properties and the static gate
+  proves only the first. Its load-bearing assertion is a NEGATIVE control: a plain write into the same missing tree must
+  throw ENOENT, or every check below it would also pass on a tree that already existed.
+- Both suites join the sweep of record automatically: `run-all-tests.mjs` enumerates every `test:*` from `package.json`.
+
+**WHAT DID NOT SHIP, and is the point of the arc:** `shots/` is still TRACKED. The untrack itself is not in this pin —
+it waits on the lane owner's word. This release builds the guard that makes the untrack safe, and stops there.
+
+**Also not shipped:** the S160 world union (camera + Borgen) is a separate tip and is not in this deploy.
+
 ## sync-v11.23 — 2026-09-11 · S159 UNION — the store's session bounds, the scan that enumerates, tsx as runtime, and the world's rounded river
 
 Deployed 2026-09-11 19:50:21 BST (push 19:47:45), Justin's standing word in Apex's terminal. NO migration. Docs re-pinned
