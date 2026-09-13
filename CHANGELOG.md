@@ -6,6 +6,32 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.25 — 2026-09-13 · S168 — the camera arc, Veyra's world (Borgen · market · smokehouse · ground), and the quiet world ticker
+
+Deployed 2026-09-13 11:05:29 BST (push 11:02:57), Justin's standing word for the session given in Apex's terminal.
+NO migration; `server/` and `shared/` are byte-identical to the previous pin (0 files in the delta). Docs re-pinned
+to `7ddd334` (14 doc pins + VERSION.json; contract regenerated AT the deployed SHA: 25 actions, asserted equal to live
+`GET /worlds/lysvik/actions` = 25 at 11:0x). Cutover: one non-200 sample at a 15 s cadence; an outage under 15 s is invisible.
+
+**WHAT SHIPPED — client only (35 production files).**
+- The camera rework (S160, `f56d70f`): the resident dossier is a NON-MODAL drawer; pointer/wheel/key takeover, follow release,
+  out-and-back drag classified as a drag, not a click.
+- Veyra's world, s161–s167: Borgen's first architecture and grounded upper treads; the rebuilt market (24 solids); stalls
+  and stall materials; the smokehouse; softer snow and weathered standing stones; an 18 m depth-of-field falloff.
+  Coastal clouds (s164) and the ground-texture study stay OUT (visual hold, opt-in flags only).
+- The world-feed ticker is QUIET for a stranger; a followed resident's action record is still visible. Ambient events
+  live in the world record. The S156 human-window gate asserts the new claim in both directions.
+- S168 folds from codex R1/R2 on the candidate: a keyboard Tab during a pending non-modal open keeps the user's focus;
+  Escape inside an open World-tools menu belongs to the menu; crowd separation never shoves a rig-staged body; the s142
+  Eye's first-roam arm refuses a contaminated page as a PRECONDITION (exit 77) instead of reporting a product red.
+- Ten world suites that existed but were registered nowhere now run in every sweep (`test:world:*`, inventory 255 → 265).
+
+**WHAT DID NOT SHIP.** No server, shared, door, route, count or money-path change. `shots/` remains tracked. Atlas's
+S162 idle-egress SSE lane (`arc/s162-atlas-sse-idle`) is on its branch awaiting the live edge probe. The clearance-fixture
+stable-order rider is on `arc/s168-apex-clearance-sort`. Known reds carried, both reproduced at the previous pin on this
+box: `test:loading-refusal:eye` and `test:approach:gate` (headless never boots the renderer here). The `a559788`
+pointer-freshness 28/1 stays retained and unattributed; the deployed tree's Eye is 29/0 source and 29/0 production.
+
 ## sync-v11.24 — 2026-09-12 · S160 — the shots write gate, its one-door helper, and a directory the clone no longer has to carry
 
 Deployed 2026-09-12 13:44:44 BST (push 13:43), Justin's standing word for main pushes of gated work. NO migration. Docs
