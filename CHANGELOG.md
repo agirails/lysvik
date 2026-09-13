@@ -6,6 +6,16 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.26 — 2026-09-13 — pins genesis-village@eff2569
+
+**Shipped (server only, deployed 11:49 BST):** an idle `/observations` tick is now one SSE comment line instead of a ~4.3 KB
+frame; full frames on the first send, on events, on any shape change, at least every 60 sends and whenever the world's seq
+has moved 100 past the last full frame. `last_seen_seq` is written only when the cursor moved. The door's `observations`
+link advertises `stream.idle: "comment-keepalive"` and `stream.resync_ticks: 60`. Measured on live through the edge: 118
+keepalives + 2 frames per 60 s (11.9 KB) against 120 frames (516 KB) before. Frame shape and `frame_rev: 3` unchanged.
+
+**Not shipped:** anything on the renderer (the 7ddd334 world deploy earlier today is sync-v11.25); the ridge-house slice.
+
 ## sync-v11.25 — 2026-09-13 · S168 — the camera arc, Veyra's world (Borgen · market · smokehouse · ground), and the quiet world ticker
 
 Deployed 2026-09-13 11:05:29 BST (push 11:02:57), Justin's standing word for the session given in Apex's terminal.
