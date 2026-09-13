@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.31 — 2026-09-13 · S171 settlement order — three home frontages, Maren's stairs, the harbour warehouse, five civic workfronts, the bent tower lane, lights on real roofs
+
+Deployed 2026-09-13 21:06:02 BST (push 21:03:30; cutover seen at sample 11 on a 15 s poll, one non-200 sample), Justin's banked word ("once safe, all clear to push"); agree round Veyra · Atlas · Apex on one frozen pin 203d654. NO migration. server/ shared/ supabase/migrations delta vs the previous pin f6abc2b: ZERO files. Docs re-pinned to `203d654` (14 pins + contract regenerated at that SHA; docs_check bare 0 · --live 0).
+
+Shipped (client only, Veyra's lane, product tree 64464d2): three home frontages with doorsteps, Maren's stairs with guards (mesh top = planned height, 63 mesh-vs-feet samples at 2 mm), the harbour warehouse in detail, five civic workfronts, the tower lane bent around its host, and all seven building-light groups parented to their rendered hosts (the floating beacon Justin's screenshot caught is on a real roof triangle). Camera obstacles now reserve collision, decks and guards synchronously before the asynchronous model load, so an unfinished load can never leave a walkable hole. One test-only fold on top: `test:loading-truth` asserts the village-admission mechanism instead of a one-line spelling.
+
+Not shipped: no door, route, count, money-path or visibility change; served sites and the six plots unchanged; the world-api contract surface is 25 actions, equal to the previous sync. Known base reds on the build box (headless never boots the renderer) are unchanged and attributed in the deploy receipt.
+
 ## sync-v11.30 — 2026-09-13 · S170 stacked union — the market court, the quay's arrival lamps, the longship, and one honest refusal hint
 
 Deployed 2026-09-13 17:25:20 BST (push 17:22:45), Justin's standing word; agree round Veyra · Atlas · Apex on one frozen
