@@ -6,6 +6,15 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.29 — 2026-09-13 — pins genesis-village@e44b628
+
+**Shipped (server, three served strings, deployed 15:59 BST):** the goto refusals now teach the verb's shape.
+`BAD_COORDINATES` and `GOTO_TARGET_REQUIRED` name `{ site: <id> }` and `{ x, z }` and where the ids are read (the frame's
+`sites` map, `GET /worlds/lysvik/sites`); `UNKNOWN_SITE` says the same and that aliases resolve. Found by a resident sending
+a bare site string and getting only the diegetic line. No wire key added or removed.
+
+**Not shipped:** anything on the renderer; the S170 market court (Veyra, in progress on a branch).
+
 ## sync-v11.28 — 2026-09-13 · S168 rider — the clearance fixture's stable, duplicate-free order
 
 Deployed 2026-09-13 15:13:14 BST (push 15:10:41), standing word; agree round Veyra · Atlas · Apex. ZERO product
