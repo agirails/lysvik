@@ -6,6 +6,34 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.27 — 2026-09-13 · S168 union — the follow release, the ridge house, and the seams between them
+
+Deployed 2026-09-13 14:32:38 BST (push 14:30:05), Justin's standing word for the session; agree round Veyra (Eye) ·
+Atlas (structural) · Apex (discharge in Arha's shape, she being absent). NO migration; `server/` and `shared/` are
+byte-identical to the previous pin. Docs re-pinned to `95abc97` (14 doc pins + VERSION.json; contract regenerated AT
+the deployed SHA: 25 actions, asserted equal to live `GET /worlds/lysvik/actions` = 25 at 14:3x). Cutover: one
+non-200 sample at a 15 s cadence; an outage under 15 s is invisible.
+
+**WHAT SHIPPED — client only (7 production files).**
+- **The follow release.** On an operator link (`?follow=<id>`) the roam control "following … · activate roam to
+  release" never released — its hold was keyed on a URL-lifetime constant. The arrival card's primary still keeps
+  the follow (S155); the control now releases it, and roam is usable afterwards.
+- **The ridge house.** `plot_ridge_1` renders its served plan stage (plot · foundation · frame · roof · complete)
+  from a strict spatial projection of `GET /worlds/lysvik/works/plan`, polled every 30 s, last-observed retained
+  with a dated stale sign. Stage geometry blocks feet; a resident or sheep already inside a rising foundation walks
+  out (never in); existing stone/slate/wood surfaces, seasonal snow, eight material batches. No amounts, ownership or
+  settlement reach any surface.
+- **The seams (found by codex on the union, not on either lane).** A retained follow re-checks its shot when the
+  obstacle set changes (a house raised across the sightline); "leave follow" never restores a saved pose into a
+  raised house; an already-arrived body inside a rising foundation walks out. Each with a red-first gate.
+- Ten world suites and three bench gates registered; the clearance fixture regenerated at the tip.
+
+**WHAT DID NOT SHIP.** No server, shared, door, route, count or money-path change. Coastal clouds and the ground
+texture study stay out (visual hold). `shots/` remains tracked. Known reds carried, each reproduced at the previous
+pin: `test:loading-refusal:eye`, `test:approach:gate` (headless never boots the renderer on this box) and
+`test:s134:human-eye:browser` (the S152 load-sensitive flake row; passes 27/27 alone at this pin, Atlas's falsifier).
+The clearance-sort rider (`arc/s168-apex-clearance-sort`) waits on its own sweep and a dedupe.
+
 ## sync-v11.26 — 2026-09-13 — pins genesis-village@eff2569
 
 **Shipped (server only, deployed 11:49 BST):** an idle `/observations` tick is now one SSE comment line instead of a ~4.3 KB
