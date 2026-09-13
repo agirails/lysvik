@@ -6,6 +6,33 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.30 — 2026-09-13 · S170 stacked union — the market court, the quay's arrival lamps, the longship, and one honest refusal hint
+
+Deployed 2026-09-13 17:25:20 BST (push 17:22:45), Justin's standing word; agree round Veyra · Atlas · Apex on one frozen
+pin. NO migration. Server delta vs the previous pin: ONE string in `server/v52.ts` (below). Docs re-pinned to `f6abc2b`
+(14 doc pins + VERSION.json; contract regenerated AT the deployed SHA: 25 actions = live 25). Cutover: one non-200
+sample at a 15 s cadence; an outage under 15 s is invisible.
+
+**WHAT SHIPPED.**
+- **The market court** (Veyra): 171 terrain-fitted stones in three merged meshes, lengthwise timber grain, three props
+  regrouped at the court's working edge. Exactly three r 0.7 discs moved in the clearance registry; no site enclosed.
+- **The quay's arrival lamps** (Veyra): three deck-mounted waylights at the pier's landward threshold and head, mounted
+  on the pier's own registered deck dimensions; three lantern no-build discs. The arrival now has its own pool of light
+  at night, so the settlement no longer reads market-first from the water.
+- **The longship** (Veyra, at Justin's ask): a curved clinker hull, carved stems, woven sail and rigging, shields and
+  oars replace the placeholder trade ship at its anchorage; voyage, arrival and departure state unchanged; crates on deck.
+  The ship registers no footprint or deck (non-colliding by design).
+- **One refusal hint told the truth** (Atlas, after Veyra's finding): the shared `UNKNOWN_SITE` hint promised alias
+  resolution ("harbour") to every consumer; only `goto` resolves aliases, so `gather`/`lay_down`/`leave_mark` were
+  mis-taught. The hint now names the canonical key and scopes aliases to `goto`, with an executable arm proving
+  `gather { site: harbour }` is refused.
+
+**WHAT DID NOT SHIP.** No door, route, count, money-path or visibility change. The harbour warehouse still traps a
+resident placed at the pier's landward start (Veyra's GLTF study supersedes the earlier proxy figure; her lane). The
+kirk→Borgen ascent remains a survey. Known reds carried, each reproduced at the previous pin or alone on a quiet box:
+`test:loading-refusal:eye`, `test:approach:gate` (headless never boots the renderer here), `test:s134:human-eye:browser`
+(the S152 load row, 27/27 alone), `test:s142:camera-eye` (29/0 alone; red only under an overlapping headed window).
+
 ## sync-v11.29 — 2026-09-13 — pins genesis-village@e44b628
 
 **Shipped (server, three served strings, deployed 15:59 BST):** the goto refusals now teach the verb's shape.
