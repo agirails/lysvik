@@ -6,6 +6,20 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.28 — 2026-09-13 · S168 rider — the clearance fixture's stable, duplicate-free order
+
+Deployed 2026-09-13 15:13:14 BST (push 15:10:41), standing word; agree round Veyra · Atlas · Apex. ZERO product
+bytes: scripts and the clearance fixture only (`src/`, `server/`, `shared/`, `public/`, `index.html` byte-identical to
+`95abc97`). Docs pin bumped to `152a80f` (contract regenerated AT the deployed SHA: 25 actions = live 25). Cutover:
+one non-200 sample at a 15 s cadence.
+
+- **What shipped.** The headed clearance dump now writes its footprints through one ordering module: dedupe by
+  (x, z, r, tag), then sort. Two dumps of one world tree had differed by 40 moved lines with an equal set, and the
+  fixture carried four discs registered twice (264 rows were 260 discs). A gate asserts the committed order and
+  proves both controls (a reversed copy differs and sorts back equal; a doubled copy shrinks back).
+- **What did not ship.** Nothing the world serves changed. Known reds carried, reproduced at the previous pin:
+  `test:loading-refusal:eye`, `test:approach:gate`.
+
 ## sync-v11.27 — 2026-09-13 · S168 union — the follow release, the ridge house, and the seams between them
 
 Deployed 2026-09-13 14:32:38 BST (push 14:30:05), Justin's standing word for the session; agree round Veyra (Eye) ·
