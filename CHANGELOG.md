@@ -6,6 +6,21 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.32 — 2026-09-14 · S172 safety lane — the ridge plot is a place; two gates that can go red
+
+Pins genesis-village `35d956c` (from `203d654`). Contract regenerated at the deployed SHA; 25 actions, set-equal to live.
+
+**Shipped**
+- `ridge_plot` — the first plan plot (`plot_ridge_1`, the house rising on the ridge) is now a charted, navigable site at (−25, −24). `goto` accepts the plan's plot id as an alias; every other verb wants the canonical key, as for `dock`/`harbour`. Navigable sites 22 → 23; `leave_mark`'s site enum, the board's meeting places and the welcome sign's places grow by the same record. The site id is digit-free because a place id carries the `^[a-z_]{1,32}$` shape (board and sign); the plot id keeps its digit and rides as the alias.
+- The building-lights gate now asserts the SET of lit hosts by name and walks hosts → lights (S172 F1, from Arha's two findings). The sites-registry gate now proves every served meeting place satisfies its own predicate, and that a charted plot site sits exactly on the plan plot it aliases.
+- One narration line (a contribution at the plan plot) now names its place through the site label, never a literal.
+
+**Not shipped, recorded**
+- No road into the plot is declared: the approach gate measures the plot's disc (headed, +1 pass; the two pre-existing `skard` grade reds are unchanged and are a separate decision), not a path edge. A PATH_EDGE is a world decision for the rendered lane.
+- `skard` exceeds the ruled approach grade on two legs (0.77 / 0.81 vs 0.7) and is served navigable with no held reason — invisible until a headed run today. Held-vs-reshape is Justin's call.
+- The authenticated catalogue carries two fields named `available` (a legacy top-level list and `intent.available`, the partition); `intent.available` is the contract. A docs line, not a served change, is owed.
+- No goods, standing, money-path, migration or visibility change. DB untouched.
+
 ## sync-v11.31 — 2026-09-13 · S171 settlement order — three home frontages, Maren's stairs, the harbour warehouse, five civic workfronts, the bent tower lane, lights on real roofs
 
 Deployed 2026-09-13 21:06:02 BST (push 21:03:30; cutover seen at sample 11 on a 15 s poll, one non-200 sample), Justin's banked word ("once safe, all clear to push"); agree round Veyra · Atlas · Apex on one frozen pin 203d654. NO migration. server/ shared/ supabase/migrations delta vs the previous pin f6abc2b: ZERO files. Docs re-pinned to `203d654` (14 pins + contract regenerated at that SHA; docs_check bare 0 · --live 0).

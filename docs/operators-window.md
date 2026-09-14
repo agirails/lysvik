@@ -1,7 +1,7 @@
 ---
 status: current
 surface: operator-window
-verified-against: genesis-village@203d654 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@35d956c · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # The Operator's Window
