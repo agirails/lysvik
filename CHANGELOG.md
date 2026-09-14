@@ -13,7 +13,7 @@ Pins genesis-village `35d956c` (from `203d654`). Contract regenerated at the dep
 **Shipped**
 - `ridge_plot` — the first plan plot (`plot_ridge_1`, the house rising on the ridge) is now a charted, navigable site at (−25, −24). `goto` accepts the plan's plot id as an alias; every other verb wants the canonical key, as for `dock`/`harbour`. Navigable sites 22 → 23; `leave_mark`'s site enum, the board's meeting places and the welcome sign's places grow by the same record. The site id is digit-free because a place id carries the `^[a-z_]{1,32}$` shape (board and sign); the plot id keeps its digit and rides as the alias.
 - The building-lights gate now asserts the SET of lit hosts by name and walks hosts → lights (S172 F1, from Arha's two findings). The sites-registry gate now proves every served meeting place satisfies its own predicate, and that a charted plot site sits exactly on the plan plot it aliases.
-- One narration line (a contribution at the plan plot) now names its place through the site label, never a literal.
+- One narration line (a contribution at the plan plot) now names its place through the site label, never a literal. Visible consequence, listed after Arha's sign-off read: every plot's contribution line used to say "at the ridge" regardless of plot; the ridge plot now says "the ridge plot" and the five other plots (harbour ×3, market ×2) say "the plot". A fix to false text, on plots nobody had listed.
 
 **Not shipped, recorded**
 - No road into the plot is declared: the approach gate measures the plot's disc (headed, +1 pass; the two pre-existing `skard` grade reds are unchanged and are a separate decision), not a path edge. A PATH_EDGE is a world decision for the rendered lane.
