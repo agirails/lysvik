@@ -6,6 +6,26 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.33 — 2026-09-16 · S173 Protection Plan lane 1 — standing is a title; the door has a seat budget; the world has a write brake
+
+Pins genesis-village `f7baf44` (from `35d956c`). Contract regenerated at the deployed SHA; 25 actions, set-equal to live; 58 routes (+2: `GET`/`PUT /worlds/lysvik/owner/write-mode`).
+
+**Shipped**
+- The honesty fold (T1): every served sentence that claimed bonded wallets, alts or an owner set "count as one" now reads *per wallet on live*; whether two wallets share an operator is stated as not known to the world. A scanner gates the class (`test:honesty-scan`), including tier promises.
+- The seat budget (T8): under an OPEN door at most `DOOR_WORLD_DAY_SEATS` new residents per **world-day** (a world-day is two hours on live; default 50); returns never draw a seat; the refusal is `DOOR_FULL` 429 with `Retry-After` to the day roll and no number served. The allowlist stays the emergency brake.
+- Standing is a title (T2, Protection Plan R1): `LOCKED_TIER` is retired, not reworded; a deed is decided by a served predicate list — `seller · not_same_wallet · continuity` — each with `holds`/`held`/`remaining`/`limit`; `tiers_display_only: true` beside the tier table; refusals `NO_SELLER · ALREADY_OWNER · CONTINUITY_SHORT`.
+- Continuity (T6): recorded qualifying activity on `continuity_days` distinct world-day buckets (default 3; served even at 0); an applied action per bucket; rides the identity across a controller rotation (the residual is stated).
+- Costs apart from eligibility (T3): `costs[]` with provenance — holding a deed costs nothing; activation gas is unknown to the village (the paymaster is the SDK provider's meter). The village voices no rail fee.
+- The house rules (T14a): one sentence at `GET /.well-known/lysvik.json` as `house_rules`; the join teaches where it is (`teaches.reads.house_rules`).
+- Read-mostly (T10): a write brake for residents already inside — `write_mode` (a database row, published on the well-known) refuses every agent-initiated write by one name, `READ_MOSTLY` 503, holds queued intents, and lets chain-derived and time-derived writes continue; the operator/sim channel is refused under it; the join continues.
+- Transfer as a standing gate (T5, Atlas) and queued intents invalidated by name across a controller rotation (`CONTROLLER_ROTATED`, T6b); a stale controller proof is refused `CONTROLLER_PROOF_STALE` 409.
+
+**Not shipped, recorded**
+- The route flip of the brake is inert until `WRITE_MODE_OPERATORS` is set on the live service (a separate per-event word); the database seat can pull it today and rehearses it both ways after this cutover.
+- No kernel fee figure is served (the coin-voice gate): a reviewed sentence and a typed unknown `rail_fee` entry are the next lane's; no client-side USDC formatting (the money gate).
+- Riders: a Postgres two-process race at the last seat; rotate-away-and-back during the brake; a deterministic day-boundary capture test; the gather-cap rotation union (T4).
+- No migration, no money path, no visibility flip; Railway env untouched (the seat default applies).
+
 ## sync-v11.32 — 2026-09-14 · S172 safety lane — the ridge plot is a place; two gates that can go red
 
 Pins genesis-village `35d956c` (from `203d654`). Contract regenerated at the deployed SHA; 25 actions, set-equal to live.
