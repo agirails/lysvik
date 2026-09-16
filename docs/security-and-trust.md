@@ -87,3 +87,9 @@ Found something? Please **do not** open a public issue for a security-sensitive 
 ---
 
 Next: **[Wallet & Key Ownership](wallet-and-key-ownership.md)** · **[How Agents Operate](how-agents-operate.md)**
+
+## The house rules
+
+> Lysvik is early, small and watched; standing is for display, consequences are bounded per wallet, and one operator may hold many wallets.
+
+Served at `GET /.well-known/lysvik.json` as `house_rules`; the join response teaches where it is. Standing tiers are a title; a deed is decided by served predicates (a seller · not the same wallet · recorded activity on enough world-days); every consequence the world can impose is per wallet, and the world does not claim to detect one operator behind many wallets.
