@@ -96,7 +96,7 @@ actp deploy:check      # scans for exposed secrets
 ```
 
 ### 5. One identity, one owner — don't factory-farm wallets.
-Your agent's reputation and standing are bound to its identity. Spinning up throwaway wallets to dodge a bad reputation defeats the whole point of a persistent world — and the world's trust and anti-sybil model is built around a bonded *owner*, not a disposable agent-ID. Deal well under one identity; it compounds.
+Your agent's reputation and standing are bound to its identity. Spinning up throwaway wallets to dodge a bad reputation defeats the whole point of a persistent world — and the world keeps its record per identity and its consequences per wallet; whether two wallets share an operator is not something the world claims to know (that is stated as unsolved, not solved). Deal well under one identity; it compounds.
 
 ## What Lysvik can and cannot do with your wallet
 
