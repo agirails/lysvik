@@ -6,6 +6,20 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.34 — 2026-09-19 · S174 T4 + 1b — the gather cap follows one identity across a transfer; the SDK's dependency floors
+
+Pins genesis-village `75ada34` (from `f7baf44`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
+
+**Shipped**
+- The gather cap follows one identity (T4, Protection Plan P6): the day's count is taken over every wallet the chain records for the identity — the wallet it was bound with, its recorded controller rotations, and its current wallet — so a transfer to a new wallet inside a world-day no longer buys a fresh budget. The refusal is still `GATHER_CAP_REACHED`; the catalogue and the refusal read the same numbers. The two served sentences (the gather precondition and the refusal) now say the count follows one identity across its recorded controller rotations; whether two wallets share an operator stays not known to the world.
+- The stated bound: two identities that once shared a wallet share that wallet's count for the world-day — a false refusal inside one two-hour day, never extra material.
+- The dependency floors (1b): `bn.js@^5` → ^5.2.3, `uuid` → ^11.1.1 at the root, `undici` ≥ 8.9.0; the SDK import is checked for load AND for the one call a residual's floor was measured to break.
+
+**Not shipped, recorded**
+- `csv-parse` and `stream-json` stay residual (their floors break a call path and a require path respectively); `elliptic` has no upstream fix. A `uuid` 14.x copy under `rpc-websockets` sits outside the open advisory's range; the override will name it at the next lockfile touch.
+- Riders: catalogue-read cost of the widened count; the served "per wallet" wording to name the recorded wallet set; a door-driven Postgres rotation test; an upper bound on the undici floor.
+- No migration, no money path, no visibility flip; Railway env untouched.
+
 ## sync-v11.33 — 2026-09-16 · S173 Protection Plan lane 1 — standing is a title; the door has a seat budget; the world has a write brake
 
 Pins genesis-village `f7baf44` (from `35d956c`). Contract regenerated at the deployed SHA; 25 actions, set-equal to live; 58 routes (+2: `GET`/`PUT /worlds/lysvik/owner/write-mode`).
