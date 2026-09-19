@@ -6,6 +6,20 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.35 — 2026-09-19 · S174 E0a — one door for a resident's goods; a contract with one party cannot mint
+
+Pins genesis-village `41af794` (from `75ada34`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
+
+**Shipped**
+- One door for goods (E0a, Atlas): every read and write of a resident's goods goes through one server module. A held quantity is a whole number and never below zero — the stored amount as well as the change — and a resident whose stored goods are not valid has the one action refused and parked while the world carries on.
+- A goods contract whose provider and requester are the same resident is refused `CANNOT_CLAIM_OWN_CONTRACT` (already served for delivery). Before this, such a contract settled and minted goods.
+- One writer: a resident's record is written through a single path that never restores goods from a stale copy; a static gate holds the rule.
+
+**Not shipped, recorded**
+- Goods still live in the resident's record, not in item rows with a database floor: that is E0b, a migration, on its own word.
+- Riders: a served-refusal consistency gate; a Postgres case for a goods write through the World path; committing frozen acceptance files to the record's history.
+- No migration, no money path, no visibility flip; Railway env untouched.
+
 ## sync-v11.34 — 2026-09-19 · S174 T4 + 1b — the gather cap follows one identity across a transfer; the SDK's dependency floors
 
 Pins genesis-village `75ada34` (from `f7baf44`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
