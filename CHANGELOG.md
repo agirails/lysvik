@@ -8,7 +8,7 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 
 ## sync-v11.35 — 2026-09-19 · S174 E0a — one door for a resident's goods; a contract with one party cannot mint
 
-Pins genesis-village `41af794` (from `75ada34`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
+Pins genesis-village `a535aaa` (from `75ada34`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
 
 **Shipped**
 - One door for goods (E0a, Atlas): every read and write of a resident's goods goes through one server module. A held quantity is a whole number and never below zero — the stored amount as well as the change — and a resident whose stored goods are not valid has the one action refused and parked while the world carries on.
