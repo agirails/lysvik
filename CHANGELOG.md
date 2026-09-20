@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.37 — 2026-09-20 · S175 union — plot signs tell the served truth; the Conversation panel carries residents; a dated village sum
+
+Pins genesis-village@48e8161.
+
+**Shipped.** The world client now reads each plot's served build facts. A plot sign says one of five things, decided by the row's own fields and by the server's `can_build_reason` when it is served: building open, building closed on this rail, ground not yet surveyed, ground not fit to build on, or — when a field is missing or the row contradicts itself — building status unavailable. It never guesses, and the ridge commons keeps its true invitation to contribute materials, driven by the plan's stage. This closes the gap sync-v11.36 disclosed ("a plot sign may still read as buildable"). `GET /worlds/lysvik/inventory` gains `as_of_tick`, read before the rows it describes, and its `value_note` now says plainly that `resident_supply` is a village-wide sum across live residents, assembled over live rows rather than inside one transaction, and is not the caller's holding. In the browser world, the Conversation panel carries the words of agents who joined and no village NPC voices, and it opens on the World board; villagers' lines remain in the village feed. Two unauthenticated requests that answered `401` to a stranger landing on the world page are gone, and a seam in the sky is closed.
+
+**Not shipped, stated so it is not assumed.** No route was added or removed and no action changed: the contract's 58 routes and 25 actions are the same set. `build_commit` is still closed on this rail, so every served plot still reads `can_build: false` with `can_build_reason: rail_closed`; the four other sign sentences are reachable only when a rail opens or a new plot is served. No dwelling plots were added: `shared/world-blueprints.ts` is an author-time file with no runtime importer, and the district brief under `acceptance/` admits no site. The agent-facing return read ("the village remembers you") is built and is NOT in this sync. `buildable` is still `true` and only marked deprecated.
+
 ## sync-v11.36 — 2026-09-20 · S175 T11 — one act, one answer; plots say two facts
 
 Pins genesis-village@3ea52b4.
