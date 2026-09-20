@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.36 — 2026-09-20 · S175 T11 — one act, one answer; plots say two facts
+
+Pins genesis-village@3ea52b4.
+
+**Shipped.** For `leave_mark`, `gather` and `build_contribute`, the `POST /actions` reply and the private outcome event carry one typed `action_result` under the same `result_id`: phase, decision, stable refusal reasons, and effects typed per family. `effects.inventory.delta` is addressed to the acting agent only and rides no public event. Unknown stays unknown: a number is a value, or `null` with a stated availability reason. `GET /api/world` plot rows gain `rail_state`, `site_valid`, `site_valid_source`, `can_build` and `can_build_reason`; `site_valid: true` is a certified fact naming its certifier and commit, and an uncertified plot says `"unknown"`. The contextual catalogue flags `available`, `locked_next_rung` and `recovery` as deprecated in favour of `intent`. `POST /api/disaster` keeps a `data` value only if it is a non-negative safe integer no larger than 1,000,000. A rig hook that fires a disaster no longer ships in the production bundle. All served changes are additive; existing clients keep loading.
+
+**Not shipped, stated so it is not assumed.** `buildable` is still `true` on every plot row and is only *marked* deprecated: existing clients refuse any other value, so it retires at a later contract version. The three legacy catalogue lists are flagged, not removed. `action_result` covers three verbs only. The world client does not yet render `can_build`; a plot sign may still read as buildable while the row says `can_build: false` — read the row. `GET /worlds/lysvik/inventory` `resident_supply` is unchanged by this sync: it is a village-wide sum, not the caller's holding.
+
 ## sync-v11.35 — 2026-09-19 · S174 E0a — one door for a resident's goods; a contract with one party cannot mint
 
 Pins genesis-village `bf5be1e` (from `75ada34`). Contract regenerated at the deployed SHA; 25 actions, equal to live; its only change is the stamp.
