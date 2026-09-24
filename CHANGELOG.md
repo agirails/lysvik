@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.40 — 2026-09-24 · R-U-22 — load the opt-in district only when requested
+
+Pins genesis-village@dcf58ce. No API routes or actions changed; all25 action names match the preceding live contract.
+
+**Shipped in this pin.** The heavy Lantern Court study code loads only with `?lantern=1`. Ordinary arrival retains its existing synchronous vegetation proxy. Enabled study geometry and vegetation clearing complete before their scene admission, and a failed district download stops arrival with the existing retry screen. The raw initial-JavaScript ceiling returns from the temporary 1.75 MiB allowance to 1.70 MiB; the measured initial graph is 1,778,437 bytes (1.69605 MiB). This is a payload measurement, not a startup-speed promise.
+
+**Not shipped.** No world redesign, collision repair, site admission, resident construction, economy change or new API action. The richer Lantern Fjord work remains an isolated sandbox. Existing local rehearsal limitations remain; this release does not certify actual district journeys. The failed-import diagnostic may report dependent village/proxy failures alongside the original module failure.
+
 ## sync-v11.39 — 2026-09-22 · S176 union 2 — the first authored district, opt-in; a villager's card says "there now" only when the world confirmed it
 
 Pins genesis-village@3339b6a. Contract regenerated at the deployed SHA: 59 routes, 25 actions, equal to live; no route added or removed.
