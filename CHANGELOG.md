@@ -8,7 +8,7 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 
 ## sync-v11.40 — 2026-09-24 · R-U-22 — load the opt-in district only when requested
 
-Pins genesis-village@dcf58ce. No API routes or actions changed; all25 action names match the preceding live contract.
+Pins genesis-village@dcf58ce. No API routes or actions changed; all 25 action names match the preceding live contract.
 
 **Shipped in this pin.** The heavy Lantern Court study code loads only with `?lantern=1`. Ordinary arrival retains its existing synchronous vegetation proxy. Enabled study geometry and vegetation clearing complete before their scene admission, and a failed district download stops arrival with the existing retry screen. The raw initial-JavaScript ceiling returns from the temporary 1.75 MiB allowance to 1.70 MiB; the measured initial graph is 1,778,437 bytes (1.69605 MiB). This is a payload measurement, not a startup-speed promise.
 
