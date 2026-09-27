@@ -8,7 +8,7 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 
 ## sync-v11.41 — 2026-09-27 · C-001 — villagers walk round the market stall, not through it
 
-Pins genesis-village@a7634a7. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
+Pins genesis-village@4bdf001. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
 
 **Shipped in this pin.** Signe's market stall is now solid for walking bodies. Villagers going to the market stop at a customer apron in front of the counter and no longer walk through the counter or stall frame. The stall keeper reaches her place by a side opening, and that opening, like every gap a route crosses around the stall, is at least 1.88 m between solids: the rear frame posts stand further back and the canopy is deeper to match, with the counter, shelf and apron where they were. Collision pockets where a body could pin itself against the stall have been filled with collision-only shapes, and a body standing where new stall geometry now lies walks outward instead of freezing. Measured in simulation over every legal start around the stall at nine headings: no walks through the counter and no stranded walkers.
 
