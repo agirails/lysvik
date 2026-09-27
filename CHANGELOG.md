@@ -8,7 +8,7 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 
 ## sync-v11.42 — 2026-09-27 · REDS-01 — the Skarð road is walkable ground again
 
-Pins genesis-village@b6ccb03. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
+Pins genesis-village@64e9ba9. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
 
 **Shipped in this pin.** The two roads into the Skarð pass (from the plaza and from the high moor) had picked up a short, steep lip about 18 m below the pass when the terrain gained its finer relief; they are back to the gentle grade they had before (about 0.53, under the walked-road limit of 0.7). The change is local to those two roads: the ground elsewhere in the world is identical. The world's own check that every road to a place is walkable, which could not run on its test machine for several weeks, now runs and passes, and it can no longer pass on missing or invalid ground heights.
 
