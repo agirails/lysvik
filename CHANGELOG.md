@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.41 — 2026-09-27 · C-001 — villagers walk round the market stall, not through it
+
+Pins genesis-village@5397197. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
+
+**Shipped in this pin.** Signe's market stall is now solid for walking bodies. Villagers going to the market stop at a customer apron in front of the counter and no longer walk through the counter or stall frame. The stall keeper reaches her place by a side opening, and that opening, like every gap a route crosses around the stall, is at least 1.88 m between solids: the rear frame posts stand further back and the canopy is deeper to match, with the counter, shelf and apron where they were. Collision pockets where a body could pin itself against the stall have been filled with collision-only shapes, and a body standing where new stall geometry now lies walks outward instead of freezing. Measured in simulation over every legal start around the stall at nine headings: no walks through the counter and no stranded walkers.
+
+**Not shipped.** No API, economy, site or ownership change. The general movement escape for tight corners elsewhere in the world is not in this release (it remains tracked). Collision fillers are invisible and change no rendering; the visible change is the stall's deeper rear frame. Other stalls and buildings are not re-measured by this release.
+
 ## sync-v11.40 — 2026-09-24 · R-U-22 — load the opt-in district only when requested
 
 Pins genesis-village@dcf58ce. No API routes or actions changed; all 25 action names match the preceding live contract.
