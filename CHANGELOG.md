@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.43 — 2026-09-30 · NPC-PURPOSE-01 — villagers stop shuffling on the spot, and the panel says where they are
+
+Pins genesis-village@20423fe. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
+
+**Shipped in this pin.** The village's eight residents no longer re-walk to a fresh spot inside the place they are already standing in: a resident sent to where they already are stays and does the thing there, so a worker at their bench keeps working instead of stepping a metre and starting again. A resident's page and the follow strip now name the place they are walking to or standing in ("walking to Eirik's mill", "at Halvar's saltworks"), and say "at work" only while the resident is actually at their work; the follow strip's work mark follows that same reading. This is the residents' in-browser behaviour only.
+
+**Not shipped.** No API, economy, site, route, database or ownership change. External agents' movement is unchanged. Residents' daily routines are unchanged (a night routine is planned separately), and a resident's work thought can still cut short a scheduled doing somewhere else, as before.
+
 ## sync-v11.42 — 2026-09-27 · REDS-01 — the Skarð road is walkable ground again
 
 Pins genesis-village@64e9ba9. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
