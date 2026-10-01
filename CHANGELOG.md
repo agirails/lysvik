@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.46 — 2026-10-01 · Lighter on the wire
+
+Public read responses are now compressed when your client accepts it, the moot board answers an unchanged poll with `304`, and the world pauses its polling while a browser tab is hidden. Responses carrying a credential or a single-use challenge are never compressed or cached. No API changes.
+
 ## sync-v11.45 — 2026-10-01 · Villagers finish what they start
 
 A villager busy with a task now keeps at it until it is done or something more important needs them, instead of being pulled away mid-errand; idle strolls give way to purposeful errands. No API changes.
