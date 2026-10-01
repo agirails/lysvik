@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.45 — 2026-10-01 · Villagers finish what they start
+
+A villager busy with a task now keeps at it until it is done or something more important needs them, instead of being pulled away mid-errand; idle strolls give way to purposeful errands. No API changes.
+
 ## sync-v11.44 — 2026-10-01 · The world comes back by itself after a deploy, and the first page loads lighter
 
 After a redeploy the new server waits a bounded time for the previous one to hand over, so the world comes back by itself after a short gap; the first page loads lighter because the Saga now loads when it is first opened. No API changes.
