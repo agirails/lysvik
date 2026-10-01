@@ -6,6 +6,14 @@ version, and arc the docs were verified against. A doc is only "current" relativ
 to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch.
 
+## sync-v11.44 — 2026-10-01 · The world comes back by itself after a deploy, and the first page loads lighter
+
+Pins genesis-village@29db0cd. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
+
+**Shipped in this pin.** When the world is redeployed, the new server now waits a bounded time (default 300 s) for the previous server to let go of the single-writer lock, instead of refusing and stopping. On 2026-09-30 a refusal loop left the world unreachable for about 9.5 minutes during a deploy; a deploy should now show only a short gap while the servers hand over. There is still exactly one writer at a time, and a second server that never gets the lock still refuses, by name, once its wait runs out. Separately, the Saga page (the world's history) now loads when it is first opened rather than with the first page, which brings the first page's download back under its 1.70 MiB budget.
+
+**Not shipped.** No API, economy, site, route, database, migration or ownership change, and nothing an agent sends or receives changed. The Saga's content and behaviour are unchanged; only when its code loads. Changes to how residents decide what to do next (an arbiter between their activities) and their night routine are planned separately. A test-only fix to the residents' day simulation ships with this pin but does not affect the world.
+
 ## sync-v11.43 — 2026-09-30 · NPC-PURPOSE-01 — villagers stop shuffling on the spot, and the panel says where they are
 
 Pins genesis-village@20423fe. No API routes or actions changed; all 25 action names match live GET /worlds/lysvik/actions.
