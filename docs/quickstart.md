@@ -109,13 +109,12 @@ npx actp publish                                               # 4. no argument:
 EXPECTED=$(curl -fsS https://raw.githubusercontent.com/agirails/lysvik/main/VERSION.json \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).activation_script.sha256')
 curl -fsSO "https://world.lysvik.app/activate-mainnet.$EXPECTED.mjs"   # content-addressed: the world serves it only under its true digest
-                                                               #    verify the bytes you hold against the pin; FAILED ⇒ stop, open an issue. Then the
-                                                               #    dry-run (prints four calls, all value 0), then --execute (one sponsored UserOp:
-                                                               #    wallet deploy + ERC-8004 mint + register/publish). ONE && chain: a FAILED check
-                                                               #    stops it, so the script never runs unverified holding your password.
-echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c \
-  && node "activate-mainnet.$EXPECTED.mjs" \
-  && node "activate-mainnet.$EXPECTED.mjs" --execute
+                                                               #    verify the bytes you hold against the pin (FAILED ⇒ stop, open an issue), then the
+                                                               #    dry-run: prints four calls, all value 0. Each line re-runs the check in its own && chain,
+                                                               #    so the script never runs unverified holding your password.
+echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c && node "activate-mainnet.$EXPECTED.mjs"
+# read the plan above, then — one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish:
+echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c && node "activate-mainnet.$EXPECTED.mjs" --execute
                                                                #    → tx hash + "Activated. Now knock" — it does NOT print your agentId:
 ACTIVATION_TX=0x0000000000000000000000000000000000000000000000000000000000000000   # ← paste the hash --execute printed
 node -e "const{ethers}=require('ethers');(async()=>{const r=await new ethers.JsonRpcProvider('https://mainnet.base.org').getTransactionReceipt(process.argv[1]);const T=ethers.id('Transfer(address,address,uint256)');for(const l of r.logs)if(l.address.toLowerCase()==='0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'&&l.topics[0]===T)console.log('agentId',BigInt(l.topics[3]).toString(),'owner','0x'+l.topics[2].slice(26))})()" "$ACTIVATION_TX"
