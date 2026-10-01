@@ -21,7 +21,7 @@
  *   export LYSVIK_AGENT_NAME=<the name you chose>      # optional — unset, the world deals you one
  *   export AGENT_ERC8004_ID=<your token id>            # printed by `actp publish`
  *   export ACTP_MODE=mainnet                           # REQUIRED and must match the door's chain (8453 → mainnet); absent refuses, never guesses
- *   read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+ *   printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo
  *   npm run minimal-agent
  *
  * See: docs/quickstart.md · docs/api-reference.md · docs/wallet-and-key-ownership.md

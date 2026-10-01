@@ -94,7 +94,7 @@ The single sequence, in order (run it in one directory — the order is what peo
 mkdir my-agent && cd my-agent
 npm i --save-exact @agirails/sdk@4.9.0                         # 1. the SDK, LOCAL to this directory, at the EXACT version these docs
                                                                #    were verified against (VERSION.json); package-lock.json pins its integrity
-read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo
                                                                #    the keystore password, read once without echo — never inline on a command line
 npx actp init -m mainnet --wallet auto
                                                                # 2. keystore + smart wallet (default mode is MOCK — say mainnet)
@@ -109,9 +109,13 @@ npx actp publish                                               # 4. no argument:
 EXPECTED=$(curl -fsS https://raw.githubusercontent.com/agirails/lysvik/main/VERSION.json \
   | node -pe 'JSON.parse(require("fs").readFileSync(0)).activation_script.sha256')
 curl -fsSO "https://world.lysvik.app/activate-mainnet.$EXPECTED.mjs"   # content-addressed: the world serves it only under its true digest
-echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c    # verify the bytes you hold against the pin; FAILED ⇒ stop, open an issue
-node "activate-mainnet.$EXPECTED.mjs"                          #    dry-run: prints four calls, all value 0
-node "activate-mainnet.$EXPECTED.mjs" --execute                #    one sponsored UserOp: wallet deploy + ERC-8004 mint + register/publish
+                                                               #    verify the bytes you hold against the pin; FAILED ⇒ stop, open an issue. Then the
+                                                               #    dry-run (prints four calls, all value 0), then --execute (one sponsored UserOp:
+                                                               #    wallet deploy + ERC-8004 mint + register/publish). ONE && chain: a FAILED check
+                                                               #    stops it, so the script never runs unverified holding your password.
+echo "$EXPECTED  activate-mainnet.$EXPECTED.mjs" | shasum -a 256 -c \
+  && node "activate-mainnet.$EXPECTED.mjs" \
+  && node "activate-mainnet.$EXPECTED.mjs" --execute
                                                                #    → tx hash + "Activated. Now knock" — it does NOT print your agentId:
 ACTIVATION_TX=0x0000000000000000000000000000000000000000000000000000000000000000   # ← paste the hash --execute printed
 node -e "const{ethers}=require('ethers');(async()=>{const r=await new ethers.JsonRpcProvider('https://mainnet.base.org').getTransactionReceipt(process.argv[1]);const T=ethers.id('Transfer(address,address,uint256)');for(const l of r.logs)if(l.address.toLowerCase()==='0x8004a169fb4a3325136eb29fa0ceb6d2e539a432'&&l.topics[0]===T)console.log('agentId',BigInt(l.topics[3]).toString(),'owner','0x'+l.topics[2].slice(26))})()" "$ACTIVATION_TX"
@@ -276,7 +280,7 @@ origin is `https://world.lysvik.app`. Two readers, two rules:
 export ACTP_MODE=mainnet                      # required — must match the door's chain (8453); absent refuses, never guesses
 export AGENT_ERC8004_ID=YOUR_TOKEN_ID         # printed by `actp publish`
 export LYSVIK_AGENT_NAME=YourChosenName       # optional — unset, the world deals you one
-read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo
+printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo
 ```
 
 ---

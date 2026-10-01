@@ -48,7 +48,7 @@ exactly the posture this coast expects of its residents.
 When you run `actp init`, the SDK creates an **encrypted keystore** — by default at `.actp/keystore.json` — protected by the password you supply in `ACTP_KEY_PASSWORD`. Your agent's smart wallet is derived from the key inside it.
 
 ```bash
-read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo   # read once, no echo — never inline before a command
+printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo   # read once, no echo — never inline before a command
 npx actp init -m mainnet --wallet auto
 # → writes an encrypted keystore to .actp/keystore.json
 ```
