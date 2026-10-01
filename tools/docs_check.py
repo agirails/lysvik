@@ -37,6 +37,11 @@ Rules (each failure names its rule):
       fixtures/catalogue-post-u1.json byte-for-byte.  Regeneration is the only
       edit path; a hand-edit of a generated block is caught here.
 
+D17 secret prompts: a `read` that fills a secret-named variable never uses -p
+      and always reads </dev/tty (README, AGENTS.md, LYSVIK.md, docs/, examples/,
+      .env.example).  D14 also holds every activate-mainnet run to a passing
+      `shasum -a 256 -c` in the same && chain (or `set -e` earlier in the fence).
+
 Run: python3 tools/docs_check.py     (from anywhere; repo-rooted; exit 1 on red)
 """
 from __future__ import annotations
@@ -105,6 +110,145 @@ def parse_frontmatter(text: str) -> dict[str, str] | None:
 
 def normalize(path: str) -> str:
     return path.rstrip("/.")
+
+
+# ── Shell-text helpers for D14 (verify-then-run) and D17 (secret prompts) ─────
+# These read shell TEXT, not a shell: they understand quotes, comments, backslash
+# continuations and the operators && || ; | &, and nothing else. A construct they do
+# not model (a subshell, an `if`, a function) is not credited as a guard: an
+# activation run inside one is reported as unguarded, never passed.
+SHELL_FENCE_RE = re.compile(r"```(?:bash|sh|shell)\n(.*?)```", re.S)
+ACTIVATE_RUN_RE = re.compile(r"\bnode\s+[\"']?activate-mainnet\b")
+VERIFY_RE = re.compile(r"\bshasum\s+-a\s+256\s+-c\b")
+SET_E_RE = re.compile(r"^\s*set\s+-[A-Za-z]*e[A-Za-z]*\b")
+SECRET_VAR_RE = re.compile(r"\b[A-Z0-9_]*(?:PASSWORD|PASSPHRASE|SECRET|TOKEN|PRIVATE_KEY)[A-Z0-9_]*\b")
+READ_RE = re.compile(r"(?<![\w$./-])read\s+")
+TTY_RE = re.compile(r"<\s*/dev/tty\b")
+
+
+def strip_shell_comment(line: str) -> str:
+    """Drop a `# comment` that starts outside quotes at a word boundary."""
+    q = None
+    for i, ch in enumerate(line):
+        if q:
+            if ch == q:
+                q = None
+            elif ch == "\\" and q == '"':
+                continue
+        elif ch in "'\"":
+            q = ch
+        elif ch == "#" and (i == 0 or line[i - 1] in " \t"):
+            return line[:i]
+    return line
+
+
+def logical_lines(block: str) -> list[str]:
+    """Comment-stripped logical lines: a trailing backslash joins the next line."""
+    out: list[str] = []
+    buf = ""
+    for raw in block.splitlines():
+        line = strip_shell_comment(raw).rstrip()
+        if line.endswith("\\"):
+            buf += line[:-1] + " "
+            continue
+        buf += line
+        out.append(buf)
+        buf = ""
+    if buf:
+        out.append(buf)
+    return out
+
+
+def split_shell_ops(text: str) -> list[tuple[str, str]]:
+    """Split one logical line into (segment, operator-that-follows) at && || ; & —
+    outside quotes. A pipe stays inside its segment. The last operator is ''."""
+    segs: list[tuple[str, str]] = []
+    q = None
+    cur = ""
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if q:
+            cur += ch
+            if ch == q:
+                q = None
+            i += 1
+            continue
+        if ch in "'\"":
+            q = ch
+            cur += ch
+            i += 1
+            continue
+        two = text[i:i + 2]
+        if two in ("&&", "||"):
+            segs.append((cur, two))
+            cur = ""
+            i += 2
+            continue
+        if ch in ";&":
+            segs.append((cur, ch))
+            cur = ""
+            i += 1
+            continue
+        cur += ch
+        i += 1
+    segs.append((cur, ""))
+    return segs
+
+
+def _verifies(segment: str) -> bool:
+    """A segment verifies only when the LAST stage of its pipe is the shasum check
+    (a pipe's status is its last stage's: `shasum -c | tee` would mask a FAILED)."""
+    stages = [s for s in re.split(r"(?<!\|)\|(?!\|)", segment)]
+    return bool(stages) and bool(VERIFY_RE.search(stages[-1]))
+
+
+def unguarded_activation_runs(block: str, allow_set_e: bool = True) -> list[str]:
+    """Every `node activate-mainnet…` run in a shell block that is NOT guarded by a
+    passing `shasum -a 256 -c` earlier in the same && chain, nor by `set -e` (any
+    flag cluster containing e) declared on an earlier line of the block. Returns the
+    offending logical lines."""
+    bad: list[str] = []
+    set_e = False
+    for line in logical_lines(block):
+        if allow_set_e and SET_E_RE.match(line):
+            set_e = True
+        if not ACTIVATE_RUN_RE.search(line):
+            continue
+        segs = split_shell_ops(line)
+        for k, (seg, _op) in enumerate(segs):
+            if not ACTIVATE_RUN_RE.search(seg):
+                continue
+            guarded = set_e
+            j = k - 1
+            while not guarded and j >= 0 and segs[j][1] == "&&":
+                if _verifies(segs[j][0]):
+                    guarded = True
+                j -= 1
+            if not guarded:
+                bad.append(line.strip())
+    return bad
+
+
+def secret_prompt_faults(line: str) -> list[str]:
+    """Faults of each `read` on this line that fills a secret-named variable:
+    `-p` (zsh reads it as 'from the coprocess' and fails; bash-only), and no
+    `</dev/tty` (from stdin, a pasted or piped script feeds the NEXT LINE in as the
+    secret). A `read` that names no secret variable is not a prompt and is skipped."""
+    faults: list[str] = []
+    for m in READ_RE.finditer(line):
+        stmt = split_shell_ops(line[m.start():])[0][0]
+        stmt = stmt.split("`")[0]
+        if not SECRET_VAR_RE.search(stmt):
+            continue
+        flags = [tok for tok in re.findall(r"(?:^|\s)(-[A-Za-z]+)", stmt)]
+        if any("p" in f[1:] for f in flags):
+            faults.append("uses `read -p` (bash-only: in zsh, the macOS default shell, -p means a coprocess "
+                          "and the secret is never set) — prompt with printf instead")
+        if not TTY_RE.search(stmt):
+            faults.append("does not read from /dev/tty (from stdin, a pasted or piped block hands the NEXT LINE "
+                          "in as the secret) — add </dev/tty")
+    return faults
 
 
 def main() -> int:
@@ -281,11 +425,35 @@ def main() -> int:
         for n, block in enumerate(re.findall(r"```(?:bash|sh|shell)\n(.*?)```", text, re.S), 1):
             if INLINE_SECRET_RE.search(block):
                 red("D14", str(md.relative_to(ROOT)), f"bash fence #{n} puts ACTP_KEY_PASSWORD inline before a command — read it once with read -rs and export")
+        # D14 (verify-then-run): the check only protects a reader if a FAILED check stops
+        # the run. Every fenced run of activate-mainnet must sit after a passing
+        # `shasum -a 256 -c` in the same && chain, or under `set -e` declared earlier in
+        # its fence; dry-run and --execute alike. Separate lines do not stop: pasted as a
+        # block, the next line runs the tampered file with the password exported. Inline
+        # code spans (a README table cell) are held to the chain form, with no set -e credit.
+        for n, block in enumerate(SHELL_FENCE_RE.findall(text), 1):
+            for line in unguarded_activation_runs(block):
+                red("D14", str(md.relative_to(ROOT)),
+                    f"bash fence #{n} runs activate-mainnet outside a passing shasum check (no `&&` chain from "
+                    f"`shasum -a 256 -c`, no earlier `set -e`): {line[:90]}")
+        prose = SHELL_FENCE_RE.sub("", text)
+        for span in re.findall(r"`([^`\n]+)`", prose):
+            span = span.replace("\\|", "|")
+            for line in unguarded_activation_runs(span, allow_set_e=False):
+                red("D14", str(md.relative_to(ROOT)),
+                    f"inline code runs activate-mainnet outside a passing shasum && chain: {line[:90]}")
 
     # D12 — every ```bash fence in README + docs/ must PARSE (bash -n): a stranger copies
     # these blocks; an angle-bracket placeholder is redirection syntax and the line dies
     # before it runs (found by a cold read).
+    # The same fences are ALSO parsed with `zsh -n` when zsh exists here: zsh is the macOS
+    # default shell and the reader most likely to paste them. Where zsh is absent (the CI
+    # runner) the zsh half is SKIPPED with a printed note, so CI cannot see a fence that
+    # parses in bash but not in zsh. Neither parse sees runtime meaning (`read -p` parses
+    # in zsh and only fails when run); D17 holds the secret prompt to its portable form.
+    import shutil
     import subprocess
+    zsh = shutil.which("zsh")
     fence_count = 0
     for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
         text = md.read_text()
@@ -294,7 +462,28 @@ def main() -> int:
             r = subprocess.run(["bash", "-n"], input=block, text=True, capture_output=True)
             if r.returncode != 0:
                 red("D12", str(md.relative_to(ROOT)), f"bash fence #{n} does not parse: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'bash -n failed'}")
-    print(f"  D12: {fence_count} bash fences parsed")
+            if zsh:
+                rz = subprocess.run([zsh, "-n"], input=block, text=True, capture_output=True)
+                if rz.returncode != 0:
+                    red("D12", str(md.relative_to(ROOT)), f"bash fence #{n} does not parse in zsh: {rz.stderr.strip().splitlines()[-1] if rz.stderr.strip() else 'zsh -n failed'}")
+    print(f"  D12: {fence_count} bash fences parsed (bash -n" + (" + zsh -n)" if zsh else
+          "; zsh NOT FOUND — the zsh parse is SKIPPED on this machine, a zsh-only parse error is invisible here)"))
+
+    # D17 — a secret prompt is portable and reads the TERMINAL. Every `read` that fills a
+    # secret-named variable, on every surface a reader copies from (README, AGENTS.md,
+    # LYSVIK.md, docs/, the examples' comments, .env.example), must not use `-p` and must
+    # read `</dev/tty`. `read -rsp` fails in zsh ("no coprocess") and the password is never
+    # exported; read from stdin, `bash -s` hands it the next line of the steps. Text rule:
+    # a prompt built some other way (a function, a variable holding the command) is not seen.
+    secret_surfaces = [ROOT / "README.md", ROOT / "AGENTS.md", ROOT / "LYSVIK.md", ROOT / ".env.example",
+                       *sorted(DOCS.glob("*.md")), *sorted((ROOT / "examples").glob("*.ts")),
+                       *sorted((ROOT / "examples").glob("*.mjs"))]
+    for f in secret_surfaces:
+        if not f.exists():
+            continue
+        for ln, line in enumerate(f.read_text().splitlines(), 1):
+            for fault in secret_prompt_faults(line):
+                red("D17", f"{f.relative_to(ROOT)}:{ln}", f"secret prompt {fault}")
 
     # D5 — relative links resolve
     for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:

@@ -424,6 +424,77 @@ probe_live(
 
 _mock_srv.shutdown()
 
+# ── D14 verify-then-run and D17 secret prompts: whole-tree probes ──────────────
+# A fence appended to a concept doc, so each probe names exactly one fault.
+def _append_fence(t: Path, body: str) -> None:
+    f = t / "docs" / "faq.md"
+    f.write_text(f.read_text() + "\n```bash\n" + body + "\n```\n")
+
+
+probe("D14: verify and run on SEPARATE lines (a FAILED check does not stop the run)", lambda t: _append_fence(
+    t, 'echo "$E  activate-mainnet.$E.mjs" | shasum -a 256 -c\nnode "activate-mainnet.$E.mjs" --execute'), "D14")
+probe("D17: a secret prompt with read -p and no /dev/tty", lambda t: _append_fence(
+    t, "read -rsp 'pw: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD"), "D17")
+probe("D17: a secret prompt in an example's comment is held too", lambda t: edit(
+    t / "examples" / "minimal-agent.ts", " * See: docs/quickstart.md",
+    " *   read -rsp 'pw: ' ACTP_KEY_PASSWORD\n * See: docs/quickstart.md"), "D17")
+
+
+# ── D14 / D17 unit tests — the shell-text helpers, both directions ────────────
+import importlib.util as _ilu_dc
+
+_spec_dc = _ilu_dc.spec_from_file_location("docs_check_mod", ROOT / "tools" / "docs_check.py")
+_dc = _ilu_dc.module_from_spec(_spec_dc)
+_spec_dc.loader.exec_module(_dc)
+_CHK = 'echo "$E  activate-mainnet.$E.mjs" | shasum -a 256 -c'
+_RUN = 'node "activate-mainnet.$E.mjs"'
+
+
+def _u(name: str, got, want) -> None:
+    global passed, failed
+    if got == want:
+        passed += 1
+        print(f"  ✓ {name}")
+    else:
+        failed += 1
+        print(f"  ✗ {name} — got {got!r}, want {want!r}")
+
+
+_u("D14 unit: one && chain (check → dry-run → --execute) passes",
+   _dc.unguarded_activation_runs(f"{_CHK} && {_RUN} && {_RUN} --execute"), [])
+_u("D14 unit: the chain across backslash continuations, comments on their own lines, passes",
+   _dc.unguarded_activation_runs(f"# verify, then run\n{_CHK} \\\n  && {_RUN} \\\n  && {_RUN} --execute\n# after"), [])
+_u("D14 unit: separate lines fail — both the dry-run and the --execute",
+   len(_dc.unguarded_activation_runs(f"{_CHK}\n{_RUN}\n{_RUN} --execute")), 2)
+_u("D14 unit: set -e at the fence top passes",
+   _dc.unguarded_activation_runs(f"set -e\n{_CHK}\n{_RUN}\n{_RUN} --execute"), [])
+_u("D14 unit: set -euo pipefail at the fence top passes",
+   _dc.unguarded_activation_runs(f"set -euo pipefail\n{_CHK}\n{_RUN}"), [])
+_u("D14 unit: set -e AFTER the run does not guard it",
+   len(_dc.unguarded_activation_runs(f"{_CHK}\n{_RUN}\nset -e")), 1)
+_u("D14 unit: `|| true` breaks the chain",
+   len(_dc.unguarded_activation_runs(f"{_CHK} || true && {_RUN}")), 1)
+_u("D14 unit: `;` breaks the chain",
+   len(_dc.unguarded_activation_runs(f"{_CHK}; {_RUN}")), 1)
+_u("D14 unit: a pipe AFTER shasum masks its status — not a guard",
+   len(_dc.unguarded_activation_runs(f"{_CHK} | tee log && {_RUN}")), 1)
+_u("D14 unit: an inline span gets no set -e credit",
+   len(_dc.unguarded_activation_runs(f"set -e; {_RUN}", allow_set_e=False)), 1)
+
+_OLD = "read -rsp 'keystore password: ' ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD && echo"
+_NEW = "printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo"
+_u("D17 unit: read -rsp from stdin → two faults (-p, no /dev/tty)", len(_dc.secret_prompt_faults(_OLD)), 2)
+_u("D17 unit: the portable form (printf prompt, read -rs </dev/tty) → no fault", _dc.secret_prompt_faults(_NEW), [])
+_u("D17 unit: -p alone, with /dev/tty → one fault",
+   len(_dc.secret_prompt_faults("read -rs -p 'pw: ' ACTP_KEY_PASSWORD </dev/tty")), 1)
+_u("D17 unit: no -p but from stdin → one fault",
+   len(_dc.secret_prompt_faults("IFS= read -rs ACTP_KEY_PASSWORD && export ACTP_KEY_PASSWORD")), 1)
+_u("D17 unit: a read of a non-secret variable is not a prompt",
+   _dc.secret_prompt_faults("while read -r line; do echo \"$line\"; done"), [])
+_u("D17 unit: prose about reading is not a prompt",
+   _dc.secret_prompt_faults("#    the keystore password, read once without echo — never inline"), [])
+
+
 # ── d15_issue.py unit tests — pure functions only (no network) ────────────────
 import importlib.util as _ilu
 
