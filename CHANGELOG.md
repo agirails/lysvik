@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.46 — 2026-10-01 · A paved way along the quay
+
+A laid route now runs from the jetty along the quay to the saltworks forecourt, lit at dusk, and the salt pans are regrouped as a working pair beside the works. No API changes.
+
 ## sync-v11.45 — 2026-10-01 · Villagers finish what they start
 
 A villager busy with a task now keeps at it until it is done or something more important needs them, instead of being pulled away mid-errand; idle strolls give way to purposeful errands. No API changes.
