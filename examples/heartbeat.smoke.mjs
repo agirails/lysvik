@@ -175,7 +175,7 @@ console.log('§dispute-window · the requester keeps their own protection');
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 100, disputeWindow: 3600 }, NOW).reason === 'WINDOW_OPEN');
   check('an elapsed window permits (relative shape)',
     releaseWindowState({ state: 'DELIVERED', completedAt: NOW - 4000, disputeWindow: 3600 }, NOW).ok === true);
-  // Argus F3 probes: malformed numerics must REFUSE, never pass (NaN compared to anything is false)
+  // F3 probes: malformed numerics must REFUSE, never pass (NaN compared to anything is false)
   check('release: NaN completedAt is WINDOW_UNVERIFIED, not ok',
     releaseWindowState({ state: 'DELIVERED', completedAt: NaN, disputeWindow: 3600 }, NOW).reason === 'WINDOW_UNVERIFIED');
   check('release: NaN disputeWindow is WINDOW_UNVERIFIED, not ok',
@@ -195,7 +195,7 @@ console.log('§dispute-window · the requester keeps their own protection');
 }
 
 
-// ═══ Argus Wave 2 (2026-08-26): F2 prompt boundary · F4 terminal evidence · F6 escrow binding · F7 origin ═══
+// ═══ Hardening wave 2 (2026-08-26): F2 prompt boundary · F4 terminal evidence · F6 escrow binding · F7 origin ═══
 console.log('§F2 · board prose never reaches the planner as anything but a separate untrusted channel');
 {
   const facts = boardFacts(BOARD);
@@ -251,7 +251,7 @@ console.log('§F6 · release binds the rail transaction to the contract semantic
   check('a record missing the provider → RECORD_INCOMPLETE', bindEscrow(tx, { escrow_id: '0xesc', amount_base_units: '1000000' }, me).reason === 'RECORD_INCOMPLETE');
   check('a record with a non-numeric amount → RECORD_INCOMPLETE', bindEscrow(tx, { ...rec, amount_base_units: '1 USDC' }, me).reason === 'RECORD_INCOMPLETE');
   check('no wallet of my own → MISSING_WALLET', bindEscrow(tx, rec, '').reason === 'MISSING_WALLET');
-  // boundRelease: a legacy bare-id record can no longer release (Argus F6: any non-empty id used to pass)
+  // boundRelease: a legacy bare-id record can no longer release (F6: any non-empty id used to pass)
   const book = { as_requester: [{ id: 'c3', requester_id: 'v1', provider_id: 'v2', state: 'delivered' }], as_provider: [] };
   check('boundRelease: a bare escrow-id string record → RECORD_LEGACY_UNBOUND', boundRelease({ contract_id: 'c3' }, book, { c3: '0xesc' }, 'v1').reason === 'RECORD_LEGACY_UNBOUND');
   const br = boundRelease({ contract_id: 'c3' }, book, { c3: rec }, 'v1');
@@ -279,7 +279,7 @@ console.log('§F7 · the world origin is pinned; an override is explicit and mus
 }
 
 
-// ═══ Veyra cold gate on e23f012 (2026-08-26): R1 bearer-before-binding · R2 schema authority · R3 stale teaching · R4 fail-open amount ═══
+// ═══ Review of e23f012 (2026-08-26): R1 bearer-before-binding · R2 schema authority · R3 stale teaching · R4 fail-open amount ═══
 console.log('§R1 · no bearer leaves before the origin is bound; the challenge is a public fetch');
 {
   check('challenge before binding → no Authorization', bearerPolicy('/worlds/lysvik/join/challenge', false).authorize === false);
@@ -304,7 +304,7 @@ console.log('§R2 · the proposal bands are the WORLD\'s, read from contracts/bo
   check('qty 20 is kept', facts({ qty: 20 })?.qty === 20);
   check('ctype outside the enum is dropped', facts({ ctype: 'evil' }) === null);
   check('verb outside the enum is dropped', facts({ verb: 'plunder' }) === null);
-  // Veyra R2 (8ddb249): the enum cross-product is NOT the world's contract — reversed.
+  // R2 (8ddb249): the enum cross-product is NOT the world's contract — reversed.
   check('capability + fish is DROPPED (capability ⇒ carve)', facts({ ctype: 'capability', verb: 'fish', good: 'rune_milling', qty: 1 }) === null);
   check('service + haul is DROPPED (service ⇒ serve)', facts({ ctype: 'service', verb: 'haul', good: 'pilotage' }) === null);
   check('scroll + serve with a non-scroll good is DROPPED (scroll ⇒ deliver + sc_ id)', facts({ ctype: 'scroll', verb: 'serve', good: 'grain', qty: 1 }) === null);
@@ -352,7 +352,7 @@ console.log('§R4 · the amount guard accepts only a decimal string or a bigint'
 }
 
 
-console.log('§R2-final · exact contract vs server/world.ts validateProposal @1530b47: proposal_id, supersedes, heirlooms, scroll id length');
+console.log('§R2 · exact contract vs server/world.ts validateProposal @1530b47: proposal_id, supersedes, heirlooms, scroll id length');
 {
   const base = { kind: 'contract', ctype: 'goods', verb: 'haul', good: 'grain', qty: 1, reward: 3, deadline_in_ticks: 4800 };
   const known = { postIds: new Set(), contractIds: new Set() };

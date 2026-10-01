@@ -77,10 +77,10 @@ PIN_RE = re.compile(
 FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 # a path token is a route the doc is asserting exists — hold it to the contract
 PATH_RE = re.compile(r"(?<![\w.])(/(?:worlds|api)/[A-Za-z0-9_/:-]+)")
-# a `METHOD /path` token asserts the METHOD too — Argus F8 (2026-08-26): a doc that turned
+# a `METHOD /path` token asserts the METHOD too (audit, 2026-08-26): a doc that turned
 # `GET /worlds/lysvik/board` into `DELETE …/board` stayed green under D6, which only saw the path
 METHOD_PATH_RE = re.compile(r"`(GET|POST|PUT|PATCH|DELETE)\s+(/(?:worlds|api)/[A-Za-z0-9_/:-]+)[^`]*`")
-# an inline secret before a command: `ACTP_KEY_PASSWORD=x cmd` — shell history keeps it (Argus F5)
+# an inline secret before a command: `ACTP_KEY_PASSWORD=x cmd` — shell history keeps it
 INLINE_SECRET_RE = re.compile(r"^\s*ACTP_KEY_PASSWORD=\S+\s+\S", re.M)
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
 
@@ -114,11 +114,11 @@ def main() -> int:
     pinned_sdk = version["verified_against"]["sdk-js"]
     upstream_gv = version["upstream"]["genesis-village"]
 
-    # D15 — PIN-VS-WORLD (Arha, O1 walk, S142): D3/D4 compare two COMMITTED values and by
+    # D15 — PIN-VS-WORLD: D3/D4 compare two COMMITTED values and by
     # construction cannot see the world move past the pin; four deploys landed in one day and
     # every live number in the README went stale together. This check is NETWORKED and therefore
     # opt-in (`--live` or DOCS_LIVE=1): GET /health .commit must equal upstream.genesis-village.
-    # Atlas ruling S142: it runs as the LAST STEP of every world deploy (beside the stranger probe)
+    # It runs as the LAST STEP of every world deploy (beside the stranger probe)
     # and at every sync pass; unreachable is RED, not skip.
     #
     # DOCS_LIVE_HEALTH_URL — override the health endpoint (default: https://world.lysvik.app/health).
@@ -147,9 +147,9 @@ def main() -> int:
     else:
         print("  D15: pin-vs-world NOT checked (deterministic run; pass --live or DOCS_LIVE=1). "
               "INVOCATION: nothing in THIS repo calls --live — it is DORMANT until genesis-village's deploy last-step "
-              "(probe:stranger-activation) calls it (owed, Apex); until then run it by hand at every sync (Arha, PR #11)")
+              "(probe:stranger-activation) calls it; until then run it by hand at every sync (PR #11)")
 
-    # D16 — SURFACE TWIN (Arha, S148 close; Apex S149): D3 and D15 compare STAMPS. A contract that
+    # D16 — SURFACE TWIN: D3 and D15 compare STAMPS. A contract that
     # was hand-edited with its `generated_from` intact passes D3 green and D15 green while the
     # SURFACE it describes is wrong (the earning case: drop one action, keep the stamp). This check
     # compares the contract's `actions` set with the live world's own GET /worlds/lysvik/actions,
@@ -261,9 +261,9 @@ def main() -> int:
                 red("D6", rel, f"documents '{method} {path}' but the contract serves no such METHOD on that route")
 
     # D14 — the activation script's pinned digest is cited verbatim wherever the docs tell an
-    # agent to run it (Argus F1): fetched from a mutable origin, then executed holding the
-    # keystore password. And no bash fence anywhere puts that password inline before a command
-    # (Argus F5): shell history keeps it.
+    # agent to run it: fetched from a mutable origin, then executed holding the
+    # keystore password. And no bash fence anywhere puts that password inline before a command:
+    # shell history keeps it.
     act = version.get("activation_script") or {}
     digest = act.get("sha256", "")
     if not re.fullmatch(r"[0-9a-f]{64}", digest):
@@ -277,7 +277,7 @@ def main() -> int:
         if runs and digest[:16] not in text:
             red("D14", str(md.relative_to(ROOT)), "the pinned digest (or its first 16 hex) must appear so a reader can compare by eye")
         if re.search(r"activate-mainnet\.mjs\.sha256[^\n]*shasum", text):
-            red("D14", str(md.relative_to(ROOT)), "verifies against the world's own .sha256 — same origin as the script authenticates nothing (Argus HIGH)")
+            red("D14", str(md.relative_to(ROOT)), "verifies against the world's own .sha256 — same origin as the script authenticates nothing")
         for n, block in enumerate(re.findall(r"```(?:bash|sh|shell)\n(.*?)```", text, re.S), 1):
             if INLINE_SECRET_RE.search(block):
                 red("D14", str(md.relative_to(ROOT)), f"bash fence #{n} puts ACTP_KEY_PASSWORD inline before a command — read it once with read -rs and export")

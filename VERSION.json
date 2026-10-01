@@ -16,7 +16,7 @@
     "url": "https://world.lysvik.app/activate-mainnet.26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a.mjs",
     "sha256": "26e4b3e5dbb453525d2e21fd6c6fe6ae989952d48c85347a3b20e5045db23a2a",
     "verified": "2026-08-28",
-    "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value. The url is the CONTENT-ADDRESSED name (Arha, S142): a mutable name and a digest cannot both be true across a rotation.",
+    "_what": "SHA-256 of the served sponsored-activation script at verification. quickstart + README cite it verbatim (gate D11) so an agent verifies the file before running it holding its keystore password. When the world re-serves the script: re-verify, update here; the docs go loud until they cite the new value. The url is the CONTENT-ADDRESSED name: a mutable name and a digest cannot both be true across a rotation.",
     "world_commit": "fad2f19"
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Post-deploy docs re-pin (the S148 ritual, folded into tools/ at sync-v11.6 as owed).
+# Post-deploy docs re-pin (folded into tools/ at sync-v11.6).
 # Usage: tools/docs_repin.sh <DEPLOYED_SHA40> <gv-worktree-AT-that-sha> <sync-tag e.g. v11.7> <docs-branch>
 # Regenerates the world-api contract IN the gv worktree at the deployed SHA (the committed copy stamps its parent —
 # a bare copy fails D3 by exactly one parent), copies it, restores the worktree, bumps VERSION.json + every doc pin,
@@ -29,4 +29,4 @@ print(f'pin {old} -> {new} · docs re-pinned: {n}')
 PY
 python3 tools/docs_check.py > /tmp/docs-check.log 2>&1; echo "docs_check EXIT:$?"
 python3 tools/docs_check.py --live > /tmp/docs-check-live.log 2>&1; echo "docs_check --live EXIT:$?"
-echo "Now: write the CHANGELOG sync-$TAG entry, assert len(actions) against live GET /worlds/lysvik/actions, commit with -F, push the branch, get the second seat's read, then main."
+echo "Now: write the CHANGELOG sync-$TAG entry, assert len(actions) against live GET /worlds/lysvik/actions, commit with -F, push the branch, get a second review, then main."

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Red probes for the docs gate — every rule shown firing on the mutation it
 exists to catch, plus the clean-tree green. A gate that has never been red is
-a costume (CODE §9: what would this suite do if the law were broken?).
+a costume (what would this suite do if the law were broken?).
 
 Run: python3 tools/test_docs_check.py
 """
@@ -78,7 +78,7 @@ probe("D1: status outside the closed set", lambda t: edit(
 # D2 fixtures target a `surface: concept` doc (faq.md). D4 exempts concept docs
 # from the converge stale-flip, so faq.md stays `status: current` across sync
 # rituals — a surface doc rots the moment upstream moves and every non-concept
-# doc flips stale (that was the S80 fixture-rot). D2 itself is surface-independent
+# doc flips stale (that was an earlier fixture-rot). D2 itself is surface-independent
 # (docs_check.py: the banner law runs on every doc), so the probe stays valid.
 probe("D2: stale without a banner", lambda t: edit(
     t / "docs" / "faq.md", "status: current", "status: stale"), "D2")
@@ -236,7 +236,7 @@ def d11_fixture_missing(t: Path) -> None:
 probe("D11: fixtures directory missing", d11_fixture_missing, "D11")
 
 
-# ── Argus audit, 2026-08-26: F8 (method-aware D6), F1/F5 (D14), observed routes (D13) ──
+# ── Audit probes, 2026-08-26: method-aware D6, D14, observed routes (D13) ──
 def _sub(path, old, new):
     t = path.read_text(); assert old in t, (path, old[:40]); path.write_text(t.replace(old, new, 1))
 
@@ -277,7 +277,7 @@ probe("D14: teaching the world's own .sha256 as verification (same origin) goes 
 
 
 # ── D15 live-mode probes ─────────────────────────────────────────────────────
-# These exercise the networked D15 path via env overrides added in S143.
+# These exercise the networked D15 path via env overrides.
 # The probe must be able to go red — if the gate swallows network errors and
 # returns 0 on unreachable, the probe below fails.
 
@@ -309,7 +309,7 @@ def _copy_tree(td: str) -> Path:
     return tree
 
 
-# S149 (D16): every live-mode probe below also pins the ACTIONS endpoint to a mock serving the
+# D16: every live-mode probe below also pins the ACTIONS endpoint to a mock serving the
 # committed contract's own actions, so the D15 probes stay deterministic (no network) and D16
 # is green unless a probe says otherwise.
 def _mock_json_server(payload: dict) -> str:
@@ -358,7 +358,7 @@ def _mock_health_server(commit: str) -> tuple[str, "_http_server.HTTPServer"]:
 
 def probe_live(name: str, extra_env: dict, want_rule: str | None, want_exit: int = 1, want_absent: str | None = None) -> None:
     """Run the gate with --live; assert exit code and rule presence — and, when asked, a rule's ABSENCE.
-    S149 (Veyra): the D16 earning case is "the twin reds while D3 stays green in the same run"; a probe
+    The D16 earning case is "the twin reds while D3 stays green in the same run"; a probe
     that only asserts D16 present would also pass on a run where D3 red too, which is D3 with extra steps."""
     global passed, failed
     with tempfile.TemporaryDirectory() as td:
@@ -404,7 +404,7 @@ probe_live(
     want_rule=None, want_exit=0,
 )
 
-# ── D16 surface-twin probes (S149, rider 15 — Arha's earning case) ──────────
+# ── D16 surface-twin probes (the earning case) ──────────
 # A hand-edited contract with its stamp intact: D3 stays green, D16 must go red.
 probe_live(
     "D16: live world lacks an action the committed contract carries (hand-edit shape) → red",
@@ -487,7 +487,7 @@ _assert(
 )
 
 
-# RIDER-1 (Atlas, S143): absence must deny — no token ⇒ the watch fails loud.
+# Absence must deny — no token ⇒ the watch fails loud.
 _saved = {k: _os.environ.pop(k, None) for k in ("GH_TOKEN", "GITHUB_TOKEN")}
 try:
     _assert(

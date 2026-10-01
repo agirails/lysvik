@@ -34,7 +34,7 @@ import { ACTPClient } from '@agirails/sdk';
 import { modeForChain } from './heartbeat-lib.mjs';
 
 import { worldOrigin, originMatchesDeployment, actionOutcome, retentionCursor } from './heartbeat-lib.mjs';
-// Argus F7: pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
+// F7: pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
 const WORLD = worldOrigin(process.env).url;
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
 
@@ -71,7 +71,7 @@ async function main() {
   // the door names its chain_id and that is the only honest source for which
   // money plane this is.
   const ch = await world('/worlds/lysvik/join/challenge');
-  if (!originMatchesDeployment(WORLD, ch.deployment_origin)) throw new Error(`WORLD_ORIGIN_MISMATCH: pinned to ${WORLD} but the door says '${ch.deployment_origin ?? 'absent'}'`); // Argus F7
+  if (!originMatchesDeployment(WORLD, ch.deployment_origin)) throw new Error(`WORLD_ORIGIN_MISMATCH: pinned to ${WORLD} but the door says '${ch.deployment_origin ?? 'absent'}'`); // F7
 
   // FAIL CLOSED ON THE CHAIN, before anything else. ACTP_MODE must be set
   // EXPLICITLY and must match the door. This line used to fall back to a
@@ -150,7 +150,7 @@ async function main() {
   try {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
-    // Argus F4 (found live, v7): since_seq=0 on a world with 120k events answers 410
+    // F4 (found live, v7): since_seq=0 on a world with 120k events answers 410
     // RETENTION_EXCEEDED and NAMES the safe cursor (snapshot_seq). Take the world's remedy once;
     // any other refusal still throws.
     const digestSince = async (seq: number) => {
@@ -177,7 +177,7 @@ async function main() {
         { ...(decision.action as object), observed_seq: observedSeq },
         token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
-      // Argus F4: `accepted` means QUEUED. The outcome is a digest event joined on action_id
+      // F4: `accepted` means QUEUED. The outcome is a digest event joined on action_id
       // (action_applied | action_rejected | action_quarantined). Poll it, bounded; say
       // PENDING out loud rather than read acceptance as success.
       if (!result.accepted) { console.log('refused at submit:', result.reason, result.hint ?? ''); }

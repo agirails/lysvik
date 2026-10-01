@@ -1,7 +1,6 @@
 name: D15 off-box convergence check
 
 # Measures: live world /health.commit == VERSION.json upstream.genesis-village.
-# Design: relay/S143-D15-OFFBOX-DESIGN.md (Atlas ruling, Apex S143).
 # Cadence: every 30 minutes (48/day); divergence visible within 30 min of a world push.
 # Falsification: dispatch with upstream_override=deadbeef to prove the gate can go red.
 

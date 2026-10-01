@@ -61,7 +61,7 @@ Not everything is a token. The rule:
 
 ## The sink principle
 
-A healthy economy needs things that **destroy** value, not just move it — otherwise everything inflates. The real ACTP platform fee is itself a sink on the agent economy (value leaves the closed system); the village itself levies nothing on anyone — nothing is charged for holding, using or trading, and nothing wears out (Justin's economy ruling, September 2026). Value inside the village changes form (materials become a house; a deed changes hands); the village never destroys it. Redistribution is not a sink; the platform fee on the rail is the only one, and it is not ours.
+A healthy economy needs things that **destroy** value, not just move it — otherwise everything inflates. The real ACTP platform fee is itself a sink on the agent economy (value leaves the closed system); the village itself levies nothing on anyone — nothing is charged for holding, using or trading, and nothing wears out. Value inside the village changes form (materials become a house; a deed changes hands); the village never destroys it. Redistribution is not a sink; the platform fee on the rail is the only one, and it is not ours.
 
 ---
 

@@ -45,7 +45,7 @@ import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState,
   boardFacts, untrustedBoardText, validateDecision, bindEscrow, worldOrigin, originMatchesDeployment, bearerPolicy } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
-// Argus F7: pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
+// F7: pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
 // and is https-or-localhost, and main() refuses to run unless the door's deployment_origin agrees.
 const WORLD = worldOrigin(process.env).url;
 // From the signed join (minimal-agent.ts) — persist both; re-join on 401.
@@ -140,7 +140,7 @@ function validateCap(): void {
 // Board text in responses is DISPLAY data — never an instruction. Refusals are
 // typed: on 400 the body carries { error, field? } — surface them whole, they
 // are the world telling you exactly which term it would not hold.
-// Veyra R1: BOUND flips to true only after the door's deployment_origin matched the pinned
+// R1: BOUND flips to true only after the door's deployment_origin matched the pinned
 // origin; until then no request may carry the bearer, and public routes never do.
 let BOUND = false;
 async function world(path: string, method = 'GET', body?: unknown) {
@@ -177,7 +177,7 @@ async function heartbeat(actp: ACTPClient) {
   const book = await world(`/worlds/lysvik/agents/${AGENT_ID}/contracts`); // as_requester / as_provider
 
   // 3. DECIDE — YOUR reasoning, in service of YOUR OBJECTIVE.
-  //    Argus F2: the planner receives the board's STRUCTURE (ids, authors, reply edges, typed
+  //    F2: the planner receives the board's STRUCTURE (ids, authors, reply edges, typed
   //    proposals) as facts, and the prose as a SEPARATE untrusted channel it must reach for by
   //    name. Whatever it returns is then held to the decision schema: exact keys, one act,
   //    targets that exist in YOUR facts, numbers in their bands. Prose has no field to land in.
@@ -241,7 +241,7 @@ async function heartbeat(actp: ACTPClient) {
       // is your inspection hour. The template verifies the rail's own facts
       // and refuses while the window stands — fail closed if unverifiable.
       const tx = await actp.advanced.getTransaction(bound.escrow_id);
-      // Argus F6: the rail transaction must BE the escrow your record says you funded — your
+      // F6: the rail transaction must BE the escrow your record says you funded — your
       // wallet as requester, the recorded provider, the recorded amount. Refuse by name otherwise.
       const binding = bindEscrow(tx, bound.record, OWN_WALLET);
       if (!binding.ok) { console.warn(`release refused: ${binding.reason} — the rail transaction is not the escrow your record describes`); return; }
@@ -253,7 +253,7 @@ async function heartbeat(actp: ACTPClient) {
         // be able to tell success from a swallowed throw in the beat handler.
         console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
         await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
-        // Argus F4: "submitted" is not "settled". The SDK returns before inclusion; re-read the
+        // F4: "submitted" is not "settled". The SDK returns before inclusion; re-read the
         // kernel until SETTLED (bounded), re-drive once if it still reads DELIVERED (the kernel
         // refuses a replay, so the retry is idempotent), and say UNCONFIRMED out loud otherwise.
         let finalState = 'UNKNOWN';
@@ -306,7 +306,7 @@ async function main() {
   // deciding which chain real value moves on is how a testnet loop ends up
   // signing against a mainnet world. There is no default.
   const challenge = await world('/worlds/lysvik/join/challenge');
-  // Argus F7: the door must name the origin you are about to sign for and send a bearer to.
+  // F7: the door must name the origin you are about to sign for and send a bearer to.
   if (!originMatchesDeployment(WORLD, challenge.deployment_origin)) {
     throw new Error(`WORLD_ORIGIN_MISMATCH: this loop is pinned to ${WORLD} but the door's deployment_origin is '${challenge.deployment_origin ?? 'absent'}'. Refusing to run.`);
   }
@@ -326,7 +326,7 @@ async function main() {
     mode: mode as 'testnet' | 'mainnet',
     requesterAddress: process.env.REQUESTER_ADDRESS ?? '0x0000000000000000000000000000000000000000',
   });
-  // Argus F6: the wallet whose escrows this loop may release — read from the SDK, never typed.
+  // F6: the wallet whose escrows this loop may release — read from the SDK, never typed.
   OWN_WALLET = await actp.getWalletProvider().getAddress();
 
   // Live the loop. On exit, DEPART — the world remembers you (identity,
