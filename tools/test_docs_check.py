@@ -236,7 +236,7 @@ def d11_fixture_missing(t: Path) -> None:
 probe("D11: fixtures directory missing", d11_fixture_missing, "D11")
 
 
-# ── Audit probes, 2026-08-26: method-aware D6, D14, observed routes (D13) ──
+# ── Audit probes: method-aware D6, D14, observed routes (D13) ──
 def _sub(path, old, new):
     t = path.read_text(); assert old in t, (path, old[:40]); path.write_text(t.replace(old, new, 1))
 
@@ -262,7 +262,7 @@ probe("D14: ACTP_KEY_PASSWORD inline before a command in a bash fence", d14_inli
 probe("D13: an observed route that the generated contract now carries", d13_observed_now_generated, "D13")
 
 def d6_generated_post_session_removed(t: Path) -> None:
-    # sync-9637c0d: POST session is GENERATED now (observed ledger empty); withdraw it from the contract
+    # POST session is GENERATED now (observed ledger empty); withdraw it from the contract
     c = json.loads((t / "contracts" / "world-api.contract.json").read_text())
     c["routes"] = [r for r in c["routes"] if not (r["method"] == "POST" and r["path"].endswith("/session"))]
     (t / "contracts" / "world-api.contract.json").write_text(json.dumps(c, indent=2))

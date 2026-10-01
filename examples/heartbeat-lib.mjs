@@ -96,7 +96,7 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   if (!settle || typeof settle.contract_id !== 'string' || settle.contract_id.length === 0) {
     return { ok: false, reason: 'NO_CONTRACT_ID' };
   }
-  // Pass-3 F2: a MALFORMED book must refuse by name, never satisfy the
+  // A MALFORMED book must refuse by name, never satisfy the
   // predicate or throw a bare TypeError — a money guard fails closed on
   // shapes it does not recognise.
   const rows = (side) => {
@@ -134,7 +134,7 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   const recorded = escrowRecords !== null && typeof escrowRecords === 'object'
     && Object.prototype.hasOwnProperty.call(escrowRecords, settle.contract_id)
     ? escrowRecords[settle.contract_id] : undefined;
-  // F6 (2026-08-26): a bare escrow id "bound" nothing — any non-empty string released.
+  // A bare escrow id binds nothing: any non-empty string used to release.
   // A record is now { escrow_id, provider_wallet, amount_base_units }: what YOUR wallet funded,
   // for whom, how much — and bindEscrow() holds the rail transaction to it before release.
   if (typeof recorded === 'string') return { ok: false, reason: 'RECORD_LEGACY_UNBOUND' };
@@ -145,12 +145,12 @@ export function boundRelease(settle, book, escrowRecords, agentId) {
   return { ok: true, escrow_id: recorded.escrow_id, record: recorded };
 }
 
-// ═══ Hardening wave 2 (2026-08-26) ═══════════════════════════════════════════
+// ═══ Planner boundary · terminal evidence · escrow binding · origin ═══════════
 
-/** F2 — the board's STRUCTURAL facts, with the prose removed. The planner sees ids, authors,
+/** The board's STRUCTURAL facts, with the prose removed. The planner sees ids, authors,
  *  reply edges, ticks and a TYPED proposal (exact keys, bounded numbers) — never a body.
  *  A proposal that fails the schema is null: a smuggled term dies here, not in decide(). */
-// R2 (e23f012): the bands are the WORLD's, not this file's. contracts/board-proposal.schema.json
+// The bands are the WORLD's, not this file's. contracts/board-proposal.schema.json
 // is captured from the served action contract at the pinned world; the smoke gate holds this
 // constant to that file in both directions (a valid live value must never be dropped; an
 // impossible one must never become a planner fact).
@@ -158,7 +158,7 @@ import { readFileSync } from 'node:fs';
 const SCHEMA_FILE = JSON.parse(readFileSync(new URL('../contracts/board-proposal.schema.json', import.meta.url), 'utf8'));
 export const PROPOSAL_SCHEMA = Object.freeze({ ctype: SCHEMA_FILE.ctype, verb: SCHEMA_FILE.verb, qty: SCHEMA_FILE.qty, reward: SCHEMA_FILE.reward, deadline_in_ticks: SCHEMA_FILE.deadline_in_ticks, rules: SCHEMA_FILE.rules, supersedes_pattern: SCHEMA_FILE.supersedes_pattern });
 const SUPERSEDES_RE = new RegExp(SCHEMA_FILE.supersedes_pattern);
-// R2 (8ddb249): enums alone admitted capability+fish, service+haul, scroll+serve, goods+carve —
+// Enums alone would admit capability+fish, service+haul, scroll+serve, goods+carve —
 // the world's validateProposal couples ctype → verb → good vocabulary (→ qty). Same rules, from the file.
 function crossFieldOk(p) {
   const r = PROPOSAL_SCHEMA.rules?.[p.ctype];
@@ -172,7 +172,7 @@ function crossFieldOk(p) {
 }
 const inBand = (v, band) => Number.isInteger(v) && v >= band.min && v <= band.max;
 const PROPOSAL_KEYS = ['kind', 'ctype', 'verb', 'good', 'qty', 'reward', 'deadline_in_ticks'];
-// R2: `supersedes` is the one optional field a client may SEND (exact ^pr_[0-9a-f]{6,64}$;
+// `supersedes` is the one optional field a client may SEND (exact ^pr_[0-9a-f]{6,64}$;
 // a wrong type or value refuses by name, never silently dropped). `proposal_id` is the WORLD's echo on
 // served rows — extraction reads it; a decision that carries it is refused (server: UNKNOWN_PROPOSAL_FIELD).
 const PROPOSAL_OPTIONAL = ['supersedes'];
@@ -212,13 +212,13 @@ export function boardFacts(posts) {
       has_body: typeof p.body === 'string' && p.body.length > 0,
     }));
 }
-/** F2 — the OTHER channel: agent-authored prose, carried separately so a planner that wants
+/** The OTHER channel: agent-authored prose, carried separately so a planner that wants
  *  to read it must reach for it by name, and never receives it as a fact. */
 export function untrustedBoardText(posts) {
   if (!Array.isArray(posts)) return [];
   return posts.filter((p) => p && typeof p.id === 'string').map((p) => ({ id: p.id, body: typeof p.body === 'string' ? p.body : '' }));
 }
-/** F2 — the decision schema. Exact keys, one act, known targets, bounded numbers. Anything a
+/** The decision schema. Exact keys, one act, known targets, bounded numbers. Anything a
  *  model (or the prose it read) tries to add has no field to land in and refuses BY NAME. */
 const BODY_MAX = 2000;
 export function validateDecision(d, known) {
@@ -256,7 +256,7 @@ export function validateDecision(d, known) {
   if (typeof s.contract_id !== 'string' || !known?.contractIds?.has(s.contract_id)) return { ok: false, reason: 'NOT_IN_YOUR_BOOK' };
   return { ok: true, decision: { settle: { contract_id: s.contract_id } } };
 }
-/** F4 — an accepted action is queued, not applied. The observation digest carries the outcome:
+/** An accepted action is queued, not applied. The observation digest carries the outcome:
  *  action_applied | action_rejected | action_quarantined, joined on action_id. Absent ⇒ pending. */
 export function actionOutcome(events, actionId) {
   if (!Array.isArray(events) || typeof actionId !== 'string') return { status: 'pending' };
@@ -267,7 +267,7 @@ export function actionOutcome(events, actionId) {
   }
   return { status: 'pending' };
 }
-/** F6 — the rail transaction must BE the escrow your record says you funded: your wallet as
+/** The rail transaction must BE the escrow your record says you funded: your wallet as
  *  requester, the recorded provider, the recorded amount. Kernel facts vs your own receipt;
  *  nothing here comes from the world's rows or from prose. */
 const ADDR = /^0x[0-9a-f]{40}$/i; // checksum-mixed case and an upper-cased prefix are the same address
@@ -280,7 +280,7 @@ export function bindEscrow(tx, record, ownWallet) {
   if (!tx || typeof tx !== 'object') return { ok: false, reason: 'NO_RAIL_TX' };
   if (!addrEq(tx.requester, ownWallet)) return { ok: false, reason: 'ESCROW_REQUESTER_MISMATCH' };
   if (!addrEq(tx.provider, record.provider_wallet)) return { ok: false, reason: 'ESCROW_PROVIDER_MISMATCH' };
-  // R4: BigInt() coerces true→1, "0x10"→16, a float→its integer — a money guard must
+  // BigInt() coerces true→1, "0x10"→16, a float→its integer — a money guard must
   // accept only the two honest shapes: a bigint, or a plain decimal string (SDK 4.9.0's
   // advanced runtime). Anything else is a mismatch by name, before any conversion.
   let amt;
@@ -290,7 +290,7 @@ export function bindEscrow(tx, record, ownWallet) {
   if (amt !== BigInt(record.amount_base_units)) return { ok: false, reason: 'ESCROW_AMOUNT_MISMATCH' };
   return { ok: true };
 }
-/** F7 — the world origin is PINNED. LYSVIK_WORLD_URL alone does nothing (a stray env var must
+/** The world origin is PINNED. LYSVIK_WORLD_URL alone does nothing (a stray env var must
  *  never redirect a signed join or a bearer session); an override needs the explicit flag and
  *  must be https, or http to localhost. */
 export const WORLD_DEFAULT = 'https://world.lysvik.app';
@@ -303,7 +303,7 @@ export function worldOrigin(env) {
   if (u.protocol !== 'https:' && !(u.protocol === 'http:' && local)) throw new Error(`INSECURE_WORLD_URL: an override must be https (or http to localhost), got '${e.LYSVIK_WORLD_URL}'`);
   return { url: u.origin, overridden: true };
 }
-/** F7 — and the door must agree: the challenge's deployment_origin (with its explicit :443)
+/** And the door must agree: the challenge's deployment_origin (with its explicit :443)
  *  must name the origin you are about to sign for. Missing ⇒ mismatch. */
 export function originMatchesDeployment(worldUrl, deploymentOrigin) {
   if (typeof worldUrl !== 'string' || typeof deploymentOrigin !== 'string') return false;
@@ -329,7 +329,7 @@ export function originMatchesDeployment(worldUrl, deploymentOrigin) {
  */
 export function releaseWindowState(tx, nowSeconds) {
   if (!tx || tx.state !== 'DELIVERED') return { ok: false, reason: 'NOT_DELIVERED_ON_RAIL' };
-  // F3 (2026-08-26): NaN is typeof 'number' and every comparison with it is false,
+  // NaN is typeof 'number' and every comparison with it is false,
   // so a malformed read used to fall through to ok:true. Finite, positive, or unverified.
   const completedAt = Number.isFinite(tx.completedAt) ? tx.completedAt : 0;
   const win = Number.isFinite(tx.disputeWindow) ? tx.disputeWindow : 0;
@@ -340,7 +340,7 @@ export function releaseWindowState(tx, nowSeconds) {
   return { ok: true };
 }
 
-/** R1 (e23f012): no bearer may leave before the door has bound the origin — and a public
+/** No bearer may leave before the door has bound the origin — and a public
  *  route never needs one. The helper decides per request, from the path and a BOUND flag the
  *  loop sets only after originMatchesDeployment() passed: public routes → no Authorization,
  *  ever; agent/owner routes → Authorization only when bound, else a refusal by name. */
@@ -352,7 +352,7 @@ export function bearerPolicy(path, bound) {
   return { authorize: true };
 }
 
-/** F4 — the digest's own recovery: a 410 RETENTION_EXCEEDED names snapshot_seq, the safe cursor.
+/** The digest's own recovery: a 410 RETENTION_EXCEEDED names snapshot_seq, the safe cursor.
  *  Given the refusal body (parsed, or the thrown error's text), return the seq to resume from,
  *  or null when the refusal is something else. The live run of minimal-agent died here first
  *  (since_seq=0 on a world with 120k events) — the world taught the remedy; the loop ignored it. */

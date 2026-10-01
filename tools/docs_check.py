@@ -25,7 +25,7 @@ Rules (each failure names its rule):
       contract (ghost routes that fall through to SPA HTML are caught here)
   D7  served ⇒ documented: every contract route on a doc-required plane
       appears in docs/api-reference.md
-  D8  canonical examples held to the served surface (verified 2026-07)
+  D8  canonical examples held to the served surface
   D9  no onboarding surface hand-copies the SDK install as primary instruction
   D10 liveness rule: VERSION.json must carry world_status (live|paused); when
       paused, every doc making a NOW-reachability claim must carry the paused
@@ -77,7 +77,7 @@ PIN_RE = re.compile(
 FRONT_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 # a path token is a route the doc is asserting exists — hold it to the contract
 PATH_RE = re.compile(r"(?<![\w.])(/(?:worlds|api)/[A-Za-z0-9_/:-]+)")
-# a `METHOD /path` token asserts the METHOD too (audit, 2026-08-26): a doc that turned
+# a `METHOD /path` token asserts the METHOD too: a doc that turned
 # `GET /worlds/lysvik/board` into `DELETE …/board` stayed green under D6, which only saw the path
 METHOD_PATH_RE = re.compile(r"`(GET|POST|PUT|PATCH|DELETE)\s+(/(?:worlds|api)/[A-Za-z0-9_/:-]+)[^`]*`")
 # an inline secret before a command: `ACTP_KEY_PASSWORD=x cmd` — shell history keeps it
@@ -284,7 +284,7 @@ def main() -> int:
 
     # D12 — every ```bash fence in README + docs/ must PARSE (bash -n): a stranger copies
     # these blocks; an angle-bracket placeholder is redirection syntax and the line dies
-    # before it runs (found by a cold read, 2026-08-26).
+    # before it runs (found by a cold read).
     import subprocess
     fence_count = 0
     for md in [*sorted(DOCS.glob("*.md")), ROOT / "README.md"]:
@@ -311,7 +311,7 @@ def main() -> int:
         if plane in contract["doc_required_planes"] and path not in api_reference_text:
             red("D7", "docs/api-reference.md", f"contract serves {method} {path} ({plane}) but the reference never mentions it")
 
-    # D8 — the canonical examples are held to the served surface (verified 2026-07).
+    # D8 — the canonical examples are held to the served surface.
     # examples/heartbeat.ts was labelled "don't improvise it" and drifted six
     # ways from the world it described — a dead route, a missing required
     # field, phantom feed fields, a testnet default against a mainnet world —
@@ -345,7 +345,7 @@ def main() -> int:
     # selection was hand-rolled across three surfaces, which is how a TESTNET
     # publish came to precede a MAINNET join.
     #
-    # WHY A GATE AND NOT A SWEEP (2026-08): the instances were removed and
+    # WHY A GATE AND NOT A SWEEP: the instances were removed and
     # nothing stopped the next edit reintroducing them. Third instance of that
     # class in one day — a roster count, a set of memory files, and this — and
     # in all three the instance was fixed while the class stayed open.

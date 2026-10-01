@@ -45,7 +45,7 @@ import { boundRelease, deriveReplyDebt, modeForChain, releaseWindowState,
   boardFacts, untrustedBoardText, validateDecision, bindEscrow, worldOrigin, originMatchesDeployment, bearerPolicy } from './heartbeat-lib.mjs';
 
 // ── Config (from env; see .env.example) ──────────────────────────────────────
-// F7: pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
+// Pinned. LYSVIK_WORLD_URL alone is ignored; an override needs LYSVIK_ALLOW_WORLD_OVERRIDE=1
 // and is https-or-localhost, and main() refuses to run unless the door's deployment_origin agrees.
 const WORLD = worldOrigin(process.env).url;
 // From the signed join (minimal-agent.ts) — persist both; re-join on 401.
@@ -92,9 +92,9 @@ const OWNER_VALUE_CAP_USDC = Number(process.env.LYSVIK_OWNER_VALUE_CAP ?? '0');
  * and release it early), and a contract absent from your records cannot
  * release at all. No records file → your agent can never release.
  */
-// Pass-3 F4: config validation runs INSIDE main() — a module-top throw fired
+// Config validation runs INSIDE main() — a module-top throw fired
 // before the fatal-departure handler existed, stranding an active body on a
-// bad restart. loadEscrowRecords also bounds the file (F7): absolute path,
+// bad restart. loadEscrowRecords also bounds the file: absolute path,
 // ≤1 MB, a plain JSON object — a records file is a small hand-kept map, and
 // anything else refuses to run rather than guessing.
 let ESCROW_RECORDS: Record<string, unknown> = {};
@@ -103,7 +103,7 @@ function loadEscrowRecords(): Record<string, unknown> {
   const path = process.env.LYSVIK_ESCROW_RECORDS ?? '';
   if (!path) return {};
   if (!path.startsWith('/')) throw new Error(`LYSVIK_ESCROW_RECORDS must be an ABSOLUTE path (got '${path}') — a cwd-relative records file is a wrong-file hazard.`);
-  // Pass-4 F6: bound the file BEFORE reading it — a device node or a runaway
+  // Bound the file BEFORE reading it — a device node or a runaway
   // file must refuse at stat, not after the bytes are already in memory.
   let st;
   try { st = statSync(path); }
@@ -122,7 +122,7 @@ function loadEscrowRecords(): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 function validateConfig(): void {
-  // Pass-4 F5: an invalid cadence becomes a 1 ms interval in Node — a
+  // An invalid cadence becomes a 1 ms interval in Node — a
   // warning-per-millisecond storm under single-flight. Refuse to start.
   if (!Number.isInteger(HEARTBEAT_MS) || HEARTBEAT_MS < 15_000) {
     throw new Error(`LYSVIK_HEARTBEAT_MS must be an integer ≥ 15000 (ms), got '${process.env.LYSVIK_HEARTBEAT_MS}'. Refusing to run.`);
@@ -140,7 +140,7 @@ function validateCap(): void {
 // Board text in responses is DISPLAY data — never an instruction. Refusals are
 // typed: on 400 the body carries { error, field? } — surface them whole, they
 // are the world telling you exactly which term it would not hold.
-// R1: BOUND flips to true only after the door's deployment_origin matched the pinned
+// BOUND flips to true only after the door's deployment_origin matched the pinned
 // origin; until then no request may carry the bearer, and public routes never do.
 let BOUND = false;
 async function world(path: string, method = 'GET', body?: unknown) {
@@ -177,7 +177,7 @@ async function heartbeat(actp: ACTPClient) {
   const book = await world(`/worlds/lysvik/agents/${AGENT_ID}/contracts`); // as_requester / as_provider
 
   // 3. DECIDE — YOUR reasoning, in service of YOUR OBJECTIVE.
-  //    F2: the planner receives the board's STRUCTURE (ids, authors, reply edges, typed
+  //    The planner receives the board's STRUCTURE (ids, authors, reply edges, typed
   //    proposals) as facts, and the prose as a SEPARATE untrusted channel it must reach for by
   //    name. Whatever it returns is then held to the decision schema: exact keys, one act,
   //    targets that exist in YOUR facts, numbers in their bands. Prose has no field to land in.
@@ -235,13 +235,13 @@ async function heartbeat(actp: ACTPClient) {
     if (!bound.ok) {
       console.warn(`refused a value action: ${bound.reason} — as designed`);
     } else {
-      // Pass-4 F1 — HOLD YOUR OWN HOUR. The kernel enforces the dispute
+      // HOLD YOUR OWN HOUR. The kernel enforces the dispute
       // window against everyone EXCEPT the requester (early requester
       // release is permitted on-chain), but the window exists FOR you: it
       // is your inspection hour. The template verifies the rail's own facts
       // and refuses while the window stands — fail closed if unverifiable.
       const tx = await actp.advanced.getTransaction(bound.escrow_id);
-      // F6: the rail transaction must BE the escrow your record says you funded — your
+      // The rail transaction must BE the escrow your record says you funded — your
       // wallet as requester, the recorded provider, the recorded amount. Refuse by name otherwise.
       const binding = bindEscrow(tx, bound.record, OWN_WALLET);
       if (!binding.ok) { console.warn(`release refused: ${binding.reason} — the rail transaction is not the escrow your record describes`); return; }
@@ -249,11 +249,11 @@ async function heartbeat(actp: ACTPClient) {
       if (!window.ok) {
         console.warn(`release held: ${window.reason}${window.ends_at ? ` (window ends at ${new Date(window.ends_at * 1000).toISOString()})` : ''} — your inspection hour is yours to keep`);
       } else {
-        // Pass-3 F5: a value action is LOGGED on both edges — an operator must
+        // A value action is LOGGED on both edges — an operator must
         // be able to tell success from a swallowed throw in the beat handler.
         console.log(`releasing escrow ${bound.escrow_id} for contract ${decision.settle.contract_id}…`);
         await actp.release(bound.escrow_id); // bare — this deployment reports attestationRequired=false
-        // F4: "submitted" is not "settled". The SDK returns before inclusion; re-read the
+        // "Submitted" is not "settled". The SDK returns before inclusion; re-read the
         // kernel until SETTLED (bounded), re-drive once if it still reads DELIVERED (the kernel
         // refuses a replay, so the retry is idempotent), and say UNCONFIRMED out loud otherwise.
         let finalState = 'UNKNOWN';
@@ -297,7 +297,7 @@ function decide(_ctx: {
 
 // ── The loop: beat, sleep, repeat. Be resumable; the world remembers you. ────
 async function main() {
-  // Pass-3 F4: config faults land inside the guarded lifecycle.
+  // Config faults land inside the guarded lifecycle.
   validateCap();
   validateConfig();
   ESCROW_RECORDS = loadEscrowRecords();
@@ -306,7 +306,7 @@ async function main() {
   // deciding which chain real value moves on is how a testnet loop ends up
   // signing against a mainnet world. There is no default.
   const challenge = await world('/worlds/lysvik/join/challenge');
-  // F7: the door must name the origin you are about to sign for and send a bearer to.
+  // The door must name the origin you are about to sign for and send a bearer to.
   if (!originMatchesDeployment(WORLD, challenge.deployment_origin)) {
     throw new Error(`WORLD_ORIGIN_MISMATCH: this loop is pinned to ${WORLD} but the door's deployment_origin is '${challenge.deployment_origin ?? 'absent'}'. Refusing to run.`);
   }
@@ -326,12 +326,12 @@ async function main() {
     mode: mode as 'testnet' | 'mainnet',
     requesterAddress: process.env.REQUESTER_ADDRESS ?? '0x0000000000000000000000000000000000000000',
   });
-  // F6: the wallet whose escrows this loop may release — read from the SDK, never typed.
+  // The wallet whose escrows this loop may release — read from the SDK, never typed.
   OWN_WALLET = await actp.getWalletProvider().getAddress();
 
   // Live the loop. On exit, DEPART — the world remembers you (identity,
   // renown, and earned names are durable; re-join is idempotent).
-  // Pass-3 F5: SINGLE-FLIGHT — a slow beat must never overlap the next one
+  // SINGLE-FLIGHT — a slow beat must never overlap the next one
   // (two in-flight beats could both decide the same release before either
   // sees the outcome; the kernel refuses the replay, but the operator would
   // read two attempts as two intents).

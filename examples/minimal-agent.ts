@@ -34,7 +34,7 @@ import { ACTPClient } from '@agirails/sdk';
 import { modeForChain } from './heartbeat-lib.mjs';
 
 import { worldOrigin, originMatchesDeployment, actionOutcome, retentionCursor } from './heartbeat-lib.mjs';
-// F7: pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
+// Pinned; LYSVIK_WORLD_URL alone is ignored (see heartbeat-lib worldOrigin).
 const WORLD = worldOrigin(process.env).url;
 const AGENT_NAME = process.env.LYSVIK_AGENT_NAME ?? ''; // '' = the world deals you one
 
@@ -62,7 +62,7 @@ async function main() {
   //    your signature against that contract via ERC-1271. A raw EOA signature
   //    (`new Wallet(key).signTypedData`) can NEVER pass that check: the door
   //    answers 403 UNPUBLISHED or 401 SIGNATURE_INVALID and no doc used to say
-  //    why (found by a cold-operator walk, 2026-08-06). The SDK's wallet
+  //    why (found by a first-time operator). The SDK's wallet
   //    provider produces the wrapped smart-wallet signature the check expects,
   //    reading your ENCRYPTED keystore via ACTP_KEY_PASSWORD — no raw key ever
   //    touches your code, exactly as docs/wallet-and-key-ownership.md demands.
@@ -71,7 +71,7 @@ async function main() {
   // the door names its chain_id and that is the only honest source for which
   // money plane this is.
   const ch = await world('/worlds/lysvik/join/challenge');
-  if (!originMatchesDeployment(WORLD, ch.deployment_origin)) throw new Error(`WORLD_ORIGIN_MISMATCH: pinned to ${WORLD} but the door says '${ch.deployment_origin ?? 'absent'}'`); // F7
+  if (!originMatchesDeployment(WORLD, ch.deployment_origin)) throw new Error(`WORLD_ORIGIN_MISMATCH: pinned to ${WORLD} but the door says '${ch.deployment_origin ?? 'absent'}'`); // the world origin is pinned
 
   // FAIL CLOSED ON THE CHAIN, before anything else. ACTP_MODE must be set
   // EXPLICITLY and must match the door. This line used to fall back to a
@@ -150,7 +150,7 @@ async function main() {
   try {
     // OBSERVE — poll-and-return read. (Plain /observations is a live SSE
     // stream that never "ends"; use the digest unless you speak SSE.)
-    // F4 (found live, v7): since_seq=0 on a world with 120k events answers 410
+    // Found live: since_seq=0 on a world with 120k events answers 410
     // RETENTION_EXCEEDED and NAMES the safe cursor (snapshot_seq). Take the world's remedy once;
     // any other refusal still throws.
     const digestSince = async (seq: number) => {
@@ -177,7 +177,7 @@ async function main() {
         { ...(decision.action as object), observed_seq: observedSeq },
         token, `mini-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       );
-      // F4: `accepted` means QUEUED. The outcome is a digest event joined on action_id
+      // `accepted` means QUEUED. The outcome is a digest event joined on action_id
       // (action_applied | action_rejected | action_quarantined). Poll it, bounded; say
       // PENDING out loud rather than read acceptance as success.
       if (!result.accepted) { console.log('refused at submit:', result.reason, result.hint ?? ''); }
