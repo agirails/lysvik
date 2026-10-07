@@ -336,8 +336,10 @@ def main() -> int:
 
     # D3 (artifact half): the committed contract must come from the pinned commit
     # The generator stamps `git rev-parse --short`, which git EXTENDS past 7 chars when 7 is ambiguous in the repo
-    # (first seen at a15f8864, 2026-10-07), while the pin stays the 7-char form /health serves. Same commit = the
-    # stamp's hex extends the pin's (both >= 7 hex chars); anything else is still red.
+    # (first seen at a15f8864, 2026-10-07), while the pin stays the 7-char form /health serves. COVERAGE LIMIT, stated:
+    # this check proves only PREFIX COMPATIBILITY (the stamp's hex extends the pin's, both >= 7 hex), NOT identity; a
+    # fabricated hex string with the right prefix would pass here. Identity is bound at RE-PIN time instead:
+    # tools/docs_repin.sh requires the stamp to equal git's own `rev-parse --short` of the FULL deployed sha.
     _stamp = contract["generated_from"].removeprefix("genesis-village@")
     if not (contract["generated_from"].startswith("genesis-village@") and re.fullmatch(r"[0-9a-f]{7,40}", _stamp or "")
             and re.fullmatch(r"[0-9a-f]{7,40}", pinned_gv or "") and _stamp.startswith(pinned_gv)):

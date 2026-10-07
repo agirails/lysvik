@@ -96,9 +96,14 @@ probe("D2: current wearing a stale banner", d2_current_with_banner, "D2")
 probe("D3: one doc pinned to a foreign sha", lambda t: edit(
     t / "docs" / "quickstart.md", pin(t), "genesis-village@deadbee"), "D3")
 
+def stamp(t: Path) -> str:
+    """The contract's OWN generated_from (git may extend the short sha past the 7-char pin; derived, never hardcoded)."""
+    return json.loads((t / "contracts" / "world-api.contract.json").read_text())["generated_from"]
+
+
 probe("D3: contract generated from a different commit than the pin", lambda t: edit(
     t / "contracts" / "world-api.contract.json",
-    f'"generated_from": "{pin(t)}"',
+    f'"generated_from": "{stamp(t)}"',
     '"generated_from": "genesis-village@deadbee"'), "D3")
 
 

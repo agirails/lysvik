@@ -11,7 +11,8 @@ git checkout -q "$BR" || exit 3
 [ -z "$(git -C "$GV" status --short)" ] || { echo "gv worktree is dirty — REFUSING"; exit 5; }
 ( cd "$GV" && node --import tsx scripts/gen-world-api-contract.mjs >/dev/null 2>&1 ) || { echo "regen at $SHORT failed — REFUSING"; exit 6; }
 STAMP=$(python3 -c "import json;print(json.load(open('$GV/contracts/world-api.contract.json'))['generated_from'])")
-case "$STAMP" in "genesis-village@$SHORT"*) ;; *) echo "regen stamped $STAMP, expected genesis-village@$SHORT(…) — REFUSING"; exit 7;; esac  # git may extend a short sha past 7 when ambiguous
+GITSHORT=$(git -C "$GV" rev-parse --short "$DEP")  # git's own short form of the FULL deployed sha (it extends past 7 when 7 is ambiguous)
+[ "$STAMP" = "genesis-village@$GITSHORT" ] || { echo "regen stamped $STAMP, expected genesis-village@$GITSHORT (git's short form of $DEP) — REFUSING"; exit 7; }
 cp "$GV/contracts/world-api.contract.json" contracts/world-api.contract.json
 ( cd "$GV" && git checkout -- contracts/world-api.contract.json )
 python3 - "$SHORT" "$TAG" <<'PY'
