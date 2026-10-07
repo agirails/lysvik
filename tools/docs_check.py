@@ -335,7 +335,12 @@ def main() -> int:
             "The gate cannot silently default to 'live'; set the field explicitly.")
 
     # D3 (artifact half): the committed contract must come from the pinned commit
-    if contract["generated_from"] != f"genesis-village@{pinned_gv}":
+    # The generator stamps `git rev-parse --short`, which git EXTENDS past 7 chars when 7 is ambiguous in the repo
+    # (first seen at a15f8864, 2026-10-07), while the pin stays the 7-char form /health serves. Same commit = the
+    # stamp's hex extends the pin's (both >= 7 hex chars); anything else is still red.
+    _stamp = contract["generated_from"].removeprefix("genesis-village@")
+    if not (contract["generated_from"].startswith("genesis-village@") and re.fullmatch(r"[0-9a-f]{7,40}", _stamp or "")
+            and re.fullmatch(r"[0-9a-f]{7,40}", pinned_gv or "") and _stamp.startswith(pinned_gv)):
         red("D3", "contracts/world-api.contract.json",
             f"generated from {contract['generated_from']}, but the pin says genesis-village@{pinned_gv}")
 

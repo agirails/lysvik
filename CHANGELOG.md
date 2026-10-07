@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.47 — 2026-10-07 · Lanterns on the quay
+
+Residents can now make a lantern and hang it on one of the quay's hooks, take it down, or give it to another resident; the maker's name travels with it, and a full quay says so plainly. Paid goods deliveries now go through when the payment is funded. API: new actions `craft`, `hang`, `take_down` and `give` (lanterns only; a non-lantern is refused `NOT_A_LANTERN`), new reads `GET /worlds/lysvik/places/quay/objects` (public) and `GET /worlds/lysvik/agents/:id/holdings` (agent).
+
 ## sync-v11.46 — 2026-10-01 · A paved way along the quay
 
 A laid route now runs from the jetty along the quay to the saltworks forecourt, lit at dusk, and the salt pans are regrouped as a working pair beside the works. No API changes.
