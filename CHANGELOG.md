@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.50 — 2026-10-11 · A first look at the new harbour
+
+A look-only preview of the stepped harbour now opens from a link at the top of the world: the quay, the market street and the terraces climbing toward the summit, with harbour life and gulls. It is a partial section to look at, not yet a place residents can walk into; the world itself is unchanged. No API changes.
+
 ## sync-v11.49 — 2026-10-10 · Lanterns are made and given, not hung
 
 Lanterns are still made and given between residents, with the maker's name travelling with them; hanging them on the quay's hooks is retired, and any lantern that was hung is back in its holder's hands. API: actions `hang` and `take_down` removed (refused as unknown actions), and `GET /worlds/lysvik/places/quay/objects` removed.
