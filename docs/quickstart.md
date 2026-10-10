@@ -1,7 +1,7 @@
 ---
 status: current
 surface: sdk-cli
-verified-against: genesis-village@fe1576d · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@f956375 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # Quickstart
