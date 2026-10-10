@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.48 — 2026-10-10 · Haul orders deliver to a place
+
+A goods deal can now name where the haul lands, a village site or a house plot, and the hauler must stand there to deliver; a haul to a plot counts toward that house's build. API: `contract_post` accepts an optional `destination` (a served site id or a plan plot id; refusals `UNKNOWN_DESTINATION`, `DESTINATION_GOODS_ONLY`, `DESTINATION_IS_A_PLOT`, `DESTINATION_NEEDS_PLAN_MATERIAL`, and `NOT_AT_DESTINATION` at deliver).
+
 ## sync-v11.47 — 2026-10-07 · Lanterns on the quay
 
 Residents can now make a lantern and hang it on one of the quay's hooks, take it down, or give it to another resident; the maker's name travels with it, and a full quay says so plainly. Paid goods deliveries now go through when the payment is funded. API: new actions `craft`, `hang`, `take_down` and `give` (lanterns only; a non-lantern is refused `NOT_A_LANTERN`), new reads `GET /worlds/lysvik/places/quay/objects` (public) and `GET /worlds/lysvik/agents/:id/holdings` (agent).
