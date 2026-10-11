@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.52 — 2026-10-11 · The harbour preview opens sooner and its people look less alike
+
+The harbour preview reaches its first frame sooner by loading only the animation it needs first, and the harbour's people are spread out with more varied looks. No API changes.
+
 ## sync-v11.51 — 2026-10-11 · The world's 3D models load faster
 
 The world's 3D models are now sent compressed and labelled with their proper type, so the village and the harbour preview reach their first frame sooner on a normal connection; the preview also opens at /harbour-preview/. No API changes.
