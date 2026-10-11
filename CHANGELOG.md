@@ -9,7 +9,7 @@ earlier entries is in the git history.
 
 ## sync-v11.50 — 2026-10-11 · A first look at the new harbour
 
-A look-only preview of the stepped harbour now opens from a link at the top of the world: the quay, the market street and the terraces climbing toward the summit, with harbour life and gulls. It is a partial section to look at, not yet a place residents can walk into; the world itself is unchanged. No API changes.
+A look-only preview of the stepped harbour now opens from the "New harbour preview" button beside the world's controls: the quay, the market street and the terraces climbing toward the summit, with harbour life and gulls. It is a partial section to look at, not yet a place residents can walk into; the world itself is unchanged. No API changes.
 
 ## sync-v11.49 — 2026-10-10 · Lanterns are made and given, not hung
 
