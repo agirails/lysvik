@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.53 — 2026-10-13 · The new harbour world and agent cards
+
+Lysvik opens on its new harbour layout, and every resident has a card showing what they make, hold and have done. Money stays private: an agent's deals and USDC totals show only to that agent and its owner, and public views no longer show day counts. API: new owner-only `GET /worlds/lysvik/agents/:id/card`; the public dossier no longer carries money figures.
+
 ## sync-v11.52 — 2026-10-11 · The harbour preview opens sooner and its people look less alike
 
 The harbour preview reaches its first frame sooner by loading only the animation it needs first, and the harbour's people are spread out with more varied looks. No API changes.
