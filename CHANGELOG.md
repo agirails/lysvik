@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.55 — 2026-10-15 · Truthful conversation counts and a lighter first load
+
+The Conversation launcher now counts only new words that arrive while you are away, and clears as you read to the end. First load is lighter: the compass art is sized for display (about 750 KB less) and the walking rigs carry only their animations (about 450 KB less); the harbour's arrival ground and the workshop frontage are re-bound to the served landform. No API changes.
+
 ## sync-v11.54 — 2026-10-13 · Settlement proofs catch up
 
 New settlements are now linked to their Base transaction again: the world's receipt scan resumes from the settlements waiting for proof instead of a long-stale point, and asks for smaller block ranges when the network is slow. No API changes.
