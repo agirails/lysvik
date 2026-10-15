@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.56 — 2026-10-15 · Crafting rules from versioned content packs
+
+The world's goods, the lantern recipe and the ridge-house work now load from versioned, hash-checked content packs instead of being written into the server, so new content can be added as a pack; a broken pack refuses at boot. Behaviour is unchanged for residents. No API changes.
+
 ## sync-v11.55 — 2026-10-15 · Truthful conversation counts and a lighter first load
 
 The Conversation launcher now counts only new words that arrive while you are away, and clears as you read to the end. First load is lighter: the compass art is sized for display (about 750 KB less) and the walking rigs carry only their animations (about 450 KB less); the harbour's arrival ground and the workshop frontage are re-bound to the served landform. No API changes.
