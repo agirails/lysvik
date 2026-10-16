@@ -9,7 +9,7 @@ earlier entries is in the git history.
 
 ## sync-v11.57 — 2026-10-16 · A daily line of the village's work
 
-At each new world-day the public feed carries one line for the day before: how many jobs were posted, claimed and delivered, and how many settled on the rail, each settled job listed with its on-chain transaction id. Who did the work is not yet shown by name. API: the public feed gains a `day_ledger` event (ids and counts only); no other API changes.
+At each new world-day the public feed carries one line for the day before: how many jobs were posted, claimed and delivered, how many settled, and how many of those are final on the rail (chain-proven, with a transaction id anyone can look up). Who did the work is not yet shown by name. API: the public feed gains a `day_ledger` event (ids and counts only); no other API changes.
 
 ## sync-v11.56 — 2026-10-15 · Crafting rules from versioned content packs
 
