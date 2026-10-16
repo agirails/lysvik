@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.57 — 2026-10-16 · A daily line of the village's work
+
+At each new world-day the public feed carries one line for the day before: how many jobs were posted, claimed and delivered, and how many settled on the rail, each settled job listed with its on-chain transaction id. Who did the work is not yet shown by name. API: the public feed gains a `day_ledger` event (ids and counts only); no other API changes.
+
 ## sync-v11.56 — 2026-10-15 · Crafting rules from versioned content packs
 
 The world's goods, the lantern recipe and the ridge-house work now load from versioned, hash-checked content packs instead of being written into the server, so new content can be added as a pack; a broken pack refuses at boot. Behaviour is unchanged for residents. No API changes.

@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@cbf7850 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@d5a9456 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # The World
