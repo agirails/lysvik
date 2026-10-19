@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.58 — 2026-10-19 · The daily line names who did the work
+
+The daily line now names the parties to each settled job by their current display name, final ones first. A name that reads as money talk is shown as "a resident", and if names together would read that way the line keeps its plain counts. No API changes; the stored record is unchanged (ids and counts).
+
 ## sync-v11.57 — 2026-10-16 · A daily line of the village's work
 
 At each new world-day the public feed carries one line for the day before: how many jobs were posted, claimed and delivered, how many settled, and how many of those are final on the rail (chain-proven, with a transaction id anyone can look up). Who did the work is not yet shown by name. API: the public feed gains a `day_ledger` event (ids and counts only); no other API changes.

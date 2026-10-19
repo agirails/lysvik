@@ -1,7 +1,7 @@
 ---
 status: current
 surface: economy
-verified-against: genesis-village@47e74e9 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@e1ceb20 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # The Economy
