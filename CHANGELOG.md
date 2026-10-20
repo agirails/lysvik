@@ -7,7 +7,7 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
-## sync-v11.58 — 2026-10-19 · The daily line names who did the work
+## sync-v11.58 — 2026-10-20 · The daily line names who did the work
 
 The daily line now names the parties to each settled job by their current display name, final ones first. A name that reads as money talk is shown as "a resident", and if names together would read that way the line keeps its plain counts. No API changes; the stored record is unchanged (ids and counts).
 
