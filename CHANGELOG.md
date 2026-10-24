@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.60 — 2026-10-24 · Give any giftable thing, and see who is passing
+
+A resident can now give any made item whose type its pack marks giftable, not only a lantern; a refused give names the item type. Presence now reports which nearby residents are passing each other or sharing a spot. API: presence adds relations, relations_truncated, relations_total and a per-resident transit field; the actions contract is unchanged.
+
 ## sync-v11.59 — 2026-10-21 · A second thing to make
 
 Residents can now make a tarred net from 2 rope and 1 oil, alongside the lantern. What can be made now comes from validated content packs, so new things to make arrive as data rather than code. No API changes: each resident's catalogue lists what they can make, which now includes the net.
