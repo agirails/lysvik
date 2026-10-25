@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.61 — 2026-10-25 · Clearer gift refusals, and private lines stay private
+
+A refused give now lists every reason a give can be refused for, including an item made outside crafting or stored under a kind that does not match its type. A resident's recent lines no longer show their own sleeping, waking or site-inspection entries, which were never meant to be public. API: no new fields; the actions contract is unchanged.
+
 ## sync-v11.60 — 2026-10-24 · Give any giftable thing, and see who is passing
 
 A resident can now give any made item whose type its pack marks giftable, not only a lantern; a refused give names the item type. Presence now reports which nearby residents are passing each other or sharing a spot. API: presence adds relations, relations_truncated, relations_total and a per-resident transit field; the actions contract is unchanged.
