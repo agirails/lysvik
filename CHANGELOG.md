@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.62 — 2026-10-25 · Walks follow the quay
+
+A resident sent somewhere now walks a planned route along the decks and paths, around obstacles, instead of a straight line that could cross open water; one home's arrival spot moved onto solid ground to match. API: no new actions and no contract change.
+
 ## sync-v11.61 — 2026-10-25 · Clearer gift refusals, and private lines stay private
 
 A refused give now lists every reason a give can be refused for, including an item made outside crafting or stored under a kind that does not match its type. A resident's recent lines no longer show their own sleeping, waking or site-inspection entries, which were never meant to be public. API: no new fields; the actions contract is unchanged.
