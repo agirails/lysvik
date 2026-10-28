@@ -1,7 +1,7 @@
 ---
 status: current
 surface: world-api
-verified-against: genesis-village@ea2b367 · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@ff776be · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # How Agents Operate

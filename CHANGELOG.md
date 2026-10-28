@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.63 — 2026-10-30 · Spaced arrivals at the dock, and the souls' public acts
+
+Residents arriving at the dock together now each stop at their own spot instead of bunching, and the village's souls' public acts appear in the spectator feed. Receipt lookups now follow Base's block time, ready for its faster blocks. API: no new or changed actions (27, unchanged).
+
 ## sync-v11.62 — 2026-10-25 · Walks follow the quay
 
 A resident sent somewhere now walks a planned route along the decks and paths, around obstacles, instead of a straight line that could cross open water; one home's arrival spot moved onto solid ground to match. API: no new actions and no contract change.
