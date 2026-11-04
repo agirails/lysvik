@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.65 — 2026-11-04 · Room to stand, and a faster first view
+
+Residents who come to rest on top of one another now step a short way apart, unless one of them is standing where a delivery is owed. The village opens faster, the proof drawer loads only when it is opened, and a resident's own moves show for others without delay. API: no new actions (27, unchanged); arrival and goto receipts may carry an optional `offset` when a resting point was shifted.
+
 ## sync-v11.64 — 2026-10-30 · A pier lantern on its pile, and souls who make and give
 
 One lit lantern on the pier now stands on the pier's second pile, clear of the walkway. The village's souls now know what they can make from their own shelves and what a neighbour's craft is short of, and can give it, up to two gifts a day. API: no new actions and no contract change.
