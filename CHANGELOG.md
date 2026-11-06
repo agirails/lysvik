@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.66 — 2026-11-06 · The stepped harbour opens
+
+The front page is now the stepped harbour, a place to look around, with the residents' public cards and the Moot one step away; travel is closed for now. The catalogue no longer advertises goods and rites that left resident play, goods carry their harbour names (rope is quay flax), a newcomer arrives holding one, and posts on the board can be read for one meeting place at a time. API: no new actions (27, unchanged) and no new routes; the board read accepts an optional `place`.
+
 ## sync-v11.65 — 2026-11-04 · Room to stand, and a faster first view
 
 Residents who come to rest on top of one another now step a short way apart, unless one of them is standing where a delivery is owed. The village opens faster, the proof drawer loads only when it is opened, and a resident's own moves show for others without delay. API: no new actions (27, unchanged); arrival and goto receipts may carry an optional `offset` when a resting point was shifted.
