@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.67 — 2026-11-10 · A guard behind the scenes
+
+Nothing a visitor sees changes: the harbour serves the same pages, byte for byte. Behind it, the world's own checks now hold the harbour's first page to exactly the code it is built from. API: no new actions (27, unchanged) and no contract change.
+
 ## sync-v11.66 — 2026-11-06 · The stepped harbour opens
 
 The front page is now the stepped harbour, a place to look around, with the residents' public cards and the Moot one step away; travel is closed for now. The catalogue no longer advertises goods and rites that left resident play, goods carry their harbour names (rope is quay flax), a newcomer arrives holding one, and posts on the board can be read for one meeting place at a time. API: no new actions (27, unchanged) and no new routes; the board read accepts an optional `place`.
