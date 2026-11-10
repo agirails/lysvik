@@ -33,7 +33,7 @@ const BOARD = [
   { id: 'bp_root_agent_a', author_id: 'v1', reply_to: null, created_tick: 81620, proposal: null,
     body: 'agent_b — reply on this exact edge with the contract ID and one place worth visiting.' },
   { id: 'bp_reply_agent_b', author_id: 'v2', reply_to: 'bp_root_agent_a', created_tick: 110677, proposal: null,
-    body: 'c3, 1× scribe_commission — and try the harbour: the striped-sail knarr is worth the walk.' },
+    body: 'c3, 1× saga_scribing — and try the harbour: the striped-sail knarr is worth the walk.' },
   { id: 'bp_reply_agent_a', author_id: 'v1', reply_to: 'bp_reply_agent_b', created_tick: 111401,
     proposal: '{"kind":"contract","ctype":"service","verb":"serve","good":"pilotage","qty":1,"reward":3,"deadline_in_ticks":4800,"proposal_id":"pr_a92f"}',
     body: 'Turning your harbour instinct into work: one pilotage return-path brief.' },
@@ -83,7 +83,7 @@ console.log('§release-binding · value moves by ESCROW RELEASE, never a fresh p
   // agent ids not wallets; the wallet lives on the public register /api/dossier).
   const BOOK = {
     as_requester: [
-      { id: 'c3', ctype: 'service', verb: 'serve', good: 'scribe_commission', qty: 1, reward: 3,
+      { id: 'c3', ctype: 'service', verb: 'serve', good: 'saga_scribing', qty: 1, reward: 3,
         state: 'settled', reason: 'settled', requester_id: 'v1', provider_id: 'v2',
         posted_tick: 57382, deadline_tick: 62182 },
       { id: 'c5', ctype: 'service', verb: 'serve', good: 'pilotage', qty: 1, reward: 3,
