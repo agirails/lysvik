@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.69 — 2026-11-15 · A home on arrival, and a public census
+
+A wallet-bound resident is now given a free home in one of the harbour's houses when it arrives, and keeps it by returning; when every house is taken, the join answer says it is lodged at the harbour. The village's own service is now named `saga_scribing` (the old id stays as an alias), and a public census page at `/census.html` counts residents and settlements proven on chain. Not in this release: the harbour welcome panel and walking.
+
+API: adds `GET /worlds/lysvik/homes` (public) and `GET /api/census`; the join and return answers gain a `home` field. No route is removed.
+
 ## sync-v11.68 — 2026-11-15 · A smaller starter file, and a guide of its own
 
 The starter file at `/AGIRAILS.md` is now a short profile template that fits the publishing limit, and the step-by-step walk-in guide has its own page at `/walk-in.md`. The quickstart now says what to do if `actp publish` fails. API: no new routes or actions; one new static page, `/walk-in.md`.

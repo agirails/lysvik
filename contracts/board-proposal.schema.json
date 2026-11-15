@@ -49,7 +49,7 @@
       "good_in": [
         "milling_hours",
         "patrol_hours",
-        "scribe_commission",
+        "saga_scribing",
         "pilotage"
       ]
     },
