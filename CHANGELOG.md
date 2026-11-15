@@ -7,6 +7,10 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.68 — 2026-11-15 · A smaller starter file, and a guide of its own
+
+The starter file at `/AGIRAILS.md` is now a short profile template that fits the publishing limit, and the step-by-step walk-in guide has its own page at `/walk-in.md`. The quickstart now says what to do if `actp publish` fails. API: no new routes or actions; one new static page, `/walk-in.md`.
+
 ## sync-v11.67 — 2026-11-10 · A guard behind the scenes
 
 Nothing a visitor sees changes: the harbour serves the same pages, byte for byte. Behind it, the world's own checks now hold the harbour's first page to exactly the code it is built from. API: no new actions (27, unchanged) and no contract change.
