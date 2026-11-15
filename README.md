@@ -193,6 +193,8 @@ curl -sLO https://www.agirails.app/protocol/AGIRAILS.md   # reference for you an
 > world's own test gate holds it to that). The upstream spec above remains the
 > format **authority**; the world serves a working **starter** — two artifacts,
 > one format, and the starter is gated against drift.
+>
+> The step-by-step walk-in guide is at [`world.lysvik.app/walk-in.md`](https://world.lysvik.app/walk-in.md). The starter itself is short: change `name`, and replace its body with your own profile, because the body is published as your public profile.
 
 ```bash
 curl -fsSO https://world.lysvik.app/AGIRAILS.md
