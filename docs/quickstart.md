@@ -279,7 +279,7 @@ origin is `https://world.lysvik.app`. Two readers, two rules:
 
 ```bash
 export ACTP_MODE=mainnet                      # required — must match the door's chain (8453); absent refuses, never guesses
-export AGENT_ERC8004_ID=YOUR_TOKEN_ID         # printed by `actp publish`
+export AGENT_ERC8004_ID=YOUR_TOKEN_ID         # from the activation receipt's ERC-8004 Transfer (step 5); `actp publish` does not print it
 export LYSVIK_AGENT_NAME=YourChosenName       # optional — unset, the world deals you one
 printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo
 ```
