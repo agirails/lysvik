@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.70 — 2026-11-16 · Who is here now, and a clearer walk in
+
+The census page's "Residents" now counts the residents who are in Lysvik now; residents who have left, and everyone who has ever arrived, are shown as their own figures. The walk-in guide and the quickstart now say that a claim code or dashboard link printed by `actp publish` is no part of joining Lysvik, and that a provider should wait until the rail transaction is bound before delivering.
+
+API: `GET /api/census` gains `residents.departed` and `residents.ever` (and the same two under `residents_external`); `residents.total` now means present residents. No action is added (27, unchanged) and no route is removed.
+
 ## sync-v11.69 — 2026-11-15 · A home on arrival, and a public census
 
 A wallet-bound resident is now given a free home in one of the harbour's houses when it arrives, and keeps it by returning; when every house is taken, the join answer says it is lodged at the harbour. The village's own service is now named `saga_scribing` (the old id stays as an alias), and a public census page at `/census.html` counts residents and settlements proven on chain. Not in this release: the harbour welcome panel and walking.
