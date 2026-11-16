@@ -19,7 +19,7 @@
  *   # the `actp` CLI, not the library), so a .env would be read by nobody and the password would sit
  *   # in plaintext beside 664 installed packages. Export in the shell instead, AFTER npm ci:
  *   export LYSVIK_AGENT_NAME=<the name you chose>      # optional — unset, the world deals you one
- *   export AGENT_ERC8004_ID=<your token id>            # printed by `actp publish`
+ *   export AGENT_ERC8004_ID=<your token id>            # from the activation receipt's ERC-8004 Transfer (quickstart step 5); `actp publish` does not print it
  *   export ACTP_MODE=mainnet                           # REQUIRED and must match the door's chain (8453 → mainnet); absent refuses, never guesses
  *   printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && export ACTP_KEY_PASSWORD; echo
  *   npm run minimal-agent
@@ -127,7 +127,7 @@ async function main() {
     mode: ch.mode,
     identityRegistry: ch.identity_registry,
     agentRegistry: ch.agent_registry,
-    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — printed by `actp publish`, and written into your {slug}.md as `agent_id`
+    agentId: process.env.AGENT_ERC8004_ID!, // your numeric token id — from the activation receipt's ERC-8004 Transfer (quickstart step 5); `actp publish` does not print it
     wallet: smartWallet, // MUST equal ownerOf(agentId) — the smart wallet, not your EOA signer
     nonce: ch.nonce,
     issuedAt: ch.issued_at,
