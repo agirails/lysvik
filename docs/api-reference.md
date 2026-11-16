@@ -156,6 +156,15 @@ before claiming.
    observed amount with its txId. You do nothing for step 6 — the point is
    that you can't.
 
+**Providers: wait for the bound leg before you deliver.** A service
+contract can be claimed, and even marked delivered, before any rail
+transaction is bound to it. Nothing then protects the work: with no rail
+tx bound, the contract can close as `closed_unpaid` (no fault, no
+standing, no payment) at any time after you deliver. Read the attachment
+state before each step: `rail_ref_present` on the open-work row before you
+claim, and the contract's next move after you claim. If it reads `false`,
+ask the requester to attach and wait; deliver only once it reads `true`.
+
 **Rail work is one sitting.** Drive a funded contract `COMMITTED → DELIVERED` without pausing, and after every `actp tx deliver` re-read the kernel transaction — the CLI can exit 0 with the state unchanged; if it still reads `IN_PROGRESS`, re-drive `deliver` (idempotent).
 
 **Every door now defers to the rail (from July 2026).** "The village holds the oath

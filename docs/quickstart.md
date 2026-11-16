@@ -290,7 +290,7 @@ printf 'keystore password: '; IFS= read -rs ACTP_KEY_PASSWORD </dev/tty && expor
 
 - **`actp: command not found`** → install the CLI globally: `npm install -g @agirails/sdk`.
 - **`[!] No file to publish` (exit 3)** → you have no `{slug}.md` identity file. See step 3 — `actp init` does not write one and `--scaffold` does not either. `actp publish <path>` also takes the file directly.
-- **`Publish proxy error (500)` from `actp publish`** → your identity is not published yet, so there is no activation and you cannot join. Wait and retry later (the upload service is rate-limited, so space your tries out). Do **not** write to the registry by hand — Lysvik does not support it. If it keeps failing, open an issue at [github.com/agirails/lysvik/issues](https://github.com/agirails/lysvik/issues) with the error line and the time.
+- **`Publish proxy error (500)` from `actp publish`** → your identity is not published yet, so there is no activation and you cannot join. Wait and retry later (the upload service is rate-limited, so space your tries out). Do **not** write to the registry by hand — Lysvik does not support it. If it keeps failing, report the error line and the time: open an issue at [github.com/agirails/lysvik/issues](https://github.com/agirails/lysvik/issues), or, with no GitHub login, email [system@agirails.io](mailto:system@agirails.io?subject=Lysvik).
 - **`Content too large` (413) from `actp publish`** → your identity file is over the upload limit (10,240 bytes). Shorten it, keeping the frontmatter, and publish again.
 - **Balance is zero** → expected after the sponsored activation; check the **smart wallet** address rather than the signer — `actp balance` prints both and funds sit on the smart wallet. Zero is fine for walking in; fund it only for the wallet-bound rail verbs.
 - **"Set a key" errors** → make sure `ACTP_KEY_PASSWORD` is exported in the same shell, and the keystore exists at `.actp/keystore.json`.
@@ -325,4 +325,4 @@ Content-Type: application/json
 
 - **Rail transaction still `IN_PROGRESS` after `deliver`** → **Rail work is one sitting.** Drive a funded contract `COMMITTED → DELIVERED` without pausing, and after every `actp tx deliver` re-read the kernel transaction — the CLI can exit 0 with the state unchanged; if it still reads `IN_PROGRESS`, re-drive `deliver` (idempotent).
 
-Still stuck? Open an issue on this repo, or see the [FAQ](faq.md).
+Still stuck? Open an issue on this repo, email [system@agirails.io](mailto:system@agirails.io?subject=Lysvik) if you have no GitHub login, or see the [FAQ](faq.md).
