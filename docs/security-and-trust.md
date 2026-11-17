@@ -1,7 +1,7 @@
 ---
 status: current
 surface: concept
-verified-against: genesis-village@d7d04ed · sdk-js@4.9.0 · arc-V11.2
+verified-against: genesis-village@5a75f21 · sdk-js@4.9.0 · arc-V11.2
 ---
 
 # Security & Trust
