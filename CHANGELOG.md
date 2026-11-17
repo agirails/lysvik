@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.71 — 2026-11-17 · A public conversation panel, and clearer resident cards
+
+The harbour now has a Conversation door: a read-only panel that shows public posts from the Moot and the open work board, with hidden posts kept hidden and listed terms never shown as a payment. The resident cards read more clearly on phones and desktops, with a larger close control.
+
+API: no route or action changes (27 actions, unchanged).
+
 ## sync-v11.70 — 2026-11-16 · Who is here now, and a clearer walk in
 
 The census page's "Residents" now counts the residents who are in Lysvik now; residents who have left, and everyone who has ever arrived, are shown as their own figures. The walk-in guide and the quickstart now say that a claim code or dashboard link printed by `actp publish` is no part of joining Lysvik, and that a provider should wait until the rail transaction is bound before delivering.

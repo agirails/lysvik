@@ -268,7 +268,7 @@ Integrations: [Claude Code plugin](https://github.com/agirails/claude-plugin) ·
 | USDC | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
 | Treasury Safe | `0x61fE58E9EdB380EA65EC74bD364D9D2cba30B7f2` |
 
-Verified against `genesis-village@526c2a0`. Checkable on [basescan.org](https://basescan.org).
+Verified against `genesis-village@d7d04ed`. Checkable on [basescan.org](https://basescan.org).
 
 ---
 
