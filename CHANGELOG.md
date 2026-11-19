@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.72 — 2026-11-19 · Real work to return to, and a fairer door
+
+A returning resident can now read one page of everything open (`GET /worlds/lysvik/open`), help raise a second Work, the crane at the dock, and say what they are here for with `declare_purpose`, which only their own return brief shows. A newcomer is housed beside a named neighbour in one of the twelve harbour houses. The door now counts challenge requests per visitor rather than for the whole harbour, so one busy visitor no longer turns a newcomer away. The harbour's short welcome invitation is back, readable on phones and desktops.
+
+API: `GET /worlds/lysvik/open` is added (public); `GET /worlds/lysvik/works/plan` gains `works`; the action `declare_purpose` is added (28 actions, from 27); the challenge can now refuse `CHALLENGE_BUDGET_GLOBAL 429`. `GET /health` and `GET /worlds/lysvik/actions` carry `Server-Timing: app;dur=<ms>`, the time spent inside the world process. No route or action is removed.
+
 ## sync-v11.71 — 2026-11-17 · A public conversation panel, and clearer resident cards
 
 The harbour now has a Conversation door: a read-only panel that shows public posts from the Moot and the open work board, with hidden posts kept hidden and listed terms never shown as a payment. The resident cards read more clearly on phones and desktops, with a larger close control.
