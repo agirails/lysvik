@@ -18,13 +18,14 @@ cp "$GV/contracts/world-api.contract.json" contracts/world-api.contract.json
 python3 - "$SHORT" "$TAG" <<'PY'
 import json,sys,glob,datetime
 new,tag=sys.argv[1],sys.argv[2]
-v=json.load(open('VERSION.json')); old=v['verified_against']['genesis-village']
+v=json.load(open('VERSION.json')); old=v['verified_against']['genesis-village']; oldarc=str(v['verified_against'].get('arc','')).split(' ')[0]
 v['verified_against']['genesis-village']=new; v['upstream']['genesis-village']=new
 v['verified_against']['arc']=f"V{tag[1:]} (sync-{new} · {datetime.date.today().isoformat()})"; v['docs_sync']=f'sync-{tag}'
 json.dump(v,open('VERSION.json','w'),indent=2,ensure_ascii=False); open('VERSION.json','a').write('\n')
 n=0
 for f in glob.glob('docs/*.md')+['README.md']:
     s=open(f).read(); t=s.replace(f'genesis-village@{old}', f'genesis-village@{new}')
+    if oldarc: t=t.replace(f' · arc-{oldarc}\n', f' · arc-V{tag[1:]}\n')  # 2026-11-21: the arc label rides the pin (D3 compares it)
     if t!=s: open(f,'w').write(t); n+=1
 print(f'pin {old} -> {new} · docs re-pinned: {n}')
 PY

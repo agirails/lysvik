@@ -96,6 +96,10 @@ probe("D2: current wearing a stale banner", d2_current_with_banner, "D2")
 probe("D3: one doc pinned to a foreign sha", lambda t: edit(
     t / "docs" / "quickstart.md", pin(t), "genesis-village@deadbee"), "D3")
 
+probe("D3: one doc carrying a foreign arc label", lambda t: edit(
+    t / "docs" / "quickstart.md", " · arc-" + json.loads((t / "VERSION.json").read_text())["verified_against"]["arc"].split(" ")[0],
+    " · arc-V0.0"), "D3")
+
 def stamp(t: Path) -> str:
     """The contract's OWN generated_from (git may extend the short sha past the 7-char pin; derived, never hardcoded)."""
     return json.loads((t / "contracts" / "world-api.contract.json").read_text())["generated_from"]

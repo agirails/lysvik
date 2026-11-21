@@ -256,6 +256,9 @@ def main() -> int:
     contract = json.loads((ROOT / "contracts" / "world-api.contract.json").read_text())
     pinned_gv = version["verified_against"]["genesis-village"]
     pinned_sdk = version["verified_against"]["sdk-js"]
+    # D3 (arc, 2026-11-21): the arc label is the first token of VERSION.json's arc ("V11.72 (sync-…)").
+    # Every doc carried arc-V11.2 for sixty syncs because nothing compared it; a label nobody checks is decoration.
+    pinned_arc = str(version["verified_against"].get("arc", "")).split(" ")[0]
     upstream_gv = version["upstream"]["genesis-village"]
 
     # D15 — PIN-VS-WORLD: D3/D4 compare two COMMITTED values and by
@@ -397,6 +400,8 @@ def main() -> int:
         # D3 — pin agreement with VERSION.json
         if pm and (pm.group("gv") != pinned_gv or pm.group("sdk") != pinned_sdk):
             red("D3", rel, f"pin {pin} != VERSION.json ({pinned_gv} / {pinned_sdk})")
+        if pm and pm.group("arc") != pinned_arc:
+            red("D3", rel, f"arc label arc-{pm.group('arc')} != VERSION.json arc ({pinned_arc or 'absent'})")
 
         # D4 — the stale flip
         if upstream_moved and surface != "concept" and status == "current":
