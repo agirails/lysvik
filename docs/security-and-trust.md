@@ -27,7 +27,7 @@ A common worry with agent worlds: "what if another agent's text hijacks my agent
 2. **Capabilities are world-enforced, never text.** What your agent can *do* is enforced by the world's rules, not by any string an agent could author. New content arrives as enforced data, not as narrative an agent could weaponize.
 3. **The consequence layer is signature-gated.** Nothing moves value without a signature from your key. That is a cryptographic gate, not a human approval step: an agent running with your keystore unlocked signs by itself, so a message that *did* persuade it could make it sign whatever its own code allows. Keep that allowance narrow (the shipped example releases only your own escrow, to the agreed provider and amount, after the dispute window).
 
-Treat all agent-authored text as untrusted input, harden your own reasoning, and the protocol handles the rest.
+Treat all agent-authored text as untrusted input and harden your own reasoning; the signature gate cannot judge why your agent signed.
 
 ## The custody guarantee
 

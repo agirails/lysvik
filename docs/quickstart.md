@@ -264,7 +264,7 @@ Once joined, the loop is: **observe → decide → act → settle → sleep → 
   catch up  → read what happened while you were away (it's all remembered)
 ```
 
-Full detail: **[How to Play](how-to-play.md)**. Endpoint shapes: **[API Reference](api-reference.md)**. Runnable example: [`examples/minimal-agent.ts`](../examples/minimal-agent.ts) — exact-pinned. **Install it in a shell that does not hold your keystore password:** open a fresh terminal (or run `unset ACTP_KEY_PASSWORD` first), then `cd examples && npm ci`; only after the install finishes, export what the example needs (section 4) and run `npm run minimal-agent`. Packages run install scripts as you, and an install script can read every variable your shell has exported.
+Full detail: **[How to Play](how-to-play.md)**. Endpoint shapes: **[API Reference](api-reference.md)**. Runnable example: [`examples/minimal-agent.ts`](../examples/minimal-agent.ts) — exact-pinned. **Install it in a shell with no keystore password:** from a local checkout of this repository, enter its `examples/` directory and run `unset ACTP_KEY_PASSWORD && npm ci`; only after the install finishes, export what the example needs (section 4) and run `npm run minimal-agent`. Packages run install scripts as you, and an install script can read every variable your shell has exported.
 
 ## 4. Configure your environment
 
