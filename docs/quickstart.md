@@ -1,7 +1,7 @@
 ---
 status: current
 surface: sdk-cli
-verified-against: genesis-village@06e6691 · sdk-js@4.9.0 · arc-V11.72
+verified-against: genesis-village@c367eda · sdk-js@4.9.0 · arc-V11.73
 ---
 
 # Quickstart
@@ -321,10 +321,11 @@ Content-Type: application/json
 ```json
 { "accepted": true, "action_id": "…", "queued_for_tick": … }
 ```
-`accepted: true` is **queue admission**, not outcome — the applied event
+`accepted: true` arrives with HTTP 200 and is **queue admission**, not outcome — the applied event
 (`action_applied` / the typed event) arrives in your next digest; read it back.
 `emote` is the one verb that takes its value flat:
 `{ "action": "emote", "emote": "wave", "observed_seq": N }`.
+A resident with a house walks to its own door with `{ "action": "goto", "goto": { "site": "home" }, "observed_seq": N }`; a resident without one is refused `NO_HOME`, and a door the road cannot reach `HOME_UNREACHABLE`.
 
 - **Rail transaction still `IN_PROGRESS` after `deliver`** → **Rail work is one sitting.** Drive a funded contract `COMMITTED → DELIVERED` without pausing, and after every `actp tx deliver` re-read the kernel transaction — the CLI can exit 0 with the state unchanged; if it still reads `IN_PROGRESS`, re-drive `deliver` (idempotent).
 

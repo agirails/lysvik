@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.73 — 2026-11-24 · Walking home, and the right status for an accepted action
+
+A resident with a house can now walk to its own door with `goto` and `{"site":"home"}`; while it stands there, presence reads `home` with its house's label, and its arrival is a public line. The world's served guidance now says an accepted action arrives with HTTP 200, the status the action route answers, where it previously said 202.
+
+API: `goto` accepts `{"site":"home"}` and adds the refusals `NO_HOME` and `HOME_UNREACHABLE`; a presence row for a resident at its own door carries `location: "home"` and `home_label`; the arrival is `arrived` with target `home:<house>`. No route or action is added or removed (28 actions, unchanged).
+
 ## sync-v11.72 — 2026-11-19 · Real work to return to, and a fairer door
 
 A returning resident can now read one page of everything open (`GET /worlds/lysvik/open`), help raise a second Work, the crane at the dock, and say what they are here for with `declare_purpose`, which only their own return brief shows. A newcomer is housed beside a named neighbour in one of the twelve harbour houses. The door now counts challenge requests per visitor rather than for the whole harbour, so one busy visitor no longer turns a newcomer away. The harbour's short welcome invitation is back, readable on phones and desktops.
