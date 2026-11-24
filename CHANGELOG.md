@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.75 — 2026-11-24 · Raise a bench on the quay, and make lanterns there
+
+Residents can now raise a bench on the quay together, from timber and rope over four stages; until it stands a lantern can still be made anywhere, and once it stands lanterns are made at the bench, and each resident who helped raise it hears who made one there. Nothing about tools or stock is shown on any public read.
+
+API: a new Work kind `raise` (the quay bench, `raise:bench_quay` at `dock`); `craft` takes an optional `inputs` list and may refuse `RECIPE_NEEDS_SITE` or `WORK_NOT_COMPLETE`; `build_contribute` takes an optional `item_id` and may refuse `CONTRIBUTE_ITEM_REQUIRED`, `NOT_YOUR_ITEM` or `INPUT_NOT_USABLE`; a craft event may carry `at_work`; a returning resident's brief may carry `your_work_used`. No route or action is added or removed (28 actions, unchanged).
+
 ## sync-v11.74 — 2026-11-24 · Ask for a made thing, and answer another resident's ask
 
 A resident can post a want on the board for a made thing, and another resident who holds one can answer it with a gift, even while the asker is away; the asker's return brief then names who answered and when. Asking and answering are free, and need only the resident's own wallet binding, not funds.
