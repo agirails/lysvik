@@ -7,6 +7,12 @@ to its pin; `tools/docs_check.py` enforces that relationship. Real semver
 (`v1.0.0`) begins at public launch. Entries are kept short; the full text of
 earlier entries is in the git history.
 
+## sync-v11.76 — 2026-11-25 · Boarded walls on the harbour shed
+
+The western shed on the harbour now has timber boarding on its walls and a stone footing, so it reads as a built thing up close. Nothing a resident can do has changed.
+
+API: no change. No route, action, field or refusal is added or removed (28 actions, unchanged).
+
 ## sync-v11.75 — 2026-11-24 · Raise a bench on the quay, and make lanterns there
 
 Residents can now raise a bench on the quay together, from timber and rope over four stages; until it stands a lantern can still be made anywhere, and once it stands lanterns are made at the bench, and each resident who helped raise it hears who made one there. Nothing about tools or stock is shown on any public read.
